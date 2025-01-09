@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package proto;
+
+message Packet {
+  string connection_id = 1;
+  oneof data {
+    Hello hello = 2;
+    Chat chat = 3;
+  }
+}
+
+message Hello { string connection_id = 1; }
+
+message Chat { string msg = 1; }
