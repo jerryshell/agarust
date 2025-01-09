@@ -1,10 +1,14 @@
 pub mod proto;
 
-use futures_util::{future, StreamExt, TryStreamExt};
+use futures_util::{
+    stream::{SplitSink, SplitStream},
+    StreamExt,
+};
 use prost::Message;
-use std::env;
+use std::{env, io::Cursor, net::SocketAddr};
 use tokio::net::{TcpListener, TcpStream};
-use tracing::info;
+use tokio_tungstenite::WebSocketStream;
+use tracing::{info, warn};
 
 #[tokio::main]
 async fn main() {
@@ -29,26 +33,74 @@ async fn main() {
     let listener = try_socket.expect("Failed to bind");
     info!("Listening on: {}", addr);
 
-    while let Ok((stream, _)) = listener.accept().await {
-        tokio::spawn(accept_connection(stream));
+    while let Ok((tcp_stream, _)) = listener.accept().await {
+        tokio::spawn(async move {
+            let (addr, ws_stream) = accept_connection(tcp_stream).await;
+            let (client_writer, client_reader) = ws_stream.split();
+            let mut client_agent = ClientAgent {
+                addr,
+                client_writer,
+                client_reader,
+            };
+            client_agent.run().await;
+        });
     }
 }
 
-async fn accept_connection(stream: TcpStream) {
-    let addr = stream
+async fn accept_connection(tcp_stream: TcpStream) -> (SocketAddr, WebSocketStream<TcpStream>) {
+    let addr = tcp_stream
         .peer_addr()
         .expect("connected streams should have a peer address");
     info!("Peer address: {}", addr);
 
-    let ws_stream = tokio_tungstenite::accept_async(stream)
+    let ws_stream = tokio_tungstenite::accept_async(tcp_stream)
         .await
         .expect("Error during the websocket handshake occurred");
 
     info!("New WebSocket connection: {}", addr);
 
-    let (write, read) = ws_stream.split();
-    read.try_filter(|msg| future::ready(msg.is_text() || msg.is_binary()))
-        .forward(write)
-        .await
-        .expect("Failed to forward messages")
+    (addr, ws_stream)
+}
+
+struct ClientAgent {
+    addr: SocketAddr,
+    client_writer: SplitSink<WebSocketStream<TcpStream>, tungstenite::protocol::Message>,
+    client_reader: SplitStream<WebSocketStream<TcpStream>>,
+}
+
+impl ClientAgent {
+    async fn run(&mut self) {
+        loop {
+            match self.client_reader.next().await {
+                Some(r) => match r {
+                    Ok(message) => {
+                        info!("message {:?}", message);
+                        if let tungstenite::Message::Binary(bytes) = message {
+                            match proto::Packet::decode(Cursor::new(bytes)) {
+                                Ok(mut packet) => {
+                                    packet.connection_id = self.addr.to_string();
+                                    info!("packet {:?}", packet);
+                                }
+                                Err(error) => {
+                                    warn!(
+                                        "proto decode error from {:?}: {:?}, close connect",
+                                        self.addr, error
+                                    );
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        warn!("error from {:?}: {:?}, close connect", self.addr, error);
+                        break;
+                    }
+                },
+                None => {
+                    warn!("read None from {:?}, close connect", self.addr);
+                    break;
+                }
+            }
+        }
+    }
 }

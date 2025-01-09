@@ -8,6 +8,7 @@ prost = "*"
 futures-util = "*"
 tokio = { version = "*", features = ["full"] }
 tokio-tungstenite = "*"
+tungstenite = "*"
 tracing = "*"
 tracing-subscriber = "*"
 
