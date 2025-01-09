@@ -5,6 +5,11 @@ edition = "2021"
 
 [dependencies]
 prost = "*"
+futures-util = "*"
+tokio = { version = "*", features = ["full"] }
+tokio-tungstenite = "*"
+tracing = "*"
+tracing-subscriber = "*"
 
 [build-dependencies]
 prost-build = "*"

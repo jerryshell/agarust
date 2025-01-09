@@ -19,7 +19,8 @@ config/icon="res://icon.png"
 
 [autoload]
 
-Global="*res://global.gd"
+Global="*res://global/global.gd"
+WsClient="*res://global/ws_client.gd"
 
 [display]
 
