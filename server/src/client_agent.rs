@@ -139,7 +139,7 @@ async fn client_writer_pump(
     while let Some(command) = command_receiver.recv().await {
         match command {
             Command::Hello => {
-                let packet = proto_util::hello(connection_id.clone());
+                let packet = proto_util::hello_packet(connection_id.clone());
                 let raw_data = packet.encode_to_vec();
                 let message = Message::binary(raw_data);
                 let _ = client_writer.send(message).await;

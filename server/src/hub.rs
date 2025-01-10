@@ -1,6 +1,6 @@
 use crate::{
     command::{ClientRegisterEntry, Command},
-    proto,
+    proto_util,
 };
 use prost::Message;
 use std::{collections::HashMap, time::Duration};
@@ -110,9 +110,7 @@ impl Hub {
                 })
             }
             Command::TickPlayer => {
-                // info!("SyncPlayer");
                 if self.player_map.is_empty() {
-                    // info!("player_map is empty, skip SyncPlayer");
                     return;
                 }
 
@@ -120,28 +118,8 @@ impl Hub {
                 self.tick_player().await;
 
                 // sync player
-                let update_player_batch = self
-                    .player_map
-                    .values()
-                    .map(|player| proto::UpdatePlayer {
-                        connection_id: player.connection_id.clone(),
-                        name: player.name.clone(),
-                        x: player.x,
-                        y: player.y,
-                        radius: player.radius,
-                        direction_angle: player.direction_angle,
-                        speed: player.speed,
-                        color: player.color,
-                    })
-                    .collect::<Vec<_>>();
-                let data_packet = proto::Packet {
-                    data: Some(proto::packet::Data::UpdatePlayerBatch(
-                        proto::UpdatePlayerBatch {
-                            update_player_batch,
-                        },
-                    )),
-                };
-                let raw_data = data_packet.encode_to_vec();
+                let packet = proto_util::update_player_batch_packet(&self.player_map);
+                let raw_data = packet.encode_to_vec();
                 self.client_map.values().for_each(|client| {
                     let _ = client.command_sender.send(Command::SendRawData {
                         raw_data: raw_data.clone(),

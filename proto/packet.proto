@@ -4,11 +4,11 @@ package proto;
 
 message Packet {
   oneof data {
-    Hello hello = 2;
-    Chat chat = 3;
-    UpdatePlayer update_player = 8;
-    UpdatePlayerBatch update_player_batch = 9;
-    UpdatePlayerDirectionAngle update_player_direction_angle = 90;
+    Hello hello = 1;
+    Chat chat = 2;
+    UpdatePlayer update_player = 3;
+    UpdatePlayerBatch update_player_batch = 4;
+    UpdatePlayerDirectionAngle update_player_direction_angle = 5;
   }
 }
 
