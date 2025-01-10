@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-prost = "*"
-futures-util = "*"
-tokio = { version = "*", features = ["full"] }
-tokio-tungstenite = "*"
-tungstenite = "*"
 tracing = "*"
 tracing-subscriber = "*"
+prost = "*"
+tokio = { version = "*", features = ["full"] }
+tokio-tungstenite = "*"
+futures-util = "*"
+nanoid = "*"
 
 [build-dependencies]
 prost-build = "*"
