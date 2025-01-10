@@ -657,18 +657,12 @@ class PBPacker:
 		return result
 
 
-
 ############### USER DATA BEGIN ################
 
 
 class Packet:
 	func _init():
 		var service
-
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
-		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
 
 		_hello = PBField.new("hello", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
@@ -688,22 +682,19 @@ class Packet:
 		service.func_ref = Callable(self, "new_update_player")
 		data[_update_player.tag] = service
 
-		_update_player_direction = PBField.new("update_player_direction", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_update_player_batch = PBField.new("update_player_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_player_direction
-		service.func_ref = Callable(self, "new_update_player_direction")
-		data[_update_player_direction.tag] = service
+		service.field = _update_player_batch
+		service.func_ref = Callable(self, "new_update_player_batch")
+		data[_update_player_batch.tag] = service
+
+		_update_player_direction_angle = PBField.new("update_player_direction_angle", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 90, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _update_player_direction_angle
+		service.func_ref = Callable(self, "new_update_player_direction_angle")
+		data[_update_player_direction_angle.tag] = service
 
 	var data = {}
-
-	var _connection_id: PBField
-	func get_connection_id() -> String:
-		return _connection_id.value
-	func clear_connection_id() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_connection_id(value : String) -> void:
-		_connection_id.value = value
 
 	var _hello: PBField
 	func has_hello() -> bool:
@@ -719,8 +710,10 @@ class Packet:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[90].state = PB_SERVICE_STATE.UNFILLED
 		_hello.value = Hello.new()
 		return _hello.value
 
@@ -738,8 +731,10 @@ class Packet:
 		data[3].state = PB_SERVICE_STATE.FILLED
 		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[90].state = PB_SERVICE_STATE.UNFILLED
 		_chat.value = Chat.new()
 		return _chat.value
 
@@ -757,20 +752,22 @@ class Packet:
 		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		data[8].state = PB_SERVICE_STATE.FILLED
-		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[90].state = PB_SERVICE_STATE.UNFILLED
 		_update_player.value = UpdatePlayer.new()
 		return _update_player.value
 
-	var _update_player_direction: PBField
-	func has_update_player_direction() -> bool:
+	var _update_player_batch: PBField
+	func has_update_player_batch() -> bool:
 		return data[9].state == PB_SERVICE_STATE.FILLED
-	func get_update_player_direction() -> UpdatePlayerDirection:
-		return _update_player_direction.value
-	func clear_update_player_direction() -> void:
+	func get_update_player_batch() -> UpdatePlayerBatch:
+		return _update_player_batch.value
+	func clear_update_player_batch() -> void:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_update_player_direction() -> UpdatePlayerDirection:
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_update_player_batch() -> UpdatePlayerBatch:
 		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -778,8 +775,31 @@ class Packet:
 		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		data[9].state = PB_SERVICE_STATE.FILLED
-		_update_player_direction.value = UpdatePlayerDirection.new()
-		return _update_player_direction.value
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[90].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = UpdatePlayerBatch.new()
+		return _update_player_batch.value
+
+	var _update_player_direction_angle: PBField
+	func has_update_player_direction_angle() -> bool:
+		return data[90].state == PB_SERVICE_STATE.FILLED
+	func get_update_player_direction_angle() -> UpdatePlayerDirectionAngle:
+		return _update_player_direction_angle.value
+	func clear_update_player_direction_angle() -> void:
+		data[90].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_update_player_direction_angle() -> UpdatePlayerDirectionAngle:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		data[90].state = PB_SERVICE_STATE.FILLED
+		_update_player_direction_angle.value = UpdatePlayerDirectionAngle.new()
+		return _update_player_direction_angle.value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -787,7 +807,7 @@ class Packet:
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
 
-	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
 			cur_limit = limit
@@ -806,7 +826,21 @@ class Hello:
 	func _init():
 		var service
 
+		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _connection_id
+		data[_connection_id.tag] = service
+
 	var data = {}
+
+	var _connection_id: PBField
+	func get_connection_id() -> String:
+		return _connection_id.value
+	func clear_connection_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_connection_id(value: String) -> void:
+		_connection_id.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -814,7 +848,7 @@ class Hello:
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
 
-	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
 			cur_limit = limit
@@ -833,20 +867,34 @@ class Chat:
 	func _init():
 		var service
 
-		_msg = PBField.new("msg", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _connection_id
+		data[_connection_id.tag] = service
+
+		_msg = PBField.new("msg", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = _msg
 		data[_msg.tag] = service
 
 	var data = {}
 
+	var _connection_id: PBField
+	func get_connection_id() -> String:
+		return _connection_id.value
+	func clear_connection_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_connection_id(value: String) -> void:
+		_connection_id.value = value
+
 	var _msg: PBField
 	func get_msg() -> String:
 		return _msg.value
 	func clear_msg() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
+		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_msg.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_msg(value : String) -> void:
+	func set_msg(value: String) -> void:
 		_msg.value = value
 
 	func _to_string() -> String:
@@ -855,7 +903,7 @@ class Chat:
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
 
-	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
 			cur_limit = limit
@@ -899,10 +947,10 @@ class UpdatePlayer:
 		service.field = _radius
 		data[_radius.tag] = service
 
-		_direction = PBField.new("direction", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_direction_angle = PBField.new("direction_angle", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _direction
-		data[_direction.tag] = service
+		service.field = _direction_angle
+		data[_direction_angle.tag] = service
 
 		_speed = PBField.new("speed", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
@@ -922,7 +970,7 @@ class UpdatePlayer:
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
 		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_connection_id(value : String) -> void:
+	func set_connection_id(value: String) -> void:
 		_connection_id.value = value
 
 	var _name: PBField
@@ -931,7 +979,7 @@ class UpdatePlayer:
 	func clear_name() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_name(value : String) -> void:
+	func set_name(value: String) -> void:
 		_name.value = value
 
 	var _x: PBField
@@ -940,7 +988,7 @@ class UpdatePlayer:
 	func clear_x() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_x(value : float) -> void:
+	func set_x(value: float) -> void:
 		_x.value = value
 
 	var _y: PBField
@@ -949,7 +997,7 @@ class UpdatePlayer:
 	func clear_y() -> void:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_y(value : float) -> void:
+	func set_y(value: float) -> void:
 		_y.value = value
 
 	var _radius: PBField
@@ -958,17 +1006,17 @@ class UpdatePlayer:
 	func clear_radius() -> void:
 		data[5].state = PB_SERVICE_STATE.UNFILLED
 		_radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_radius(value : float) -> void:
+	func set_radius(value: float) -> void:
 		_radius.value = value
 
-	var _direction: PBField
-	func get_direction() -> float:
-		return _direction.value
-	func clear_direction() -> void:
+	var _direction_angle: PBField
+	func get_direction_angle() -> float:
+		return _direction_angle.value
+	func clear_direction_angle() -> void:
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_direction(value : float) -> void:
-		_direction.value = value
+		_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_direction_angle(value: float) -> void:
+		_direction_angle.value = value
 
 	var _speed: PBField
 	func get_speed() -> float:
@@ -976,7 +1024,7 @@ class UpdatePlayer:
 	func clear_speed() -> void:
 		data[7].state = PB_SERVICE_STATE.UNFILLED
 		_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_speed(value : float) -> void:
+	func set_speed(value: float) -> void:
 		_speed.value = value
 
 	var _color: PBField
@@ -985,7 +1033,7 @@ class UpdatePlayer:
 	func clear_color() -> void:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT32]
-	func set_color(value : int) -> void:
+	func set_color(value: int) -> void:
 		_color.value = value
 
 	func _to_string() -> String:
@@ -994,7 +1042,7 @@ class UpdatePlayer:
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
 
-	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
 			cur_limit = limit
@@ -1009,25 +1057,28 @@ class UpdatePlayer:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 
-class UpdatePlayerDirection:
+class UpdatePlayerBatch:
 	func _init():
 		var service
 
-		_direction = PBField.new("direction", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_update_player_batch = PBField.new("update_player_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, [])
 		service = PBServiceField.new()
-		service.field = _direction
-		data[_direction.tag] = service
+		service.field = _update_player_batch
+		service.func_ref = Callable(self, "add_update_player_batch")
+		data[_update_player_batch.tag] = service
 
 	var data = {}
 
-	var _direction: PBField
-	func get_direction() -> float:
-		return _direction.value
-	func clear_direction() -> void:
+	var _update_player_batch: PBField
+	func get_update_player_batch() -> Array:
+		return _update_player_batch.value
+	func clear_update_player_batch() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_direction(value : float) -> void:
-		_direction.value = value
+		_update_player_batch.value = []
+	func add_update_player_batch() -> UpdatePlayer:
+		var element = UpdatePlayer.new()
+		_update_player_batch.value.append(element)
+		return element
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1035,7 +1086,48 @@ class UpdatePlayerDirection:
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
 
-	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class UpdatePlayerDirectionAngle:
+	func _init():
+		var service
+
+		_direction_angle = PBField.new("direction_angle", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _direction_angle
+		data[_direction_angle.tag] = service
+
+	var data = {}
+
+	var _direction_angle: PBField
+	func get_direction_angle() -> float:
+		return _direction_angle.value
+	func clear_direction_angle() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_direction_angle(value: float) -> void:
+		_direction_angle.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
 			cur_limit = limit

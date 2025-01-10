@@ -21,6 +21,11 @@ pub enum Command {
     SendRawData {
         raw_data: Vec<u8>,
     },
+    TickPlayer,
+    UpdatePlayerDirectionAngle {
+        connection_id: String,
+        direction_angle: f64,
+    },
 }
 
 #[derive(Debug, Clone)]

@@ -17,14 +17,18 @@ func _on_ws_connected() -> void:
 	logger.info("Server connected")
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
-	print(packet)
-	var connection_id = packet.get_connection_id()
 	if packet.has_hello():
-		_handle_hello_msg(connection_id, packet.get_hello())
+		print(packet)
+		_handle_hello_msg(packet.get_hello())
 	elif packet.has_chat():
-		_handle_chat_msg(connection_id, packet.get_chat())
+		print(packet)
+		_handle_chat_msg(packet.get_chat())
 	elif packet.has_update_player():
-		_handle_update_player_msg(connection_id, packet.get_update_player())
+		print(packet)
+		_handle_update_player_msg(packet.get_update_player())
+	elif packet.has_update_player_batch():
+		_handle_update_player_batch_msg(packet.get_update_player_batch())
+
 
 func _on_chat_edit_text_submited(new_text: String):
 	var packet := Global.proto.Packet.new()
@@ -33,13 +37,18 @@ func _on_chat_edit_text_submited(new_text: String):
 	WsClient.send(packet)
 	chat_edit.text = ""
 
-func _handle_hello_msg(connection_id: String, chat_msg: Global.proto.Hello) -> void:
-	Global.connection_id = connection_id
+func _handle_hello_msg(hello_msg: Global.proto.Hello) -> void:
+	Global.connection_id = hello_msg.get_connection_id()
 
-func _handle_chat_msg(connection_id: String, chat_msg: Global.proto.Chat) -> void:
-	logger.chat(connection_id, chat_msg.get_msg())
+func _handle_chat_msg(chat_msg: Global.proto.Chat) -> void:
+	logger.chat(chat_msg.get_connection_id(), chat_msg.get_msg())
 
-func _handle_update_player_msg(connection_id: String, update_player_msg: Global.proto.UpdatePlayer) -> void:
+func _handle_update_player_batch_msg(update_player_batch_msg: Global.proto.UpdatePlayerBatch) -> void:
+	for update_player_msg: Global.proto.UpdatePlayer in update_player_batch_msg.get_update_player_batch():
+		_handle_update_player_msg(update_player_msg)
+
+func _handle_update_player_msg(update_player_msg: Global.proto.UpdatePlayer) -> void:
+	var actor_connection_id := update_player_msg.get_connection_id()
 	var actor_name := update_player_msg.get_name()
 	var x := update_player_msg.get_x()
 	var y := update_player_msg.get_y()
@@ -48,13 +57,13 @@ func _handle_update_player_msg(connection_id: String, update_player_msg: Global.
 	var color_hex := update_player_msg.get_color()
 
 	var color := Color.hex(color_hex)
-	var is_player := connection_id == Global.connection_id
+	var is_player := actor_connection_id == Global.connection_id
 
-	if connection_id not in player_map:
-		_add_actor(connection_id, actor_name, x, y, radius, speed, color, is_player)
+	if actor_connection_id not in player_map:
+		_add_actor(actor_connection_id, actor_name, x, y, radius, speed, color, is_player)
 	else:
-		var direction := update_player_msg.get_direction()
-		_update_actor(connection_id, x, y, direction, speed, radius, is_player)
+		var direction := update_player_msg.get_direction_angle()
+		_update_actor(actor_connection_id, x, y, direction, speed, radius, is_player)
 
 func _add_actor(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
 	var actor := Actor.instantiate(connection_id, actor_name, x, y, radius, speed, color, is_player)

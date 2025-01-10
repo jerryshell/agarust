@@ -2,6 +2,7 @@ pub mod client_agent;
 pub mod command;
 pub mod hub;
 pub mod proto;
+pub mod proto_util;
 
 use client_agent::ClientAgent;
 use command::Command;

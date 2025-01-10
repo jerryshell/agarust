@@ -70,8 +70,8 @@ func _physics_process(delta) -> void:
 		velocity = input_vec * speed
 
 		var packet := Global.proto.Packet.new()
-		var player_direction_message := packet.new_update_player_direction()
-		player_direction_message.set_direction(velocity.angle())
+		var update_player_direction_angle := packet.new_update_player_direction_angle()
+		update_player_direction_angle.set_direction_angle(velocity.angle())
 		WsClient.send(packet)
 
 func _draw() -> void:

@@ -1,6 +1,6 @@
 use crate::{
     command::{ClientRegisterEntry, Command},
-    proto,
+    proto, proto_util,
 };
 use futures_util::{
     stream::{SplitSink, SplitStream},
@@ -13,7 +13,7 @@ use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
 };
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 
 #[derive(Debug, Clone)]
 pub struct ClientAgent {
@@ -74,12 +74,22 @@ impl ClientAgent {
     }
 }
 
-async fn handle_packet(packet: proto::Packet, hub_command_sender: UnboundedSender<Command>) {
-    info!("handle_packet {:?}", packet);
+async fn handle_packet(
+    connection_id: String,
+    packet: proto::Packet,
+    hub_command_sender: UnboundedSender<Command>,
+) {
     if let Some(data) = packet.clone().data {
         match data {
             proto::packet::Data::Chat(_chat) => {
                 let _ = hub_command_sender.send(Command::Broadcast { packet });
+            }
+            proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
+                let direction_angle = update_player_direction_angle.direction_angle;
+                let _ = hub_command_sender.send(Command::UpdatePlayerDirectionAngle {
+                    connection_id,
+                    direction_angle,
+                });
             }
             _ => {
                 warn!("unknow packet: {:?}", packet);
@@ -97,13 +107,11 @@ async fn client_reader_pump(
     while let Some(read_result) = client_reader.next().await {
         match read_result {
             Ok(message) => {
-                info!("message {:?}", message);
                 if let Message::Binary(bytes) = message {
                     match proto::Packet::decode(Cursor::new(bytes)) {
-                        Ok(mut packet) => {
-                            packet.connection_id = connection_id.clone();
+                        Ok(packet) => {
                             let hub_command_sender = hub_command_sender.clone();
-                            handle_packet(packet, hub_command_sender).await;
+                            handle_packet(connection_id.clone(), packet, hub_command_sender).await;
                         }
                         Err(error) => {
                             warn!(
@@ -131,12 +139,9 @@ async fn client_writer_pump(
     while let Some(command) = command_receiver.recv().await {
         match command {
             Command::Hello => {
-                let packet = proto::Packet {
-                    connection_id: connection_id.clone(),
-                    data: Some(proto::packet::Data::Hello(proto::Hello {})),
-                };
-                let bytes = packet.encode_to_vec();
-                let message = Message::binary(bytes);
+                let packet = proto_util::hello(connection_id.clone());
+                let raw_data = packet.encode_to_vec();
+                let message = Message::binary(raw_data);
                 let _ = client_writer.send(message).await;
             }
             Command::SendPacket { packet } => {
