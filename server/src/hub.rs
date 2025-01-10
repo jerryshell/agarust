@@ -1,11 +1,27 @@
-use crate::command::{ClientRegisterEntry, Command};
+use crate::{
+    command::{ClientRegisterEntry, Command},
+    proto,
+};
 use prost::Message;
 use std::collections::HashMap;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tracing::{info, warn};
 
+#[derive(Debug, Clone)]
+pub struct Player {
+    pub connection_id: String,
+    pub name: String,
+    pub x: f64,
+    pub y: f64,
+    pub radius: f64,
+    pub direction: f64,
+    pub speed: f64,
+    pub color: i32,
+}
+
 #[derive(Debug)]
 pub struct Hub {
+    pub player_map: HashMap<String, Player>,
     pub client_map: HashMap<String, ClientRegisterEntry>,
     pub command_sender: UnboundedSender<Command>,
     pub command_receiver: UnboundedReceiver<Command>,
@@ -13,12 +29,7 @@ pub struct Hub {
 
 impl Default for Hub {
     fn default() -> Self {
-        let (command_sender, command_receiver) = unbounded_channel::<Command>();
-        Self {
-            client_map: HashMap::new(),
-            command_sender,
-            command_receiver,
-        }
+        Self::new()
     }
 }
 
@@ -26,6 +37,7 @@ impl Hub {
     pub fn new() -> Self {
         let (command_sender, command_receiver) = unbounded_channel::<Command>();
         Self {
+            player_map: HashMap::new(),
             client_map: HashMap::new(),
             command_sender,
             command_receiver,
@@ -46,10 +58,37 @@ impl Hub {
             } => {
                 info!("RegisterClient: {:?}", client_register_entry);
                 let client_agent_command_sender = client_register_entry.command_sender.clone();
-                let key = client_register_entry.connection_id.clone();
-                self.client_map.insert(key, client_register_entry);
+                let connection_id = client_register_entry.connection_id.clone();
+                self.client_map
+                    .insert(connection_id.clone(), client_register_entry);
                 info!("client_agent_map: {:?}", self.client_map);
                 let _ = client_agent_command_sender.send(Command::Hello);
+
+                let player = Player {
+                    connection_id: connection_id.clone(),
+                    name: "todo!()".to_string(),
+                    x: 1.0,
+                    y: 2.0,
+                    radius: 20.0,
+                    direction: 0.0,
+                    speed: 200.0,
+                    color: 1,
+                };
+                let _ = client_agent_command_sender.send(Command::SendPacket {
+                    packet: crate::proto::Packet {
+                        connection_id: connection_id.clone(),
+                        data: Some(proto::packet::Data::UpdatePlayer(proto::UpdatePlayer {
+                            connection_id: player.connection_id,
+                            name: player.name,
+                            x: player.x,
+                            y: player.y,
+                            radius: player.radius,
+                            direction: player.direction,
+                            speed: player.speed,
+                            color: player.color,
+                        })),
+                    },
+                });
             }
             Command::UnregisterClient { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);

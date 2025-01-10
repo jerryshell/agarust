@@ -1,10 +1,23 @@
-[gd_scene load_steps=3 format=3 uid="uid://b6eavbvcua5hk"]
+[gd_scene load_steps=5 format=3 uid="uid://b6eavbvcua5hk"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_gugxu"]
 [ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="2_1tw4a"]
+[ext_resource type="Texture2D" uid="uid://brlbwsgc364e8" path="res://assets/floor.svg" id="3_1p1p0"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h6q5m"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_gugxu")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture_repeat = 2
+material = SubResource("ShaderMaterial_h6q5m")
+texture = ExtResource("3_1p1p0")
+region_enabled = true
+region_rect = Rect2(0, 0, 10000, 10000)
+
+[node name="World" type="Node2D" parent="."]
+unique_name_in_owner = true
 
 [node name="Gui" type="CanvasLayer" parent="."]
 

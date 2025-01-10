@@ -664,26 +664,38 @@ class PBPacker:
 class Packet:
 	func _init():
 		var service
-		
+
 		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = _connection_id
 		data[_connection_id.tag] = service
-		
+
 		_hello = PBField.new("hello", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = _hello
 		service.func_ref = Callable(self, "new_hello")
 		data[_hello.tag] = service
-		
+
 		_chat = PBField.new("chat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = _chat
 		service.func_ref = Callable(self, "new_chat")
 		data[_chat.tag] = service
-		
+
+		_update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _update_player
+		service.func_ref = Callable(self, "new_update_player")
+		data[_update_player.tag] = service
+
+		_update_player_direction = PBField.new("update_player_direction", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _update_player_direction
+		service.func_ref = Callable(self, "new_update_player_direction")
+		data[_update_player_direction.tag] = service
+
 	var data = {}
-	
+
 	var _connection_id: PBField
 	func get_connection_id() -> String:
 		return _connection_id.value
@@ -692,7 +704,7 @@ class Packet:
 		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value : String) -> void:
 		_connection_id.value = value
-	
+
 	var _hello: PBField
 	func has_hello() -> bool:
 		return data[2].state == PB_SERVICE_STATE.FILLED
@@ -705,9 +717,13 @@ class Packet:
 		data[2].state = PB_SERVICE_STATE.FILLED
 		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_hello.value = Hello.new()
 		return _hello.value
-	
+
 	var _chat: PBField
 	func has_chat() -> bool:
 		return data[3].state == PB_SERVICE_STATE.FILLED
@@ -720,15 +736,57 @@ class Packet:
 		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		data[3].state = PB_SERVICE_STATE.FILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_chat.value = Chat.new()
 		return _chat.value
-	
+
+	var _update_player: PBField
+	func has_update_player() -> bool:
+		return data[8].state == PB_SERVICE_STATE.FILLED
+	func get_update_player() -> UpdatePlayer:
+		return _update_player.value
+	func clear_update_player() -> void:
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_update_player() -> UpdatePlayer:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		data[8].state = PB_SERVICE_STATE.FILLED
+		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = UpdatePlayer.new()
+		return _update_player.value
+
+	var _update_player_direction: PBField
+	func has_update_player_direction() -> bool:
+		return data[9].state == PB_SERVICE_STATE.FILLED
+	func get_update_player_direction() -> UpdatePlayerDirection:
+		return _update_player_direction.value
+	func clear_update_player_direction() -> void:
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_update_player_direction() -> UpdatePlayerDirection:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		data[9].state = PB_SERVICE_STATE.FILLED
+		_update_player_direction.value = UpdatePlayerDirection.new()
+		return _update_player_direction.value
+
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
-		
+
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
-		
+
 	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
@@ -743,19 +801,19 @@ class Packet:
 		elif limit == -1 && result > 0:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
-	
+
 class Hello:
 	func _init():
 		var service
-		
+
 	var data = {}
-	
+
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
-		
+
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
-		
+
 	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
@@ -770,18 +828,18 @@ class Hello:
 		elif limit == -1 && result > 0:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
-	
+
 class Chat:
 	func _init():
 		var service
-		
+
 		_msg = PBField.new("msg", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = _msg
 		data[_msg.tag] = service
-		
+
 	var data = {}
-	
+
 	var _msg: PBField
 	func get_msg() -> String:
 		return _msg.value
@@ -790,13 +848,13 @@ class Chat:
 		_msg.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_msg(value : String) -> void:
 		_msg.value = value
-	
+
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
-		
+
 	func to_bytes() -> PackedByteArray:
 		return PBPacker.pack_message(data)
-		
+
 	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
 		var cur_limit = bytes.size()
 		if limit != -1:
@@ -811,5 +869,185 @@ class Chat:
 		elif limit == -1 && result > 0:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
-	
+
+class UpdatePlayer:
+	func _init():
+		var service
+
+		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _connection_id
+		data[_connection_id.tag] = service
+
+		_name = PBField.new("name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _name
+		data[_name.tag] = service
+
+		_x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _x
+		data[_x.tag] = service
+
+		_y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _y
+		data[_y.tag] = service
+
+		_radius = PBField.new("radius", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _radius
+		data[_radius.tag] = service
+
+		_direction = PBField.new("direction", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _direction
+		data[_direction.tag] = service
+
+		_speed = PBField.new("speed", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _speed
+		data[_speed.tag] = service
+
+		_color = PBField.new("color", PB_DATA_TYPE.INT32, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT32])
+		service = PBServiceField.new()
+		service.field = _color
+		data[_color.tag] = service
+
+	var data = {}
+
+	var _connection_id: PBField
+	func get_connection_id() -> String:
+		return _connection_id.value
+	func clear_connection_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_connection_id(value : String) -> void:
+		_connection_id.value = value
+
+	var _name: PBField
+	func get_name() -> String:
+		return _name.value
+	func clear_name() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_name(value : String) -> void:
+		_name.value = value
+
+	var _x: PBField
+	func get_x() -> float:
+		return _x.value
+	func clear_x() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_x(value : float) -> void:
+		_x.value = value
+
+	var _y: PBField
+	func get_y() -> float:
+		return _y.value
+	func clear_y() -> void:
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_y(value : float) -> void:
+		_y.value = value
+
+	var _radius: PBField
+	func get_radius() -> float:
+		return _radius.value
+	func clear_radius() -> void:
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_radius(value : float) -> void:
+		_radius.value = value
+
+	var _direction: PBField
+	func get_direction() -> float:
+		return _direction.value
+	func clear_direction() -> void:
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_direction(value : float) -> void:
+		_direction.value = value
+
+	var _speed: PBField
+	func get_speed() -> float:
+		return _speed.value
+	func clear_speed() -> void:
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_speed(value : float) -> void:
+		_speed.value = value
+
+	var _color: PBField
+	func get_color() -> int:
+		return _color.value
+	func clear_color() -> void:
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT32]
+	func set_color(value : int) -> void:
+		_color.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class UpdatePlayerDirection:
+	func _init():
+		var service
+
+		_direction = PBField.new("direction", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _direction
+		data[_direction.tag] = service
+
+	var data = {}
+
+	var _direction: PBField
+	func get_direction() -> float:
+		return _direction.value
+	func clear_direction() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_direction.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_direction(value : float) -> void:
+		_direction.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
 ################ USER DATA END #################

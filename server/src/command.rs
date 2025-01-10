@@ -15,6 +15,9 @@ pub enum Command {
     Broadcast {
         packet: proto::Packet,
     },
+    SendPacket {
+        packet: proto::Packet,
+    },
     SendRawData {
         raw_data: Vec<u8>,
     },

@@ -139,11 +139,15 @@ async fn client_writer_pump(
                 let message = Message::binary(bytes);
                 let _ = client_writer.send(message).await;
             }
+            Command::SendPacket { packet } => {
+                let raw_data = packet.encode_to_vec();
+                let _ = client_writer.send(Message::binary(raw_data)).await;
+            }
             Command::SendRawData { raw_data } => {
                 let _ = client_writer.send(Message::binary(raw_data)).await;
             }
             _ => {
-                warn!("ClientAgent unknow command: {:?}", command);
+                warn!("unknow command: {:?}", command);
             }
         }
     }

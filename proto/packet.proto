@@ -7,9 +7,24 @@ message Packet {
   oneof data {
     Hello hello = 2;
     Chat chat = 3;
+    UpdatePlayer update_player = 8;
+    UpdatePlayerDirection update_player_direction = 9;
   }
 }
 
 message Hello {}
 
 message Chat { string msg = 1; }
+
+message UpdatePlayer {
+  string connection_id = 1;
+  string name = 2;
+  double x = 3;
+  double y = 4;
+  double radius = 5;
+  double direction = 6;
+  double speed = 7;
+  int32 color = 8;
+}
+
+message UpdatePlayerDirection { double direction = 1; }
