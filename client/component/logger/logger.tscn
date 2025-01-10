@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://cpmsnc8fuugqe"]
+
+[ext_resource type="Script" path="res://component/logger/logger.gd" id="1_bql4o"]
+
+[node name="Logger" type="RichTextLabel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
+scroll_following = true
+script = ExtResource("1_bql4o")

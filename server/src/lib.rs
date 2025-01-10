@@ -28,8 +28,9 @@ pub async fn handle_tcp_stream(
         let client_agent = ClientAgent {
             socket_addr,
             connection_id,
+            hub_command_sender,
         };
-        tokio::spawn(async move { client_agent.run(ws_stream, hub_command_sender).await })
+        tokio::spawn(async move { client_agent.run(ws_stream).await })
     };
 
     let _ = client_agent_task.await;

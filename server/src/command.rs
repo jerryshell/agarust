@@ -1,6 +1,8 @@
 use std::net::SocketAddr;
 use tokio::sync::mpsc::UnboundedSender;
 
+use crate::proto;
+
 #[derive(Debug, Clone)]
 pub enum Command {
     Hello,
@@ -9,6 +11,12 @@ pub enum Command {
     },
     UnregisterClient {
         connection_id: String,
+    },
+    Broadcast {
+        packet: proto::Packet,
+    },
+    SendRawData {
+        raw_data: Vec<u8>,
     },
 }
 

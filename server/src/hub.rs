@@ -1,4 +1,5 @@
 use crate::command::{ClientRegisterEntry, Command};
+use prost::Message;
 use std::collections::HashMap;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tracing::{info, warn};
@@ -43,7 +44,7 @@ impl Hub {
             Command::RegisterClient {
                 client_register_entry,
             } => {
-                info!("RegisterClientRegisterEntry: {:?}", client_register_entry);
+                info!("RegisterClient: {:?}", client_register_entry);
                 let client_agent_command_sender = client_register_entry.command_sender.clone();
                 let key = client_register_entry.connection_id.clone();
                 self.client_map.insert(key, client_register_entry);
@@ -51,9 +52,19 @@ impl Hub {
                 let _ = client_agent_command_sender.send(Command::Hello);
             }
             Command::UnregisterClient { connection_id } => {
-                info!("UnregisterClientRegisterEntry: {:?}", connection_id);
+                info!("UnregisterClient: {:?}", connection_id);
                 self.client_map.remove(&connection_id);
                 info!("client_agent_map: {:?}", self.client_map);
+            }
+            Command::Broadcast { packet } => {
+                info!("Broadcast: {:?}", packet);
+                let raw_data = packet.encode_to_vec();
+                self.client_map.values().for_each(|client| {
+                    let raw_data = raw_data.clone();
+                    let _ = client
+                        .command_sender
+                        .send(Command::SendRawData { raw_data });
+                })
             }
             _ => {
                 warn!("unknow command: {:?}", command);
