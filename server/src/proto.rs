@@ -16,11 +16,8 @@ pub mod packet {
         Chat(super::Chat),
     }
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Hello {
-    #[prost(string, tag = "1")]
-    pub connection_id: ::prost::alloc::string::String,
-}
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Hello {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Chat {
     #[prost(string, tag = "1")]

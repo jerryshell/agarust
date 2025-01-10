@@ -748,21 +748,7 @@ class Hello:
 	func _init():
 		var service
 		
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
-		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
-		
 	var data = {}
-	
-	var _connection_id: PBField
-	func get_connection_id() -> String:
-		return _connection_id.value
-	func clear_connection_id() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_connection_id(value : String) -> void:
-		_connection_id.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

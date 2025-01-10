@@ -13,7 +13,7 @@ async fn main() {
 
     let mut hub = agarust_server::hub::Hub::new();
     let hub_command_sender = hub.command_sender.clone();
-    tokio::spawn(async move { hub.run().await });
+    let hub_task = tokio::spawn(async move { hub.run().await });
 
     while let Ok((tcp_stream, socket_addr)) = tcp_listener.accept().await {
         tracing::info!("Accept tcp_stream: {:?}", socket_addr);
@@ -22,4 +22,6 @@ async fn main() {
             agarust_server::handle_tcp_stream(tcp_stream, socket_addr, hub_command_sender).await
         });
     }
+
+    hub_task.abort();
 }

@@ -10,6 +10,6 @@ message Packet {
   }
 }
 
-message Hello { string connection_id = 1; }
+message Hello {}
 
 message Chat { string msg = 1; }
