@@ -11,7 +11,7 @@ async fn main() {
         .expect("Failed to bind");
     tracing::info!("TCP Listening on: {}", bind_addr);
 
-    let mut hub = agarust_server::Hub::new();
+    let mut hub = agarust_server::hub::Hub::new();
     let hub_command_sender = hub.command_sender.clone();
     tokio::spawn(async move { hub.run().await });
 
