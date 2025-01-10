@@ -49,6 +49,7 @@ func _ready():
 	radius = start_rad
 	collision_shape.shape.radius = radius
 	nameplate.text = actor_name
+	camera.enabled = is_player
 
 func _process(_delta: float) -> void:
 	if not is_equal_approx(camera.zoom.x, target_zoom):

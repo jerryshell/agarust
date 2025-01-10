@@ -18,7 +18,7 @@ func _on_ws_connected() -> void:
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	if packet.has_hello():
-		print(packet)
+		logger.info(packet.to_string())
 		_handle_hello_msg(packet.get_hello())
 	elif packet.has_chat():
 		print(packet)
@@ -28,7 +28,6 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		_handle_update_player_msg(packet.get_update_player())
 	elif packet.has_update_player_batch():
 		_handle_update_player_batch_msg(packet.get_update_player_batch())
-
 
 func _on_chat_edit_text_submited(new_text: String):
 	var packet := Global.proto.Packet.new()

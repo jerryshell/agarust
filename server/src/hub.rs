@@ -84,7 +84,7 @@ impl Hub {
 
                 let player = Player {
                     connection_id: connection_id.clone(),
-                    name: "TODO".to_string(),
+                    name: connection_id.clone(),
                     x: 1.0,
                     y: 2.0,
                     radius: 20.0,
