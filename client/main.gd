@@ -111,10 +111,29 @@ func _set_actor_mass(actor: Actor, new_mass: float) -> void:
 
 func _on_player_area_entered(area: Area2D) -> void:
 	print_debug("_on_player_area_entered ", area)
-	#if area is Spore:
-		#_consume_spore(area as Spore)
+	if area is Spore:
+		_consume_spore(area as Spore)
 	#elif area is Actor:
 		#_collide_actor(area as Actor)
+
+func _consume_spore(spore: Spore) -> void:
+	if spore.underneath_player:
+		return
+
+	var player = player_map[Global.connection_id]
+	var player_mass := _rad_to_mass(player.radius)
+	var spore_mass := _rad_to_mass(spore.radius)
+	_set_actor_mass(player, player_mass + spore_mass)
+
+	var packet := Global.proto.Packet.new()
+	var consume_spore_msg := packet.new_consume_spore()
+	consume_spore_msg.set_spore_id(spore.spore_id)
+	WsClient.send(packet)
+	_remove_spore(spore)
+
+func _remove_spore(spore: Spore) -> void:
+	spore_map.erase(spore.spore_id)
+	spore.queue_free()
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
 	var actor = player_map[connection_id]
