@@ -58,7 +58,7 @@ func _process(_delta: float) -> void:
 func _physics_process(delta) -> void:
 	position += velocity * delta
 	server_position += velocity * delta
-	position += (server_position - position) * 0.05
+	position = position.lerp(server_position, 0.05)
 
 	if not is_player:
 		return

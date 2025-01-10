@@ -1,7 +1,6 @@
+use crate::{hub::Spore, proto};
 use std::net::SocketAddr;
 use tokio::sync::mpsc::UnboundedSender;
-
-use crate::proto;
 
 #[derive(Debug, Clone)]
 pub enum Command {
@@ -25,6 +24,9 @@ pub enum Command {
     UpdatePlayerDirectionAngle {
         connection_id: String,
         direction_angle: f64,
+    },
+    UpdateSporeBatch {
+        spore_batch: Vec<Spore>,
     },
 }
 

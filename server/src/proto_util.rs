@@ -58,9 +58,9 @@ pub fn update_spore_pack(spore: &Spore) -> proto::Packet {
     }
 }
 
-pub fn update_spore_batch_packet(spore_map: &HashMap<String, Spore>) -> proto::Packet {
-    let update_spore_batch = spore_map
-        .values()
+pub fn update_spore_batch_packet(spore_list: &[Spore]) -> proto::Packet {
+    let update_spore_batch = spore_list
+        .iter()
         .map(update_spore)
         .collect::<Vec<proto::UpdateSpore>>();
     proto::Packet {

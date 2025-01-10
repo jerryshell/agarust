@@ -7,10 +7,13 @@ use futures_util::{
     SinkExt, StreamExt,
 };
 use prost::Message as _;
-use std::{io::Cursor, net::SocketAddr};
+use std::{io::Cursor, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::TcpStream,
-    sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+    sync::{
+        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+        Mutex,
+    },
 };
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use tracing::{error, warn};
@@ -134,22 +137,38 @@ async fn client_reader_pump(
 async fn client_writer_pump(
     connection_id: String,
     mut command_receiver: UnboundedReceiver<Command>,
-    mut client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
+    client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
 ) {
+    let client_writer = Arc::new(Mutex::new(client_writer));
     while let Some(command) = command_receiver.recv().await {
+        let client_writer = client_writer.clone();
         match command {
             Command::Hello => {
                 let packet = proto_util::hello_packet(connection_id.clone());
                 let raw_data = packet.encode_to_vec();
                 let message = Message::binary(raw_data);
+                let mut client_writer = client_writer.lock().await;
                 let _ = client_writer.send(message).await;
             }
             Command::SendPacket { packet } => {
                 let raw_data = packet.encode_to_vec();
+                let mut client_writer = client_writer.lock().await;
                 let _ = client_writer.send(Message::binary(raw_data)).await;
             }
             Command::SendRawData { raw_data } => {
+                let mut client_writer = client_writer.lock().await;
                 let _ = client_writer.send(Message::binary(raw_data)).await;
+            }
+            Command::UpdateSporeBatch { spore_batch } => {
+                tokio::spawn(async move {
+                    for spore_window in spore_batch.windows(20) {
+                        let packet = proto_util::update_spore_batch_packet(spore_window);
+                        let raw_data = packet.encode_to_vec();
+                        let mut client_writer = client_writer.lock().await;
+                        let _ = client_writer.send(Message::binary(raw_data)).await;
+                        tokio::time::sleep(Duration::from_millis(50)).await;
+                    }
+                });
             }
             _ => {
                 warn!("unknow command: {:?}", command);

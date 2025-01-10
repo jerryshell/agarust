@@ -29,7 +29,6 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	elif packet.has_update_player_batch():
 		_handle_update_player_batch_msg(packet.get_update_player_batch())
 	elif packet.has_update_spore():
-		print_debug(packet)
 		_handle_update_spore_msg(packet.get_update_spore())
 	elif packet.has_update_spore_batch():
 		_handle_update_spore_batch_msg(packet.get_update_spore_batch())

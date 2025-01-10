@@ -121,17 +121,21 @@ impl Hub {
                 let player = Player {
                     connection_id: connection_id.clone(),
                     name: connection_id.clone(),
-                    x: 1.0,
-                    y: 2.0,
+                    x: 0.0,
+                    y: 0.0,
                     radius: 20.0,
                     direction_angle: 0.0,
                     speed: 200.0,
                     color: 1,
                 };
+
+                let packet = proto_util::update_player_packet(&player);
+                let _ = client_agent_command_sender.send(Command::SendPacket { packet });
+
                 self.player_map.insert(connection_id, player);
 
-                let packet = proto_util::update_spore_batch_packet(&self.spore_map);
-                let _ = client_agent_command_sender.send(Command::SendPacket { packet });
+                let spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
+                let _ = client_agent_command_sender.send(Command::UpdateSporeBatch { spore_batch });
             }
             Command::UnregisterClient { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);
