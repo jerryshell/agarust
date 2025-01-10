@@ -1,4 +1,7 @@
-use crate::{hub::Player, proto};
+use crate::{
+    hub::{Player, Spore},
+    proto,
+};
 use std::collections::HashMap;
 
 pub fn hello_packet(connection_id: String) -> proto::Packet {
@@ -36,6 +39,33 @@ pub fn update_player_batch_packet(player_map: &HashMap<String, Player>) -> proto
             proto::UpdatePlayerBatch {
                 update_player_batch,
             },
+        )),
+    }
+}
+
+pub fn update_spore(spore: &Spore) -> proto::UpdateSpore {
+    proto::UpdateSpore {
+        id: spore.id.clone(),
+        x: spore.x,
+        y: spore.y,
+        radius: spore.radius,
+    }
+}
+
+pub fn update_spore_pack(spore: &Spore) -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::UpdateSpore(update_spore(spore))),
+    }
+}
+
+pub fn update_spore_batch_packet(spore_map: &HashMap<String, Spore>) -> proto::Packet {
+    let update_spore_batch = spore_map
+        .values()
+        .map(update_spore)
+        .collect::<Vec<proto::UpdateSpore>>();
+    proto::Packet {
+        data: Some(proto::packet::Data::UpdateSporeBatch(
+            proto::UpdateSporeBatch { update_spore_batch },
         )),
     }
 }

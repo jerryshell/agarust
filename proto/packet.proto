@@ -9,6 +9,10 @@ message Packet {
     UpdatePlayer update_player = 3;
     UpdatePlayerBatch update_player_batch = 4;
     UpdatePlayerDirectionAngle update_player_direction_angle = 5;
+    UpdateSpore update_spore = 6;
+    UpdateSporeBatch update_spore_batch = 7;
+    ConsumeSpore consume_spore = 8;
+    ConsumePlayer consume_player = 9;
   }
 }
 
@@ -33,3 +37,16 @@ message UpdatePlayer {
 message UpdatePlayerBatch { repeated UpdatePlayer update_player_batch = 1; }
 
 message UpdatePlayerDirectionAngle { double direction_angle = 1; }
+
+message UpdateSpore {
+  string id = 1;
+  double x = 2;
+  double y = 3;
+  double radius = 4;
+}
+
+message UpdateSporeBatch { repeated UpdateSpore update_spore_batch = 1; }
+
+message ConsumeSpore { string spore_id = 1; }
+
+message ConsumePlayer { string connection_id = 1; }

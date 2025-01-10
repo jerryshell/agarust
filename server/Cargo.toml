@@ -11,6 +11,7 @@ tokio = { version = "*", features = ["full"] }
 tokio-tungstenite = "*"
 futures-util = "*"
 nanoid = "*"
+rand = "*"
 
 [build-dependencies]
 prost-build = "*"

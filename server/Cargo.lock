@@ -25,6 +25,7 @@ dependencies = [
  "nanoid",
  "prost",
  "prost-build",
+ "rand",
  "tokio",
  "tokio-tungstenite",
  "tracing",

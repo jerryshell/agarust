@@ -1,7 +1,7 @@
 class_name Actor
 extends Area2D
 
-const Scene := preload("res://component/actor/actor.tscn")
+const ACTOR = preload("res://component/actor/actor.tscn")
 
 @onready var collision_shape: CollisionShape2D = %CollisionShape
 @onready var nameplate: Label = %Nameplate
@@ -30,7 +30,7 @@ var furthest_zoom_allowed := target_zoom
 var server_position: Vector2
 
 static func instantiate(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> Actor:
-	var actor := Scene.instantiate()
+	var actor := ACTOR.instantiate()
 	actor.connection_id = connection_id
 	actor.actor_name = actor_name
 	actor.start_x = x

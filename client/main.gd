@@ -4,8 +4,8 @@ extends Node2D
 @onready var chat_edit: LineEdit = %ChatEdit
 @onready var logger: Logger = %Logger
 
-# connection_id -> player
 var player_map: Dictionary = {}
+var spore_map: Dictionary = {}
 
 func _ready() -> void:
 	WsClient.connect_to_server(Global.server_url)
@@ -21,13 +21,20 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		logger.info(packet.to_string())
 		_handle_hello_msg(packet.get_hello())
 	elif packet.has_chat():
-		print(packet)
+		print_debug(packet)
 		_handle_chat_msg(packet.get_chat())
 	elif packet.has_update_player():
-		print(packet)
+		print_debug(packet)
 		_handle_update_player_msg(packet.get_update_player())
 	elif packet.has_update_player_batch():
 		_handle_update_player_batch_msg(packet.get_update_player_batch())
+	elif packet.has_update_spore():
+		print_debug(packet)
+		_handle_update_spore_msg(packet.get_update_spore())
+	elif packet.has_update_spore_batch():
+		_handle_update_spore_batch_msg(packet.get_update_spore_batch())
+	else:
+		print_debug("unknow packet: ", packet)
 
 func _on_chat_edit_text_submited(new_text: String):
 	var packet := Global.proto.Packet.new()
@@ -64,6 +71,28 @@ func _handle_update_player_msg(update_player_msg: Global.proto.UpdatePlayer) -> 
 		var direction := update_player_msg.get_direction_angle()
 		_update_actor(actor_connection_id, x, y, direction, speed, radius, is_player)
 
+func _handle_update_spore_batch_msg(update_spore_batch_msg: Global.proto.UpdateSporeBatch) -> void:
+	for update_spore_msg: Global.proto.UpdateSpore in update_spore_batch_msg.get_update_spore_batch():
+		_handle_update_spore_msg(update_spore_msg)
+
+func _handle_update_spore_msg(update_spore_msg: Global.proto.UpdateSpore) -> void:
+	var spore_id = update_spore_msg.get_id()
+	var x = update_spore_msg.get_x()
+	var y = update_spore_msg.get_y()
+	var radius = update_spore_msg.get_radius()
+	var underneath_player := false
+
+	if Global.connection_id in player_map:
+		var player = player_map[Global.connection_id]
+		var player_pos := Vector2(player.position.x, player.position.y)
+		var spore_pos := Vector2(x, y)
+		underneath_player = player_pos.distance_squared_to(spore_pos) < player.radius * player.radius
+
+	if spore_id not in spore_map:
+		var spore := Spore.instantiate(spore_id, x, y, radius, underneath_player)
+		world.add_child(spore)
+		spore_map[spore_id] = spore
+
 func _add_actor(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
 	var actor := Actor.instantiate(connection_id, actor_name, x, y, radius, speed, color, is_player)
 	actor.z_index = 1
@@ -82,7 +111,7 @@ func _set_actor_mass(actor: Actor, new_mass: float) -> void:
 	#hiscores.set_hiscore(actor.actor_name, roundi(new_mass))
 
 func _on_player_area_entered(area: Area2D) -> void:
-	print("_on_player_area_entered ", area)
+	print_debug("_on_player_area_entered ", area)
 	#if area is Spore:
 		#_consume_spore(area as Spore)
 	#elif area is Actor:

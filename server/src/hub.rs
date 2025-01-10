@@ -2,6 +2,7 @@ use crate::{
     command::{ClientRegisterEntry, Command},
     proto_util,
 };
+use nanoid::nanoid;
 use prost::Message;
 use std::{collections::HashMap, time::Duration};
 use tokio::{
@@ -11,6 +12,8 @@ use tokio::{
 use tracing::{info, warn};
 
 const TICK_DELTA: Duration = Duration::from_millis(50);
+const SPORE_BOUND: f64 = 3000.0;
+const MAX_SPORE_COUNT: usize = 1000;
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -24,10 +27,33 @@ pub struct Player {
     pub color: i32,
 }
 
+#[derive(Debug, Clone)]
+pub struct Spore {
+    pub id: String,
+    pub x: f64,
+    pub y: f64,
+    pub radius: f64,
+}
+
+impl Spore {
+    pub fn random() -> Self {
+        let x = (rand::random::<f64>() * 2.0 - 1.0) * SPORE_BOUND;
+        let y = (rand::random::<f64>() * 2.0 - 1.0) * SPORE_BOUND;
+        let radius = (rand::random::<f64>() * 3.0 + 10.0).max(5.0);
+        Self {
+            id: nanoid!(),
+            x,
+            y,
+            radius,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Hub {
-    pub player_map: HashMap<String, Player>,
     pub client_map: HashMap<String, ClientRegisterEntry>,
+    pub player_map: HashMap<String, Player>,
+    pub spore_map: HashMap<String, Spore>,
     pub command_sender: UnboundedSender<Command>,
     pub command_receiver: UnboundedReceiver<Command>,
 }
@@ -42,14 +68,19 @@ impl Hub {
     pub fn new() -> Self {
         let (command_sender, command_receiver) = unbounded_channel::<Command>();
         Self {
-            player_map: HashMap::new(),
             client_map: HashMap::new(),
+            player_map: HashMap::new(),
+            spore_map: HashMap::new(),
             command_sender,
             command_receiver,
         }
     }
 
     pub async fn run(&mut self) {
+        for _ in 0..MAX_SPORE_COUNT {
+            self.new_spore().await;
+        }
+
         let tick_player_task = {
             let hub_command_sender = self.command_sender.clone();
             tokio::spawn(async move {
@@ -68,6 +99,11 @@ impl Hub {
         }
 
         tick_player_task.abort();
+    }
+
+    async fn new_spore(&mut self) {
+        let spore = Spore::random();
+        self.spore_map.insert(spore.id.clone(), spore);
     }
 
     async fn handle_command(&mut self, command: Command) {
@@ -93,6 +129,9 @@ impl Hub {
                     color: 1,
                 };
                 self.player_map.insert(connection_id, player);
+
+                let packet = proto_util::update_spore_batch_packet(&self.spore_map);
+                let _ = client_agent_command_sender.send(Command::SendPacket { packet });
             }
             Command::UnregisterClient { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);

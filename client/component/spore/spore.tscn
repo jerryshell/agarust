@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://bctoa48vbcjqg"]
+
+[ext_resource type="Script" path="res://component/spore/spore.gd" id="1_7vnp8"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_7luv8"]
+resource_local_to_scene = true
+
+[node name="Spore" type="Area2D"]
+script = ExtResource("1_7vnp8")
+
+[node name="CollisionShape" type="CollisionShape2D" parent="."]
+unique_name_in_owner = true
+shape = SubResource("CircleShape2D_7luv8")

@@ -694,6 +694,30 @@ class Packet:
 		service.func_ref = Callable(self, "new_update_player_direction_angle")
 		data[_update_player_direction_angle.tag] = service
 
+		_update_spore = PBField.new("update_spore", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _update_spore
+		service.func_ref = Callable(self, "new_update_spore")
+		data[_update_spore.tag] = service
+
+		_update_spore_batch = PBField.new("update_spore_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _update_spore_batch
+		service.func_ref = Callable(self, "new_update_spore_batch")
+		data[_update_spore_batch.tag] = service
+
+		_consume_spore = PBField.new("consume_spore", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _consume_spore
+		service.func_ref = Callable(self, "new_consume_spore")
+		data[_consume_spore.tag] = service
+
+		_consume_player = PBField.new("consume_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _consume_player
+		service.func_ref = Callable(self, "new_consume_player")
+		data[_consume_player.tag] = service
+
 	var data = {}
 
 	var _hello: PBField
@@ -714,6 +738,14 @@ class Packet:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_hello.value = Hello.new()
 		return _hello.value
 
@@ -735,6 +767,14 @@ class Packet:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_chat.value = Chat.new()
 		return _chat.value
 
@@ -756,6 +796,14 @@ class Packet:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_update_player.value = UpdatePlayer.new()
 		return _update_player.value
 
@@ -777,6 +825,14 @@ class Packet:
 		data[4].state = PB_SERVICE_STATE.FILLED
 		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_batch.value = UpdatePlayerBatch.new()
 		return _update_player_batch.value
 
@@ -798,8 +854,132 @@ class Packet:
 		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		data[5].state = PB_SERVICE_STATE.FILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_direction_angle.value = UpdatePlayerDirectionAngle.new()
 		return _update_player_direction_angle.value
+
+	var _update_spore: PBField
+	func has_update_spore() -> bool:
+		return data[6].state == PB_SERVICE_STATE.FILLED
+	func get_update_spore() -> UpdateSpore:
+		return _update_spore.value
+	func clear_update_spore() -> void:
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_update_spore() -> UpdateSpore:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		data[6].state = PB_SERVICE_STATE.FILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = UpdateSpore.new()
+		return _update_spore.value
+
+	var _update_spore_batch: PBField
+	func has_update_spore_batch() -> bool:
+		return data[7].state == PB_SERVICE_STATE.FILLED
+	func get_update_spore_batch() -> UpdateSporeBatch:
+		return _update_spore_batch.value
+	func clear_update_spore_batch() -> void:
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_update_spore_batch() -> UpdateSporeBatch:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		data[7].state = PB_SERVICE_STATE.FILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = UpdateSporeBatch.new()
+		return _update_spore_batch.value
+
+	var _consume_spore: PBField
+	func has_consume_spore() -> bool:
+		return data[8].state == PB_SERVICE_STATE.FILLED
+	func get_consume_spore() -> ConsumeSpore:
+		return _consume_spore.value
+	func clear_consume_spore() -> void:
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_consume_spore() -> ConsumeSpore:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		data[8].state = PB_SERVICE_STATE.FILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = ConsumeSpore.new()
+		return _consume_spore.value
+
+	var _consume_player: PBField
+	func has_consume_player() -> bool:
+		return data[9].state == PB_SERVICE_STATE.FILLED
+	func get_consume_player() -> ConsumePlayer:
+		return _consume_player.value
+	func clear_consume_player() -> void:
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_consume_player() -> ConsumePlayer:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		data[9].state = PB_SERVICE_STATE.FILLED
+		_consume_player.value = ConsumePlayer.new()
+		return _consume_player.value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1120,6 +1300,215 @@ class UpdatePlayerDirectionAngle:
 		_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_direction_angle(value: float) -> void:
 		_direction_angle.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class UpdateSpore:
+	func _init():
+		var service
+
+		_id = PBField.new("id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _id
+		data[_id.tag] = service
+
+		_x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _x
+		data[_x.tag] = service
+
+		_y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _y
+		data[_y.tag] = service
+
+		_radius = PBField.new("radius", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = _radius
+		data[_radius.tag] = service
+
+	var data = {}
+
+	var _id: PBField
+	func get_id() -> String:
+		return _id.value
+	func clear_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_id(value: String) -> void:
+		_id.value = value
+
+	var _x: PBField
+	func get_x() -> float:
+		return _x.value
+	func clear_x() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_x(value: float) -> void:
+		_x.value = value
+
+	var _y: PBField
+	func get_y() -> float:
+		return _y.value
+	func clear_y() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_y(value: float) -> void:
+		_y.value = value
+
+	var _radius: PBField
+	func get_radius() -> float:
+		return _radius.value
+	func clear_radius() -> void:
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_radius(value: float) -> void:
+		_radius.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class UpdateSporeBatch:
+	func _init():
+		var service
+
+		_update_spore_batch = PBField.new("update_spore_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, [])
+		service = PBServiceField.new()
+		service.field = _update_spore_batch
+		service.func_ref = Callable(self, "add_update_spore_batch")
+		data[_update_spore_batch.tag] = service
+
+	var data = {}
+
+	var _update_spore_batch: PBField
+	func get_update_spore_batch() -> Array:
+		return _update_spore_batch.value
+	func clear_update_spore_batch() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = []
+	func add_update_spore_batch() -> UpdateSpore:
+		var element = UpdateSpore.new()
+		_update_spore_batch.value.append(element)
+		return element
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class ConsumeSpore:
+	func _init():
+		var service
+
+		_spore_id = PBField.new("spore_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _spore_id
+		data[_spore_id.tag] = service
+
+	var data = {}
+
+	var _spore_id: PBField
+	func get_spore_id() -> String:
+		return _spore_id.value
+	func clear_spore_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_spore_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_spore_id(value: String) -> void:
+		_spore_id.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class ConsumePlayer:
+	func _init():
+		var service
+
+		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _connection_id
+		data[_connection_id.tag] = service
+
+	var data = {}
+
+	var _connection_id: PBField
+	func get_connection_id() -> String:
+		return _connection_id.value
+	func clear_connection_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_connection_id(value: String) -> void:
+		_connection_id.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
