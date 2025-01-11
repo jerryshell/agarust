@@ -85,7 +85,7 @@ async fn handle_packet(
     if let Some(data) = packet.clone().data {
         match data {
             proto::packet::Data::Chat(_chat) => {
-                let _ = hub_command_sender.send(Command::Broadcast { packet });
+                let _ = hub_command_sender.send(Command::BroadcastPacket { packet });
             }
             proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
                 let direction_angle = update_player_direction_angle.direction_angle;

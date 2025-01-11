@@ -1,6 +1,6 @@
 use crate::{hub::Spore, proto};
 use std::net::SocketAddr;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::{sync::mpsc::UnboundedSender, time::Instant};
 
 #[derive(Debug, Clone)]
 pub enum Command {
@@ -11,8 +11,11 @@ pub enum Command {
     UnregisterClient {
         connection_id: String,
     },
-    Broadcast {
+    BroadcastPacket {
         packet: proto::Packet,
+    },
+    BroadcastRawData {
+        raw_data: Vec<u8>,
     },
     SendPacket {
         packet: proto::Packet,
@@ -20,8 +23,8 @@ pub enum Command {
     SendRawData {
         raw_data: Vec<u8>,
     },
-    TickPlayer {
-        delta: f64,
+    Tick {
+        last_tick: Instant,
     },
     UpdatePlayerDirectionAngle {
         connection_id: String,

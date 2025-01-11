@@ -9,7 +9,7 @@ use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
     time::Instant,
 };
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 const TICK_DURATION: Duration = Duration::from_millis(50);
 const SPORE_BOUND: f64 = 3000.0;
@@ -81,31 +81,13 @@ impl Hub {
             self.new_spore().await;
         }
 
-        let tick_player_task = {
-            let hub_command_sender = self.command_sender.clone();
-            tokio::spawn(async move {
-                let mut last_tick = Instant::now();
-                loop {
-                    let delta = TICK_DURATION.saturating_sub(last_tick.elapsed());
-                    let _ = hub_command_sender.send(Command::TickPlayer {
-                        delta: delta.as_secs_f64(),
-                    });
-                    tokio::time::sleep(delta).await;
-                    last_tick = Instant::now();
-                }
-            })
-        };
+        let _ = self.command_sender.send(Command::Tick {
+            last_tick: Instant::now(),
+        });
 
         while let Some(command) = self.command_receiver.recv().await {
             self.handle_command(command).await;
         }
-
-        tick_player_task.abort();
-    }
-
-    async fn new_spore(&mut self) {
-        let spore = Spore::random();
-        self.spore_map.insert(spore.id.clone(), spore);
     }
 
     async fn handle_command(&mut self, command: Command) {
@@ -147,32 +129,42 @@ impl Hub {
                 self.client_map.remove(&connection_id);
                 self.player_map.remove(&connection_id);
             }
-            Command::Broadcast { packet } => {
+            Command::BroadcastPacket { packet } => {
                 info!("Broadcast: {:?}", packet);
                 let raw_data = packet.encode_to_vec();
+                let _ = self
+                    .command_sender
+                    .send(Command::BroadcastRawData { raw_data });
+            }
+            Command::BroadcastRawData { raw_data } => {
                 self.client_map.values().for_each(|client| {
                     let raw_data = raw_data.clone();
                     let _ = client
                         .command_sender
                         .send(Command::SendRawData { raw_data });
-                })
+                });
             }
-            Command::TickPlayer { delta } => {
-                if self.player_map.is_empty() {
-                    return;
+            Command::Tick { mut last_tick } => {
+                let delta = last_tick.elapsed();
+
+                if delta.ge(&TICK_DURATION) {
+                    self.tick_player(delta);
+                    last_tick = Instant::now();
+
+                    let packet = proto_util::update_player_batch_packet(&self.player_map);
+                    let raw_data = packet.encode_to_vec();
+                    let _ = self
+                        .command_sender
+                        .send(Command::BroadcastRawData { raw_data });
                 }
 
-                // tick player
-                self.tick_player(delta).await;
-
-                // sync player
-                let packet = proto_util::update_player_batch_packet(&self.player_map);
-                let raw_data = packet.encode_to_vec();
-                self.client_map.values().for_each(|client| {
-                    let _ = client.command_sender.send(Command::SendRawData {
-                        raw_data: raw_data.clone(),
-                    });
-                })
+                let hub_command_sender = self.command_sender.clone();
+                tokio::spawn(async move {
+                    tokio::time::sleep_until(last_tick + TICK_DURATION).await;
+                    if let Err(error) = hub_command_sender.send(Command::Tick { last_tick }) {
+                        error!("send Command::Tick error: {:?}", error);
+                    }
+                });
             }
             Command::UpdatePlayerDirectionAngle {
                 connection_id,
@@ -189,10 +181,16 @@ impl Hub {
         }
     }
 
-    async fn tick_player(&mut self, delta: f64) {
+    async fn new_spore(&mut self) {
+        let spore = Spore::random();
+        self.spore_map.insert(spore.id.clone(), spore);
+    }
+
+    fn tick_player(&mut self, delta: Duration) {
+        let delta_secs = delta.as_secs_f64();
         self.player_map.values_mut().for_each(|player| {
-            let new_x = player.x + player.speed * player.direction_angle.cos() * delta;
-            let new_y = player.y + player.speed * player.direction_angle.sin() * delta;
+            let new_x = player.x + player.speed * player.direction_angle.cos() * delta_secs;
+            let new_y = player.y + player.speed * player.direction_angle.sin() * delta_secs;
 
             player.x = new_x;
             player.y = new_y;
