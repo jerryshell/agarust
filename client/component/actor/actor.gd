@@ -64,10 +64,15 @@ func _physics_process(delta) -> void:
 		return
 
 	var mouse_position := get_global_mouse_position()
+
+	var distance_squared_to_mouse = position.distance_squared_to(mouse_position)
+	if distance_squared_to_mouse < pow(radius, 2):
+		return
+
 	var direction_to_mouse = position.direction_to(mouse_position).normalized()
 
-	var angle_diff_to_mouse = abs(direction.angle_to(direction_to_mouse))
-	if angle_diff_to_mouse > TAU / 32:
+	var angle_diff = abs(direction.angle_to(direction_to_mouse))
+	if angle_diff > TAU / 32:
 		direction = direction_to_mouse
 		_send_direction_angle()
 

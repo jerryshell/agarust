@@ -110,7 +110,6 @@ func _set_actor_mass(actor: Actor, new_mass: float) -> void:
 	#hiscores.set_hiscore(actor.actor_name, roundi(new_mass))
 
 func _on_player_area_entered(area: Area2D) -> void:
-	print_debug("_on_player_area_entered ", area)
 	if area is Spore:
 		_consume_spore(area as Spore)
 	#elif area is Actor:
