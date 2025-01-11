@@ -2,9 +2,10 @@ use crate::{
     command::{ClientRegisterEntry, Command},
     proto_util,
 };
+use hashbrown::HashMap;
 use nanoid::nanoid;
 use prost::Message;
-use std::{collections::HashMap, f64::consts::PI, time::Duration};
+use std::{f64::consts::PI, time::Duration};
 use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
     time::{interval, Instant},
@@ -25,6 +26,21 @@ pub struct Player {
     pub direction_angle: f64,
     pub speed: f64,
     pub color: i32,
+}
+
+impl Player {
+    pub fn random(connection_id: String, name: String) -> Self {
+        Self {
+            connection_id,
+            name,
+            x: 0.0,
+            y: 0.0,
+            radius: 20.0,
+            direction_angle: 0.0,
+            speed: 150.0,
+            color: 1,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -103,16 +119,7 @@ impl Hub {
                     .insert(connection_id.clone(), client_register_entry);
                 let _ = client_agent_command_sender.send(Command::Hello);
 
-                let player = Player {
-                    connection_id: connection_id.clone(),
-                    name: connection_id.clone(),
-                    x: 0.0,
-                    y: 0.0,
-                    radius: 20.0,
-                    direction_angle: 0.0,
-                    speed: 150.0,
-                    color: 1,
-                };
+                let player = Player::random(connection_id.clone(), connection_id.clone());
 
                 let packet = proto_util::update_player_packet(&player);
                 let _ = client_agent_command_sender.send(Command::SendPacket { packet });
@@ -201,6 +208,41 @@ impl Hub {
                     let _ = self
                         .command_sender
                         .send(Command::BroadcastPacket { packet });
+                }
+            }
+            Command::ConsumePlayer {
+                connection_id,
+                victim_connection_id,
+            } => {
+                match self
+                    .player_map
+                    .get_many_mut([&connection_id, &victim_connection_id])
+                {
+                    [Some(player), Some(victim)] => {
+                        let distance_sq =
+                            (player.x - victim.x).powi(2) + (player.y - victim.y).powi(2);
+
+                        let threshold = player.radius + victim.radius + 10.0;
+                        let threshold_sq = threshold.powi(2);
+
+                        if distance_sq > threshold_sq {
+                            warn!(
+                                "consume player error, distance_sq: {}, threshold_sq {}",
+                                distance_sq, threshold_sq
+                            );
+                            return;
+                        }
+
+                        let victim_mass = radius_to_mass(victim.radius);
+                        let mut player_mass = radius_to_mass(player.radius);
+                        player_mass += victim_mass;
+                        player.radius = mass_to_radius(player_mass);
+
+                        *victim = Player::random(victim.connection_id.clone(), victim.name.clone());
+                    }
+                    _ => {
+                        warn!("not found player or victim in player_map, connection_id: {connection_id:?}, victim_connection_id: {victim_connection_id:?}");
+                    }
                 }
             }
             _ => {

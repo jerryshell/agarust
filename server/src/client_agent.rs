@@ -95,6 +95,12 @@ fn handle_packet(
                     spore_id: consume_spore.spore_id,
                 });
             }
+            proto::packet::Data::ConsumePlayer(consume_player) => {
+                let _ = hub_command_sender.send(Command::ConsumePlayer {
+                    connection_id,
+                    victim_connection_id: consume_player.victim_connection_id,
+                });
+            }
             _ => {
                 warn!("unknow packet: {:?}", packet);
             }

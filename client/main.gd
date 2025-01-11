@@ -128,8 +128,8 @@ func _set_actor_mass(actor: Actor, new_mass: float) -> void:
 func _on_player_area_entered(area: Area2D) -> void:
 	if area is Spore:
 		_consume_spore(area as Spore)
-	#elif area is Actor:
-		#_collide_actor(area as Actor)
+	elif area is Actor:
+		_collide_actor(area as Actor)
 
 func _consume_spore(spore: Spore) -> void:
 	if spore.underneath_player:
@@ -149,6 +149,31 @@ func _consume_spore(spore: Spore) -> void:
 func _remove_spore(spore: Spore) -> void:
 	spore_map.erase(spore.spore_id)
 	spore.queue_free()
+
+func _collide_actor(actor: Actor) -> void:
+	var player = player_map[Global.connection_id]
+	var player_mass := _radius_to_mass(player.radius)
+	var actor_mass := _radius_to_mass(actor.radius)
+
+	if player_mass > actor_mass * 1.5:
+		_consume_actor(actor)
+
+func _consume_actor(actor: Actor) -> void:
+	var player = player_map[Global.connection_id]
+	var player_mass := _radius_to_mass(player.radius)
+	var actor_mass := _radius_to_mass(actor.radius)
+	_set_actor_mass(player, player_mass + actor_mass)
+
+	var packet := Global.proto.Packet.new()
+	var consume_player_msg := packet.new_consume_player()
+	consume_player_msg.set_victim_connection_id(actor.connection_id)
+	WsClient.send(packet)
+	_remove_actor(actor)
+
+func _remove_actor(actor: Actor) -> void:
+	player_map.erase(actor.connection_id)
+	actor.queue_free()
+	# hiscores.remove_hiscore(actor.actor_name)
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
 	var actor = player_map[connection_id]

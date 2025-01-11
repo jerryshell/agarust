@@ -44,7 +44,7 @@ pub enum Command {
     },
     ConsumePlayer {
         connection_id: String,
-        player_id: String,
+        victim_connection_id: String,
     },
 }
 

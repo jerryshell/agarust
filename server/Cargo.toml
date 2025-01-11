@@ -12,6 +12,7 @@ tokio-tungstenite = "*"
 futures-util = "*"
 nanoid = "*"
 rand = "*"
+hashbrown = "*"
 
 [build-dependencies]
 prost-build = "*"
