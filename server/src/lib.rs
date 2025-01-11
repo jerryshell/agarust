@@ -7,7 +7,7 @@ pub mod proto_util;
 use client_agent::ClientAgent;
 use command::Command;
 use nanoid::nanoid;
-use std::net::SocketAddr;
+use std::{error::Error, net::SocketAddr};
 use tokio::{net::TcpStream, sync::mpsc::UnboundedSender};
 use tracing::info;
 
@@ -15,11 +15,9 @@ pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,
     socket_addr: SocketAddr,
     hub_command_sender: UnboundedSender<Command>,
-) {
-    let ws_stream = tokio_tungstenite::accept_async(tcp_stream)
-        .await
-        .expect("Error during the websocket handshake occurred");
-    info!("Accept ws_stream: {:?}", socket_addr);
+) -> Result<(), Box<dyn Error>> {
+    let ws_stream = tokio_tungstenite::accept_async(tcp_stream).await?;
+    info!("Accept WebSocket stream: {:?}", ws_stream);
 
     let connection_id = nanoid!();
 
@@ -38,4 +36,6 @@ pub async fn handle_tcp_stream(
 
     let unregister_command = Command::UnregisterClient { connection_id };
     let _ = hub_command_sender.send(unregister_command);
+
+    Ok(())
 }

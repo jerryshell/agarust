@@ -170,7 +170,6 @@ impl Hub {
                 connection_id,
                 direction_angle,
             } => {
-                info!("UpdatePlayerDirectionAngle {connection_id:?} {direction_angle:?}");
                 if let Some(player) = self.player_map.get_mut(&connection_id) {
                     player.direction_angle = direction_angle;
                 }

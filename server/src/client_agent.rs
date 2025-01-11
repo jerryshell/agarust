@@ -53,21 +53,16 @@ impl ClientAgent {
             })
         };
 
-        {
-            let socket_addr = self.socket_addr;
-            let connection_id = self.connection_id.clone();
-            let register_client_command = Command::RegisterClient {
-                client_register_entry: ClientRegisterEntry {
-                    socket_addr,
-                    connection_id,
-                    command_sender,
-                },
-            };
-            let command_send_result = self.hub_command_sender.send(register_client_command);
-            if let Err(error) = command_send_result {
-                error!("register_client_command error: {:?}", error);
-                return;
-            }
+        let command_send_result = self.hub_command_sender.send(Command::RegisterClient {
+            client_register_entry: ClientRegisterEntry {
+                socket_addr: self.socket_addr,
+                connection_id: self.connection_id.clone(),
+                command_sender,
+            },
+        });
+        if let Err(error) = command_send_result {
+            error!("send Command::RegisterClient error: {:?}", error);
+            return;
         }
 
         tokio::select! {
@@ -117,17 +112,14 @@ async fn client_reader_pump(
                             handle_packet(connection_id.clone(), packet, hub_command_sender).await;
                         }
                         Err(error) => {
-                            warn!(
-                                "proto decode error from {:?}: {:?}, close connect",
-                                socket_addr, error
-                            );
+                            warn!("proto decode error {:?}: {:?}", socket_addr, error);
                             continue;
                         }
                     }
                 }
             }
             Err(error) => {
-                warn!("error from {:?}: {:?}, close connect", socket_addr, error);
+                warn!("client_reader error {:?}: {:?}", socket_addr, error);
                 break;
             }
         }
