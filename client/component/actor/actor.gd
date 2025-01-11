@@ -11,7 +11,7 @@ var connection_id: String
 var actor_name: String
 var start_x: float
 var start_y: float
-var start_rad: float
+var start_radius: float
 var speed: float
 var color: Color
 var is_player: bool
@@ -29,16 +29,16 @@ var furthest_zoom_allowed := target_zoom
 
 var server_position: Vector2
 
-static func instantiate(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> Actor:
+static func instantiate(p_connection_id: String, p_actor_name: String, p_start_x: float, p_start_y: float, p_start_radius: float, p_speed: float, p_color: Color, p_is_player: bool) -> Actor:
 	var actor := ACTOR.instantiate()
-	actor.connection_id = connection_id
-	actor.actor_name = actor_name
-	actor.start_x = x
-	actor.start_y = y
-	actor.start_rad = radius
-	actor.speed = speed
-	actor.color = color
-	actor.is_player = is_player
+	actor.connection_id = p_connection_id
+	actor.actor_name = p_actor_name
+	actor.start_x = p_start_x
+	actor.start_y = p_start_y
+	actor.start_radius = p_start_radius
+	actor.speed = p_speed
+	actor.color = p_color
+	actor.is_player = p_is_player
 	return actor
 
 func _ready():
@@ -46,7 +46,7 @@ func _ready():
 	position.y = start_y
 	server_position = position
 	direction = Vector2.RIGHT
-	radius = start_rad
+	radius = start_radius
 	collision_shape.shape.radius = radius
 	nameplate.text = actor_name
 	camera.enabled = is_player
@@ -65,22 +65,16 @@ func _physics_process(delta) -> void:
 
 	var mouse_position := get_global_mouse_position()
 
-	var distance_squared_to_mouse = position.distance_squared_to(mouse_position)
+	var distance_squared_to_mouse := position.distance_squared_to(mouse_position)
 	if distance_squared_to_mouse < pow(radius, 2):
 		return
 
-	var direction_to_mouse = position.direction_to(mouse_position).normalized()
+	var direction_to_mouse := position.direction_to(mouse_position).normalized()
 
 	var angle_diff = abs(direction.angle_to(direction_to_mouse))
 	if angle_diff > TAU / 32:
 		direction = direction_to_mouse
 		_send_direction_angle()
-
-func _send_direction_angle():
-		var packet := Global.proto.Packet.new()
-		var update_player_direction_angle := packet.new_update_player_direction_angle()
-		update_player_direction_angle.set_direction_angle(direction.angle())
-		WsClient.send(packet)
 
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, Color.BLUE_VIOLET)
@@ -88,12 +82,22 @@ func _draw() -> void:
 		draw_circle(server_position - position, radius, Color.WHEAT)
 
 func _input(event):
-	if is_player:
-		if event.is_action_pressed("zoom_in"):
-				target_zoom = min(4, target_zoom + 0.1)
-		elif event.is_action_pressed("zoom_out"):
-				target_zoom = max(furthest_zoom_allowed, target_zoom - 0.1)
-		camera.zoom.y = camera.zoom.x
+	if not is_player:
+		return
+
+	const zoom_speed := 0.1
+
+	if event.is_action_pressed("zoom_in"):
+			target_zoom = min(4, target_zoom + zoom_speed)
+	elif event.is_action_pressed("zoom_out"):
+			target_zoom = max(furthest_zoom_allowed, target_zoom - zoom_speed)
+	camera.zoom.y = camera.zoom.x
+
+func _send_direction_angle():
+		var packet := Global.proto.Packet.new()
+		var update_player_direction_angle := packet.new_update_player_direction_angle()
+		update_player_direction_angle.set_direction_angle(direction.angle())
+		WsClient.send(packet)
 
 func _update_zoom() -> void:
 	if is_node_ready():
@@ -102,7 +106,7 @@ func _update_zoom() -> void:
 	if not is_player:
 		return
 
-	var new_furthest_zoom_allowed := 2 * start_rad / radius
+	var new_furthest_zoom_allowed := 2 * start_radius / radius
 	if is_equal_approx(target_zoom, furthest_zoom_allowed):
 		target_zoom = new_furthest_zoom_allowed
 	furthest_zoom_allowed = new_furthest_zoom_allowed

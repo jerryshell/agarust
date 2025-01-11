@@ -75,10 +75,10 @@ func _handle_update_spore_batch_msg(update_spore_batch_msg: Global.proto.UpdateS
 		_handle_update_spore_msg(update_spore_msg)
 
 func _handle_update_spore_msg(update_spore_msg: Global.proto.UpdateSpore) -> void:
-	var spore_id = update_spore_msg.get_id()
-	var x = update_spore_msg.get_x()
-	var y = update_spore_msg.get_y()
-	var radius = update_spore_msg.get_radius()
+	var spore_id := update_spore_msg.get_id()
+	var x := update_spore_msg.get_x()
+	var y := update_spore_msg.get_y()
+	var radius := update_spore_msg.get_radius()
 	var underneath_player := false
 
 	if Global.connection_id in player_map:
@@ -96,13 +96,14 @@ func _add_actor(connection_id: String, actor_name: String, x: float, y: float, r
 	var actor := Actor.instantiate(connection_id, actor_name, x, y, radius, speed, color, is_player)
 	actor.z_index = 1
 	world.add_child(actor)
-	_set_actor_mass(actor, _rad_to_mass(radius))
+	var mass := _radius_to_mass(radius)
+	_set_actor_mass(actor, mass)
 	player_map[connection_id] = actor
 
 	if is_player:
 		actor.area_entered.connect(_on_player_area_entered)
 
-func _rad_to_mass(radius: float) -> float:
+func _radius_to_mass(radius: float) -> float:
 	return radius * radius * PI
 
 func _set_actor_mass(actor: Actor, new_mass: float) -> void:
@@ -120,8 +121,8 @@ func _consume_spore(spore: Spore) -> void:
 		return
 
 	var player = player_map[Global.connection_id]
-	var player_mass := _rad_to_mass(player.radius)
-	var spore_mass := _rad_to_mass(spore.radius)
+	var player_mass := _radius_to_mass(player.radius)
+	var spore_mass := _radius_to_mass(spore.radius)
 	_set_actor_mass(player, player_mass + spore_mass)
 
 	var packet := Global.proto.Packet.new()
@@ -136,7 +137,7 @@ func _remove_spore(spore: Spore) -> void:
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
 	var actor = player_map[connection_id]
-	_set_actor_mass(actor, _rad_to_mass(radius))
+	_set_actor_mass(actor, _radius_to_mass(radius))
 	actor.radius = radius
 
 	var server_position := Vector2(x, y)
