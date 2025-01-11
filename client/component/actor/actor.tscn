@@ -31,3 +31,4 @@ vertical_alignment = 1
 
 [node name="Camera" type="Camera2D" parent="."]
 unique_name_in_owner = true
+position_smoothing_enabled = true

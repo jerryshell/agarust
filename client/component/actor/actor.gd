@@ -16,7 +16,7 @@ var speed: float
 var color: Color
 var is_player: bool
 
-var velocity: Vector2
+var direction: Vector2
 var radius: float:
 	set(new_radius):
 		radius = new_radius
@@ -45,7 +45,7 @@ func _ready():
 	position.x = start_x
 	position.y = start_y
 	server_position = position
-	velocity = Vector2.RIGHT * speed
+	direction = Vector2.RIGHT
 	radius = start_rad
 	collision_shape.shape.radius = radius
 	nameplate.text = actor_name
@@ -56,27 +56,31 @@ func _process(_delta: float) -> void:
 		camera.zoom -= Vector2(1, 1) * (camera.zoom.x - target_zoom) * 0.05
 
 func _physics_process(delta) -> void:
-	position += velocity * delta
-	server_position += velocity * delta
+	position += direction * speed * delta
+	server_position += direction * speed * delta
 	position = position.lerp(server_position, 0.05)
 
 	if not is_player:
 		return
 
-	# Player-specific stuff below here
-	var mouse_pos := get_global_mouse_position()
-	var input_vec = position.direction_to(mouse_pos).normalized()
+	var mouse_position := get_global_mouse_position()
+	var direction_to_mouse = position.direction_to(mouse_position).normalized()
 
-	if abs(velocity.angle_to(input_vec)) > TAU / 15: # 24 degrees
-		velocity = input_vec * speed
+	var angle_diff_to_mouse = abs(direction.angle_to(direction_to_mouse))
+	if angle_diff_to_mouse > TAU / 32:
+		direction = direction_to_mouse
+		_send_direction_angle()
 
+func _send_direction_angle():
 		var packet := Global.proto.Packet.new()
 		var update_player_direction_angle := packet.new_update_player_direction_angle()
-		update_player_direction_angle.set_direction_angle(velocity.angle())
+		update_player_direction_angle.set_direction_angle(direction.angle())
 		WsClient.send(packet)
 
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, Color.BLUE_VIOLET)
+	if OS.is_debug_build():
+		draw_circle(server_position - position, radius, Color.WHEAT)
 
 func _input(event):
 	if is_player:

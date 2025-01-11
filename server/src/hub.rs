@@ -127,17 +127,20 @@ impl Hub {
                     y: 0.0,
                     radius: 20.0,
                     direction_angle: 0.0,
-                    speed: 200.0,
+                    speed: 150.0,
                     color: 1,
                 };
 
                 let packet = proto_util::update_player_packet(&player);
                 let _ = client_agent_command_sender.send(Command::SendPacket { packet });
 
-                self.player_map.insert(connection_id, player);
-
-                let spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
+                let mut spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
+                spore_batch.sort_by_cached_key(|spore| {
+                    ((player.x - spore.x).powi(2) + (player.y - spore.y).powi(2)) as i64
+                });
                 let _ = client_agent_command_sender.send(Command::UpdateSporeBatch { spore_batch });
+
+                self.player_map.insert(connection_id, player);
             }
             Command::UnregisterClient { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);
