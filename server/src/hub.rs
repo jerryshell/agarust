@@ -1,11 +1,8 @@
-use crate::{
-    command::{ClientRegisterEntry, Command},
-    proto_util,
-};
+use crate::*;
+
 use hashbrown::HashMap;
-use nanoid::nanoid;
 use prost::Message;
-use std::{f64::consts::PI, time::Duration};
+use std::time::Duration;
 use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
     time::{interval, Instant},
@@ -13,57 +10,7 @@ use tokio::{
 use tracing::{error, info, warn};
 
 const TICK_DURATION: Duration = Duration::from_millis(50);
-const SPORE_BOUND: f64 = 3000.0;
 const MAX_SPORE_COUNT: usize = 1000;
-
-#[derive(Debug, Clone)]
-pub struct Player {
-    pub connection_id: String,
-    pub name: String,
-    pub x: f64,
-    pub y: f64,
-    pub radius: f64,
-    pub direction_angle: f64,
-    pub speed: f64,
-    pub color: i32,
-}
-
-impl Player {
-    pub fn random(connection_id: String, name: String) -> Self {
-        Self {
-            connection_id,
-            name,
-            x: 0.0,
-            y: 0.0,
-            radius: 20.0,
-            direction_angle: 0.0,
-            speed: 150.0,
-            color: 1,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Spore {
-    pub id: String,
-    pub x: f64,
-    pub y: f64,
-    pub radius: f64,
-}
-
-impl Spore {
-    pub fn random() -> Self {
-        let x = (rand::random::<f64>() * 2.0 - 1.0) * SPORE_BOUND;
-        let y = (rand::random::<f64>() * 2.0 - 1.0) * SPORE_BOUND;
-        let radius = (rand::random::<f64>() * 3.0 + 10.0).max(5.0);
-        Self {
-            id: nanoid!(),
-            x,
-            y,
-            radius,
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct Hub {
@@ -94,7 +41,7 @@ impl Hub {
 
     pub async fn run(&mut self) {
         for _ in 0..MAX_SPORE_COUNT {
-            self.new_spore();
+            self.spawn_spore();
         }
 
         let _ = self.command_sender.send(Command::Tick {
@@ -119,7 +66,7 @@ impl Hub {
                     .insert(connection_id.clone(), client_register_entry);
                 let _ = client_agent_command_sender.send(Command::Hello);
 
-                let player = Player::random(connection_id.clone(), connection_id.clone());
+                let player = Player::random(connection_id.clone(), connection_id.clone(), 0);
 
                 let packet = proto_util::update_player_packet(&player);
                 let _ = client_agent_command_sender.send(Command::SendPacket { packet });
@@ -196,11 +143,7 @@ impl Hub {
                     self.spore_map.get_mut(&spore_id),
                 ) {
                     let spore_mass = radius_to_mass(spore.radius);
-                    let mut player_mass = radius_to_mass(player.radius);
-                    player_mass += spore_mass;
-
-                    let player_radius = mass_to_radius(player_mass);
-                    player.radius = player_radius;
+                    player.add_mass(spore_mass);
 
                     self.spore_map.remove(&spore_id);
 
@@ -234,11 +177,9 @@ impl Hub {
                         }
 
                         let victim_mass = radius_to_mass(victim.radius);
-                        let mut player_mass = radius_to_mass(player.radius);
-                        player_mass += victim_mass;
-                        player.radius = mass_to_radius(player_mass);
+                        player.add_mass(victim_mass);
 
-                        *victim = Player::random(victim.connection_id.clone(), victim.name.clone());
+                        victim.respawn();
                     }
                     _ => {
                         warn!("not found player or victim in player_map, connection_id: {connection_id:?}, victim_connection_id: {victim_connection_id:?}");
@@ -251,7 +192,7 @@ impl Hub {
         }
     }
 
-    fn new_spore(&mut self) {
+    fn spawn_spore(&mut self) {
         let spore = Spore::random();
         self.spore_map.insert(spore.id.clone(), spore);
     }
@@ -266,12 +207,4 @@ impl Hub {
             player.y = new_y;
         });
     }
-}
-
-fn radius_to_mass(radius: f64) -> f64 {
-    PI * radius * radius
-}
-
-fn mass_to_radius(mass: f64) -> f64 {
-    (mass / PI).sqrt()
 }

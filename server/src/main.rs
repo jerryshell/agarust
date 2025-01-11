@@ -17,8 +17,9 @@ async fn main() {
     };
     tracing::info!("TCP listen: {:?}", tcp_listener);
 
-    let mut hub = agarust_server::hub::Hub::new();
-    let hub_command_sender = hub.command_sender.clone();
+    let mut hub = agarust_server::Hub::new();
+    let hub_command_sender: tokio::sync::mpsc::UnboundedSender<agarust_server::Command> =
+        hub.command_sender.clone();
     let hub_task = tokio::spawn(async move { hub.run().await });
 
     while let Ok((tcp_stream, socket_addr)) = tcp_listener.accept().await {

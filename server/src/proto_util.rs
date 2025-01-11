@@ -1,7 +1,5 @@
-use crate::{
-    hub::{Player, Spore},
-    proto,
-};
+use crate::*;
+
 use hashbrown::HashMap;
 
 pub fn hello_packet(connection_id: String) -> proto::Packet {
