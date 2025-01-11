@@ -142,6 +142,20 @@ impl Hub {
                     self.player_map.get_mut(&connection_id),
                     self.spore_map.get_mut(&spore_id),
                 ) {
+                    let is_close = check_distance_is_close(
+                        player.x,
+                        player.y,
+                        player.radius,
+                        spore.x,
+                        spore.y,
+                        spore.radius,
+                    );
+
+                    if !is_close {
+                        warn!("consume spore error, distance too far");
+                        return;
+                    }
+
                     let spore_mass = radius_to_mass(spore.radius);
                     player.add_mass(spore_mass);
 
@@ -162,17 +176,17 @@ impl Hub {
                     .get_many_mut([&connection_id, &victim_connection_id])
                 {
                     [Some(player), Some(victim)] => {
-                        let distance_sq =
-                            (player.x - victim.x).powi(2) + (player.y - victim.y).powi(2);
+                        let is_close = check_distance_is_close(
+                            player.x,
+                            player.y,
+                            player.radius,
+                            victim.x,
+                            victim.y,
+                            victim.radius,
+                        );
 
-                        let threshold = player.radius + victim.radius + 10.0;
-                        let threshold_sq = threshold.powi(2);
-
-                        if distance_sq > threshold_sq {
-                            warn!(
-                                "consume player error, distance_sq: {}, threshold_sq {}",
-                                distance_sq, threshold_sq
-                            );
+                        if !is_close {
+                            warn!("consume player error, distance too far");
                             return;
                         }
 
