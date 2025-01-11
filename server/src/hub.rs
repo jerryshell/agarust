@@ -11,7 +11,7 @@ use tokio::{
 };
 use tracing::{info, warn};
 
-const TICK_DELTA: Duration = Duration::from_millis(50);
+const TICK_DURATION: Duration = Duration::from_millis(50);
 const SPORE_BOUND: f64 = 3000.0;
 const MAX_SPORE_COUNT: usize = 1000;
 
@@ -86,9 +86,11 @@ impl Hub {
             tokio::spawn(async move {
                 let mut last_tick = Instant::now();
                 loop {
-                    let _ = hub_command_sender.send(Command::TickPlayer);
-                    let timeout = TICK_DELTA.saturating_sub(last_tick.elapsed());
-                    tokio::time::sleep(timeout).await;
+                    let delta = TICK_DURATION.saturating_sub(last_tick.elapsed());
+                    let _ = hub_command_sender.send(Command::TickPlayer {
+                        delta: delta.as_secs_f64(),
+                    });
+                    tokio::time::sleep(delta).await;
                     last_tick = Instant::now();
                 }
             })
@@ -152,13 +154,13 @@ impl Hub {
                         .send(Command::SendRawData { raw_data });
                 })
             }
-            Command::TickPlayer => {
+            Command::TickPlayer { delta } => {
                 if self.player_map.is_empty() {
                     return;
                 }
 
                 // tick player
-                self.tick_player().await;
+                self.tick_player(delta).await;
 
                 // sync player
                 let packet = proto_util::update_player_batch_packet(&self.player_map);
@@ -184,12 +186,10 @@ impl Hub {
         }
     }
 
-    async fn tick_player(&mut self) {
+    async fn tick_player(&mut self, delta: f64) {
         self.player_map.values_mut().for_each(|player| {
-            let new_x =
-                player.x + player.speed * player.direction_angle.cos() * TICK_DELTA.as_secs_f64();
-            let new_y =
-                player.y + player.speed * player.direction_angle.sin() * TICK_DELTA.as_secs_f64();
+            let new_x = player.x + player.speed * player.direction_angle.cos() * delta;
+            let new_y = player.y + player.speed * player.direction_angle.sin() * delta;
 
             player.x = new_x;
             player.y = new_y;

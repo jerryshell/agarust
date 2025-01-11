@@ -20,13 +20,23 @@ pub enum Command {
     SendRawData {
         raw_data: Vec<u8>,
     },
-    TickPlayer,
+    TickPlayer {
+        delta: f64,
+    },
     UpdatePlayerDirectionAngle {
         connection_id: String,
         direction_angle: f64,
     },
     UpdateSporeBatch {
         spore_batch: Vec<Spore>,
+    },
+    ConsumeSpore {
+        connection_id: String,
+        spore_id: String,
+    },
+    ConsumePlayer {
+        connection_id: String,
+        player_id: String,
     },
 }
 
