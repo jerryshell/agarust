@@ -47,6 +47,9 @@ pub enum Command {
         connection_id: String,
         victim_connection_id: String,
     },
+    SpawnSpore {
+        interval: Interval,
+    },
 }
 
 #[derive(Debug, Clone)]

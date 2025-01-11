@@ -10,6 +10,7 @@ use tokio::{
 use tracing::{error, info, warn};
 
 const TICK_DURATION: Duration = Duration::from_millis(50);
+const SPAWN_SPORE_DURATION: Duration = Duration::from_millis(2000);
 const MAX_SPORE_COUNT: usize = 1000;
 
 #[derive(Debug)]
@@ -47,6 +48,10 @@ impl Hub {
         let _ = self.command_sender.send(Command::Tick {
             last_tick: Instant::now(),
             interval: interval(TICK_DURATION),
+        });
+
+        let _ = self.command_sender.send(Command::SpawnSpore {
+            interval: interval(SPAWN_SPORE_DURATION),
         });
 
         while let Some(command) = self.command_receiver.recv().await {
@@ -199,6 +204,18 @@ impl Hub {
                         warn!("not found player or victim in player_map, connection_id: {connection_id:?}, victim_connection_id: {victim_connection_id:?}");
                     }
                 }
+            }
+            Command::SpawnSpore { mut interval } => {
+                if self.spore_map.len() < MAX_SPORE_COUNT {
+                    let spore = Spore::random();
+                    self.spore_map.insert(spore.id.clone(), spore);
+                }
+
+                let hub_command_sender = self.command_sender.clone();
+                tokio::spawn(async move {
+                    interval.tick().await;
+                    let _ = hub_command_sender.send(Command::SpawnSpore { interval });
+                });
             }
             _ => {
                 warn!("unknow command: {:?}", command);
