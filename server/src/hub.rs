@@ -65,6 +65,7 @@ impl Hub {
                 client_register_entry,
             } => {
                 info!("RegisterClient: {:?}", client_register_entry);
+
                 let client_agent_command_sender = client_register_entry.command_sender.clone();
                 let connection_id = client_register_entry.connection_id.clone();
                 self.client_map
@@ -86,8 +87,14 @@ impl Hub {
             }
             Command::UnregisterClient { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);
+
                 self.client_map.remove(&connection_id);
                 self.player_map.remove(&connection_id);
+
+                let packet = proto_util::disconnect_packet(connection_id, "unregister".to_string());
+                let _ = self
+                    .command_sender
+                    .send(Command::BroadcastPacket { packet });
             }
             Command::BroadcastPacket { packet } => {
                 let raw_data = packet.encode_to_vec();

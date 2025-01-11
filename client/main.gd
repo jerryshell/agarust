@@ -34,6 +34,8 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		_handle_update_spore_batch_msg(packet.get_update_spore_batch())
 	elif packet.has_consume_spore():
 		_handle_consume_spore_msg(packet.get_consume_spore())
+	elif packet.has_disconnect():
+		_handle_disconnect_msg(packet.get_disconnect())
 	else:
 		print_debug("unknow packet: ", packet)
 
@@ -106,6 +108,14 @@ func _handle_consume_spore_msg(consume_spore_msg: Global.proto.ConsumeSpore) -> 
 
 		_set_actor_mass(actor, actor_mass + spore_mass)
 		_remove_spore(spore)
+
+func _handle_disconnect_msg(disconnect_msg: Global.proto.Disconnect) -> void:
+	var connection_id = disconnect_msg.get_connection_id()
+	if connection_id in player_map:
+		var player = player_map[connection_id]
+		var reason := disconnect_msg.get_reason()
+		logger.info("%s disconnected because %s" % [player.actor_name, reason])
+		_remove_actor(player)
 
 func _add_actor(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
 	var actor := Actor.instantiate(connection_id, actor_name, x, y, radius, speed, color, is_player)

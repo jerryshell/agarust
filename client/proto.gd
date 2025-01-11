@@ -718,6 +718,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_consume_player")
 		data[_consume_player.tag] = service
 
+		_disconnect = PBField.new("disconnect", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 10, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _disconnect
+		service.func_ref = Callable(self, "new_disconnect")
+		data[_disconnect.tag] = service
+
 	var data = {}
 
 	var _hello: PBField
@@ -746,6 +752,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_hello.value = Hello.new()
 		return _hello.value
 
@@ -775,6 +783,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_chat.value = Chat.new()
 		return _chat.value
 
@@ -804,6 +814,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_update_player.value = UpdatePlayer.new()
 		return _update_player.value
 
@@ -833,6 +845,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_batch.value = UpdatePlayerBatch.new()
 		return _update_player_batch.value
 
@@ -862,6 +876,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_update_player_direction_angle.value = UpdatePlayerDirectionAngle.new()
 		return _update_player_direction_angle.value
 
@@ -891,6 +907,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_update_spore.value = UpdateSpore.new()
 		return _update_spore.value
 
@@ -920,6 +938,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_update_spore_batch.value = UpdateSporeBatch.new()
 		return _update_spore_batch.value
 
@@ -949,6 +969,8 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.FILLED
 		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_consume_spore.value = ConsumeSpore.new()
 		return _consume_spore.value
 
@@ -978,8 +1000,41 @@ class Packet:
 		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		data[9].state = PB_SERVICE_STATE.FILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_consume_player.value = ConsumePlayer.new()
 		return _consume_player.value
+
+	var _disconnect: PBField
+	func has_disconnect() -> bool:
+		return data[10].state == PB_SERVICE_STATE.FILLED
+	func get_disconnect() -> Disconnect:
+		return _disconnect.value
+	func clear_disconnect() -> void:
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_disconnect() -> Disconnect:
+		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		data[10].state = PB_SERVICE_STATE.FILLED
+		_disconnect.value = Disconnect.new()
+		return _disconnect.value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1537,6 +1592,61 @@ class ConsumePlayer:
 		_victim_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_victim_connection_id(value: String) -> void:
 		_victim_connection_id.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class Disconnect:
+	func _init():
+		var service
+
+		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _connection_id
+		data[_connection_id.tag] = service
+
+		_reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _reason
+		data[_reason.tag] = service
+
+	var data = {}
+
+	var _connection_id: PBField
+	func get_connection_id() -> String:
+		return _connection_id.value
+	func clear_connection_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_connection_id(value: String) -> void:
+		_connection_id.value = value
+
+	var _reason: PBField
+	func get_reason() -> String:
+		return _reason.value
+	func clear_reason() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_reason(value: String) -> void:
+		_reason.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

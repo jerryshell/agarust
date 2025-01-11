@@ -13,6 +13,7 @@ message Packet {
     UpdateSporeBatch update_spore_batch = 7;
     ConsumeSpore consume_spore = 8;
     ConsumePlayer consume_player = 9;
+    Disconnect disconnect = 10;
   }
 }
 
@@ -55,4 +56,9 @@ message ConsumeSpore {
 message ConsumePlayer {
   string connection_id = 1;
   string victim_connection_id = 2;
+}
+
+message Disconnect {
+  string connection_id = 1;
+  string reason = 2;
 }

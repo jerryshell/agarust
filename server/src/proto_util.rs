@@ -76,3 +76,12 @@ pub fn consume_spore_packet(connection_id: String, spore_id: String) -> proto::P
         })),
     }
 }
+
+pub fn disconnect_packet(connection_id: String, reason: String) -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::Disconnect(proto::Disconnect {
+            connection_id,
+            reason,
+        })),
+    }
+}
