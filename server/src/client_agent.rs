@@ -89,6 +89,12 @@ fn handle_packet(
                     direction_angle,
                 });
             }
+            proto::packet::Data::ConsumeSpore(consume_spore) => {
+                let _ = hub_command_sender.send(Command::ConsumeSpore {
+                    connection_id,
+                    spore_id: consume_spore.spore_id,
+                });
+            }
             _ => {
                 warn!("unknow packet: {:?}", packet);
             }

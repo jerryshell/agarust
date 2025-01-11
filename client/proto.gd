@@ -1453,18 +1453,32 @@ class ConsumeSpore:
 	func _init():
 		var service
 
-		_spore_id = PBField.new("spore_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _connection_id
+		data[_connection_id.tag] = service
+
+		_spore_id = PBField.new("spore_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = _spore_id
 		data[_spore_id.tag] = service
 
 	var data = {}
 
+	var _connection_id: PBField
+	func get_connection_id() -> String:
+		return _connection_id.value
+	func clear_connection_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_connection_id(value: String) -> void:
+		_connection_id.value = value
+
 	var _spore_id: PBField
 	func get_spore_id() -> String:
 		return _spore_id.value
 	func clear_spore_id() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
+		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_spore_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_spore_id(value: String) -> void:
 		_spore_id.value = value
@@ -1499,6 +1513,11 @@ class ConsumePlayer:
 		service.field = _connection_id
 		data[_connection_id.tag] = service
 
+		_victim_connection_id = PBField.new("victim_connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _victim_connection_id
+		data[_victim_connection_id.tag] = service
+
 	var data = {}
 
 	var _connection_id: PBField
@@ -1509,6 +1528,15 @@ class ConsumePlayer:
 		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
 		_connection_id.value = value
+
+	var _victim_connection_id: PBField
+	func get_victim_connection_id() -> String:
+		return _victim_connection_id.value
+	func clear_victim_connection_id() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_victim_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_victim_connection_id(value: String) -> void:
+		_victim_connection_id.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

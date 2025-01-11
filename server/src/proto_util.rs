@@ -69,3 +69,12 @@ pub fn update_spore_batch_packet(spore_list: &[Spore]) -> proto::Packet {
         )),
     }
 }
+
+pub fn consume_spore_packet(connection_id: String, spore_id: String) -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::ConsumeSpore(proto::ConsumeSpore {
+            connection_id,
+            spore_id,
+        })),
+    }
+}

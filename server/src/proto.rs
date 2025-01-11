@@ -88,10 +88,14 @@ pub struct UpdateSporeBatch {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConsumeSpore {
     #[prost(string, tag = "1")]
+    pub connection_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
     pub spore_id: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConsumePlayer {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub victim_connection_id: ::prost::alloc::string::String,
 }

@@ -4,7 +4,7 @@ use crate::{
 };
 use nanoid::nanoid;
 use prost::Message;
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, f64::consts::PI, time::Duration};
 use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
     time::Instant,
@@ -130,7 +130,6 @@ impl Hub {
                 self.player_map.remove(&connection_id);
             }
             Command::BroadcastPacket { packet } => {
-                info!("Broadcast: {:?}", packet);
                 let raw_data = packet.encode_to_vec();
                 let _ = self
                     .command_sender
@@ -152,10 +151,9 @@ impl Hub {
                     last_tick = Instant::now();
 
                     let packet = proto_util::update_player_batch_packet(&self.player_map);
-                    let raw_data = packet.encode_to_vec();
                     let _ = self
                         .command_sender
-                        .send(Command::BroadcastRawData { raw_data });
+                        .send(Command::BroadcastPacket { packet });
                 }
 
                 let hub_command_sender = self.command_sender.clone();
@@ -172,6 +170,29 @@ impl Hub {
             } => {
                 if let Some(player) = self.player_map.get_mut(&connection_id) {
                     player.direction_angle = direction_angle;
+                }
+            }
+            Command::ConsumeSpore {
+                connection_id,
+                spore_id,
+            } => {
+                if let (Some(player), Some(spore)) = (
+                    self.player_map.get_mut(&connection_id),
+                    self.spore_map.get_mut(&spore_id),
+                ) {
+                    let spore_mass = radius_to_mass(spore.radius);
+                    let mut player_mass = radius_to_mass(player.radius);
+                    player_mass += spore_mass;
+
+                    let player_radius = mass_to_radius(player_mass);
+                    player.radius = player_radius;
+
+                    self.spore_map.remove(&spore_id);
+
+                    let packet = proto_util::consume_spore_packet(connection_id, spore_id);
+                    let _ = self
+                        .command_sender
+                        .send(Command::BroadcastPacket { packet });
                 }
             }
             _ => {
@@ -195,4 +216,12 @@ impl Hub {
             player.y = new_y;
         });
     }
+}
+
+fn radius_to_mass(radius: f64) -> f64 {
+    PI * radius * radius
+}
+
+fn mass_to_radius(mass: f64) -> f64 {
+    (mass / PI).sqrt()
 }

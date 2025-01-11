@@ -47,6 +47,12 @@ message UpdateSpore {
 
 message UpdateSporeBatch { repeated UpdateSpore update_spore_batch = 1; }
 
-message ConsumeSpore { string spore_id = 1; }
+message ConsumeSpore {
+  string connection_id = 1;
+  string spore_id = 2;
+}
 
-message ConsumePlayer { string connection_id = 1; }
+message ConsumePlayer {
+  string connection_id = 1;
+  string victim_connection_id = 2;
+}
