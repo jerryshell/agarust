@@ -78,7 +78,7 @@ impl Hub {
 
     pub async fn run(&mut self) {
         for _ in 0..MAX_SPORE_COUNT {
-            self.new_spore().await;
+            self.new_spore();
         }
 
         let _ = self.command_sender.send(Command::Tick {
@@ -86,11 +86,11 @@ impl Hub {
         });
 
         while let Some(command) = self.command_receiver.recv().await {
-            self.handle_command(command).await;
+            self.handle_command(command);
         }
     }
 
-    async fn handle_command(&mut self, command: Command) {
+    fn handle_command(&mut self, command: Command) {
         match command {
             Command::RegisterClient {
                 client_register_entry,
@@ -180,7 +180,7 @@ impl Hub {
         }
     }
 
-    async fn new_spore(&mut self) {
+    fn new_spore(&mut self) {
         let spore = Spore::random();
         self.spore_map.insert(spore.id.clone(), spore);
     }

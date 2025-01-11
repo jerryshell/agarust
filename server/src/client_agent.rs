@@ -72,7 +72,7 @@ impl ClientAgent {
     }
 }
 
-async fn handle_packet(
+fn handle_packet(
     connection_id: String,
     packet: proto::Packet,
     hub_command_sender: UnboundedSender<Command>,
@@ -109,7 +109,7 @@ async fn client_reader_pump(
                     match proto::Packet::decode(Cursor::new(bytes)) {
                         Ok(packet) => {
                             let hub_command_sender = hub_command_sender.clone();
-                            handle_packet(connection_id.clone(), packet, hub_command_sender).await;
+                            handle_packet(connection_id.clone(), packet, hub_command_sender);
                         }
                         Err(error) => {
                             warn!("proto decode error {:?}: {:?}", socket_addr, error);
