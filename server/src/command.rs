@@ -1,8 +1,11 @@
 use crate::{hub::Spore, proto};
 use std::net::SocketAddr;
-use tokio::{sync::mpsc::UnboundedSender, time::Instant};
+use tokio::{
+    sync::mpsc::UnboundedSender,
+    time::{Instant, Interval},
+};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Command {
     Hello,
     RegisterClient {
@@ -25,7 +28,9 @@ pub enum Command {
     },
     Tick {
         last_tick: Instant,
+        interval: Interval,
     },
+    SyncPlayer,
     UpdatePlayerDirectionAngle {
         connection_id: String,
         direction_angle: f64,

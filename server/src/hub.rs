@@ -7,7 +7,7 @@ use prost::Message;
 use std::{collections::HashMap, f64::consts::PI, time::Duration};
 use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-    time::Instant,
+    time::{interval, Instant},
 };
 use tracing::{error, info, warn};
 
@@ -83,6 +83,7 @@ impl Hub {
 
         let _ = self.command_sender.send(Command::Tick {
             last_tick: Instant::now(),
+            interval: interval(TICK_DURATION),
         });
 
         while let Some(command) = self.command_receiver.recv().await {
@@ -143,26 +144,33 @@ impl Hub {
                         .send(Command::SendRawData { raw_data });
                 });
             }
-            Command::Tick { mut last_tick } => {
+            Command::Tick {
+                mut last_tick,
+                mut interval,
+            } => {
                 let delta = last_tick.elapsed();
 
-                if delta.ge(&TICK_DURATION) {
-                    self.tick_player(delta);
-                    last_tick = Instant::now();
+                self.tick_player(delta);
+                last_tick = Instant::now();
 
-                    let packet = proto_util::update_player_batch_packet(&self.player_map);
-                    let _ = self
-                        .command_sender
-                        .send(Command::BroadcastPacket { packet });
-                }
+                let _ = self.command_sender.send(Command::SyncPlayer);
 
                 let hub_command_sender = self.command_sender.clone();
                 tokio::spawn(async move {
-                    tokio::time::sleep_until(last_tick + TICK_DURATION).await;
-                    if let Err(error) = hub_command_sender.send(Command::Tick { last_tick }) {
+                    interval.tick().await;
+                    if let Err(error) = hub_command_sender.send(Command::Tick {
+                        last_tick,
+                        interval,
+                    }) {
                         error!("send Command::Tick error: {:?}", error);
                     }
                 });
+            }
+            Command::SyncPlayer => {
+                let packet = proto_util::update_player_batch_packet(&self.player_map);
+                let _ = self
+                    .command_sender
+                    .send(Command::BroadcastPacket { packet });
             }
             Command::UpdatePlayerDirectionAngle {
                 connection_id,

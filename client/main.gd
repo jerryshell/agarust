@@ -137,12 +137,14 @@ func _remove_spore(spore: Spore) -> void:
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
 	var actor = player_map[connection_id]
+
 	_set_actor_mass(actor, _radius_to_mass(radius))
-	actor.radius = radius
+
+	actor.speed = speed
 
 	var server_position := Vector2(x, y)
 	if actor.position.distance_squared_to(server_position) > 50:
 		actor.server_position = server_position
 
 	if not is_player:
-		actor.velocity = Vector2.from_angle(direction) * speed
+		actor.direction = Vector2.from_angle(direction)

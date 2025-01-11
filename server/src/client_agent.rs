@@ -159,11 +159,13 @@ async fn client_writer_pump(
             }
             Command::UpdateSporeBatch { spore_batch } => {
                 tokio::spawn(async move {
-                    for spore_window in spore_batch.windows(20) {
+                    for spore_window in spore_batch.windows(32) {
                         let packet = proto_util::update_spore_batch_packet(spore_window);
                         let raw_data = packet.encode_to_vec();
-                        let mut client_writer = client_writer.lock().await;
-                        let _ = client_writer.send(Message::binary(raw_data)).await;
+                        {
+                            let mut client_writer = client_writer.lock().await;
+                            let _ = client_writer.send(Message::binary(raw_data)).await;
+                        }
                         tokio::time::sleep(Duration::from_millis(50)).await;
                     }
                 });
