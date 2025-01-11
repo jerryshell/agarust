@@ -32,6 +32,8 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		_handle_update_spore_msg(packet.get_update_spore())
 	elif packet.has_update_spore_batch():
 		_handle_update_spore_batch_msg(packet.get_update_spore_batch())
+	elif packet.has_consume_spore():
+		_handle_consume_spore_msg(packet.get_consume_spore())
 	else:
 		print_debug("unknow packet: ", packet)
 
@@ -91,6 +93,19 @@ func _handle_update_spore_msg(update_spore_msg: Global.proto.UpdateSpore) -> voi
 		var spore := Spore.instantiate(spore_id, x, y, radius, underneath_player)
 		world.add_child(spore)
 		spore_map[spore_id] = spore
+
+func _handle_consume_spore_msg(consume_spore_msg: Global.proto.ConsumeSpore) -> void:
+	var connection_id := consume_spore_msg.get_connection_id()
+	var spore_id := consume_spore_msg.get_spore_id()
+	if connection_id in player_map and spore_id in spore_map:
+		var actor = player_map[connection_id]
+		var actor_mass := _radius_to_mass(actor.radius)
+
+		var spore = spore_map[spore_id]
+		var spore_mass := _radius_to_mass(spore.radius)
+
+		_set_actor_mass(actor, actor_mass + spore_mass)
+		_remove_spore(spore)
 
 func _add_actor(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
 	var actor := Actor.instantiate(connection_id, actor_name, x, y, radius, speed, color, is_player)
