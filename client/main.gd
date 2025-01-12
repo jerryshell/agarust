@@ -1,7 +1,10 @@
 extends Node2D
 
 @onready var world: Node2D = %World
+@onready var logout_button: Button = %LogoutButton
 @onready var chat_edit: LineEdit = %ChatEdit
+@onready var send_chat_button: Button = %SendChatButton
+@onready var leaderboard: Leaderboard = %Leaderboard
 @onready var logger: Logger = %Logger
 
 var player_map: Dictionary = {}
@@ -131,9 +134,9 @@ func _add_actor(connection_id: String, actor_name: String, x: float, y: float, r
 func _radius_to_mass(radius: float) -> float:
 	return radius * radius * PI
 
-func _set_actor_mass(actor: Actor, new_mass: float) -> void:
-	actor.radius = sqrt(new_mass / PI)
-	#hiscores.set_hiscore(actor.actor_name, roundi(new_mass))
+func _set_actor_mass(actor: Actor, mass: float) -> void:
+	actor.radius = sqrt(mass / PI)
+	leaderboard.set_score(actor.actor_name, roundi(mass))
 
 func _on_player_area_entered(area: Area2D) -> void:
 	if area is Spore:
@@ -183,7 +186,7 @@ func _consume_actor(actor: Actor) -> void:
 func _remove_actor(actor: Actor) -> void:
 	player_map.erase(actor.connection_id)
 	actor.queue_free()
-	# hiscores.remove_hiscore(actor.actor_name)
+	leaderboard.remove(actor.actor_name)
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
 	var actor = player_map[connection_id]
