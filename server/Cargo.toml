@@ -13,6 +13,7 @@ futures-util = "*"
 nanoid = "*"
 rand = "*"
 hashbrown = "*"
+sqlx = { version = "*", features = ["runtime-tokio", "sqlite"] }
 
 [build-dependencies]
 prost-build = "*"

@@ -20,16 +20,11 @@ pub struct Hub {
     pub spore_map: HashMap<String, Spore>,
     pub command_sender: UnboundedSender<Command>,
     pub command_receiver: UnboundedReceiver<Command>,
-}
-
-impl Default for Hub {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub db_pool: sqlx::Pool<sqlx::Sqlite>,
 }
 
 impl Hub {
-    pub fn new() -> Self {
+    pub fn new(db_pool: sqlx::Pool<sqlx::Sqlite>) -> Self {
         let (command_sender, command_receiver) = unbounded_channel::<Command>();
         Self {
             client_map: HashMap::new(),
@@ -37,6 +32,7 @@ impl Hub {
             spore_map: HashMap::new(),
             command_sender,
             command_receiver,
+            db_pool,
         }
     }
 
