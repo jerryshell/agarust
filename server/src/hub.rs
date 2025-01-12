@@ -70,7 +70,9 @@ impl Hub {
                 let connection_id = client_register_entry.connection_id.clone();
                 self.client_map
                     .insert(connection_id.clone(), client_register_entry);
-                let _ = client_agent_command_sender.send(Command::Hello);
+
+                let packet = proto_util::hello_packet(connection_id.clone());
+                let _ = client_agent_command_sender.send(Command::SendPacket { packet });
 
                 let player = Player::random(connection_id.clone(), connection_id.clone(), 0);
 
@@ -134,6 +136,12 @@ impl Hub {
             }
             Command::SyncPlayer => {
                 let packet = proto_util::update_player_batch_packet(&self.player_map);
+                let _ = self
+                    .command_sender
+                    .send(Command::BroadcastPacket { packet });
+            }
+            Command::Chat { connection_id, msg } => {
+                let packet = proto_util::chat_packet(connection_id, msg);
                 let _ = self
                     .command_sender
                     .send(Command::BroadcastPacket { packet });

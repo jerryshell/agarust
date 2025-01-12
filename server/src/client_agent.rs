@@ -45,10 +45,7 @@ impl ClientAgent {
         };
 
         let mut client_writer_task = {
-            let connection_id = self.connection_id.clone();
-            tokio::spawn(async move {
-                client_writer_pump(connection_id, command_receiver, client_writer).await
-            })
+            tokio::spawn(async move { client_writer_pump(command_receiver, client_writer).await })
         };
 
         let command_send_result = self.hub_command_sender.send(Command::RegisterClient {
@@ -77,14 +74,16 @@ fn handle_packet(
 ) {
     if let Some(data) = packet.clone().data {
         match data {
-            proto::packet::Data::Chat(_chat) => {
-                let _ = hub_command_sender.send(Command::BroadcastPacket { packet });
+            proto::packet::Data::Chat(chat) => {
+                let _ = hub_command_sender.send(Command::Chat {
+                    connection_id,
+                    msg: chat.msg,
+                });
             }
             proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
-                let direction_angle = update_player_direction_angle.direction_angle;
                 let _ = hub_command_sender.send(Command::UpdatePlayerDirectionAngle {
                     connection_id,
-                    direction_angle,
+                    direction_angle: update_player_direction_angle.direction_angle,
                 });
             }
             proto::packet::Data::ConsumeSpore(consume_spore) => {
@@ -137,7 +136,6 @@ async fn client_reader_pump(
 }
 
 async fn client_writer_pump(
-    connection_id: String,
     mut command_receiver: UnboundedReceiver<Command>,
     client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
 ) {
@@ -145,13 +143,6 @@ async fn client_writer_pump(
     while let Some(command) = command_receiver.recv().await {
         let client_writer = client_writer.clone();
         match command {
-            Command::Hello => {
-                let packet = proto_util::hello_packet(connection_id.clone());
-                let raw_data = packet.encode_to_vec();
-                let message = Message::binary(raw_data);
-                let mut client_writer = client_writer.lock().await;
-                let _ = client_writer.send(message).await;
-            }
             Command::SendPacket { packet } => {
                 let raw_data = packet.encode_to_vec();
                 let mut client_writer = client_writer.lock().await;

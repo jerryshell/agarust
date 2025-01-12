@@ -8,6 +8,15 @@ pub fn hello_packet(connection_id: String) -> proto::Packet {
     }
 }
 
+pub fn chat_packet(connection_id: String, msg: String) -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::Chat(proto::Chat {
+            connection_id,
+            msg,
+        })),
+    }
+}
+
 pub fn update_player(player: &Player) -> proto::UpdatePlayer {
     proto::UpdatePlayer {
         connection_id: player.connection_id.clone(),

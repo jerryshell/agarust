@@ -21,7 +21,6 @@ func _on_ws_connected() -> void:
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	if packet.has_hello():
-		logger.info(packet.to_string())
 		_handle_hello_msg(packet.get_hello())
 	elif packet.has_chat():
 		print_debug(packet)
@@ -44,6 +43,8 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		print_debug("unknow packet: ", packet)
 
 func _on_chat_edit_text_submited(new_text: String):
+	if new_text.is_empty():
+		return
 	var packet := Global.proto.Packet.new()
 	var chat := packet.new_chat()
 	chat.set_msg(new_text)
@@ -51,10 +52,14 @@ func _on_chat_edit_text_submited(new_text: String):
 	chat_edit.text = ""
 
 func _handle_hello_msg(hello_msg: Global.proto.Hello) -> void:
+	logger.info(hello_msg.to_string())
 	Global.connection_id = hello_msg.get_connection_id()
 
 func _handle_chat_msg(chat_msg: Global.proto.Chat) -> void:
-	logger.chat(chat_msg.get_connection_id(), chat_msg.get_msg())
+	var connection_id = chat_msg.get_connection_id()
+	if connection_id in player_map:
+		var player = player_map[connection_id]
+		logger.chat(player.actor_name, chat_msg.get_msg())
 
 func _handle_update_player_batch_msg(update_player_batch_msg: Global.proto.UpdatePlayerBatch) -> void:
 	for update_player_msg: Global.proto.UpdatePlayer in update_player_batch_msg.get_update_player_batch():

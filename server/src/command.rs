@@ -8,7 +8,6 @@ use tokio::{
 
 #[derive(Debug)]
 pub enum Command {
-    Hello,
     RegisterClient {
         client_register_entry: ClientRegisterEntry,
     },
@@ -32,6 +31,10 @@ pub enum Command {
         interval: Interval,
     },
     SyncPlayer,
+    Chat {
+        connection_id: String,
+        msg: String,
+    },
     UpdatePlayerDirectionAngle {
         connection_id: String,
         direction_angle: f64,
