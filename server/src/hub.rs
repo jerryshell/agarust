@@ -169,7 +169,7 @@ impl Hub {
                     }
 
                     let spore_mass = radius_to_mass(spore.radius);
-                    player.add_mass(spore_mass);
+                    player.increase_mass(spore_mass);
 
                     self.spore_map.remove(&spore_id);
 
@@ -203,7 +203,7 @@ impl Hub {
                         }
 
                         let victim_mass = radius_to_mass(victim.radius);
-                        player.add_mass(victim_mass);
+                        player.increase_mass(victim_mass);
 
                         victim.respawn();
                     }
@@ -243,6 +243,23 @@ impl Hub {
 
             player.x = new_x;
             player.y = new_y;
+
+            let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 2.0);
+            if rand::random::<f64>() < drop_mass_probability {
+                if let Some(mass) = player.try_drop_mass() {
+                    let mut spore = Spore::random();
+                    spore.x = player.x;
+                    spore.y = player.y;
+                    spore.radius = mass_to_radius(mass);
+
+                    let packet = proto_util::update_spore_pack(&spore);
+                    let _ = self
+                        .command_sender
+                        .send(Command::BroadcastPacket { packet });
+
+                    self.spore_map.insert(spore.id.clone(), spore);
+                }
+            }
         });
     }
 }
