@@ -26,11 +26,12 @@ pub enum Command {
         color: i32,
     },
     Join {
-        player_db_id: i64,
         connection_id: String,
+        player_db_id: i64,
         nickname: String,
         color: i32,
     },
+    DisconnectClinet,
     BroadcastPacket {
         packet: proto::Packet,
     },

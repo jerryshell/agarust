@@ -58,11 +58,11 @@ impl Hub {
         });
 
         while let Some(command) = self.command_receiver.recv().await {
-            self.handle_command(command);
+            self.handle_command(command).await;
         }
     }
 
-    fn handle_command(&mut self, command: Command) {
+    async fn handle_command(&mut self, command: Command) {
         match command {
             Command::RegisterClient {
                 socket_addr,
@@ -100,8 +100,8 @@ impl Hub {
                     .send(Command::BroadcastPacket { packet });
             }
             Command::Join {
-                player_db_id,
                 connection_id,
+                player_db_id,
                 nickname,
                 color,
             } => {
@@ -109,6 +109,15 @@ impl Hub {
                     "PlayerJoin: {:?} {:?} {:?} {:?}",
                     player_db_id, connection_id, nickname, color
                 );
+
+                self.player_map.values().for_each(|online_player| {
+                    if online_player.db_id == player_db_id {
+                        if let Some(client) = self.client_map.get_mut(&online_player.connection_id)
+                        {
+                            let _ = client.command_sender.send(Command::DisconnectClinet);
+                        }
+                    }
+                });
 
                 let client = match self.client_map.get_mut(&connection_id) {
                     Some(client) => client,

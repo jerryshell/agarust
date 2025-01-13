@@ -96,7 +96,7 @@ async fn handle_client_reader_packet(
                 let auth = match query_result {
                     Ok(auth) => auth,
                     Err(error) => {
-                        error!("auth query error: {:?}", error);
+                        warn!("auth query error: {:?}", error);
                         let packet = proto_util::login_err_packet(
                             "incorrect username or password".to_string(),
                         );
@@ -108,7 +108,7 @@ async fn handle_client_reader_packet(
                 match bcrypt::verify(password, &auth.password) {
                     Ok(valid) => {
                         if !valid {
-                            error!("bcrypt valid false");
+                            warn!("bcrypt valid false");
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".to_string(),
                             );
@@ -117,7 +117,7 @@ async fn handle_client_reader_packet(
                         }
                     }
                     Err(error) => {
-                        error!("bcrypt verify error: {:?}", error);
+                        warn!("bcrypt verify error: {:?}", error);
                         let packet = proto_util::login_err_packet(
                             "incorrect username or password".to_string(),
                         );
@@ -137,7 +137,7 @@ async fn handle_client_reader_packet(
                 let player = match query_result {
                     Ok(player) => player,
                     Err(error) => {
-                        error!("player query error: {:?}", error);
+                        warn!("player query error: {:?}", error);
                         let packet = proto_util::login_err_packet(
                             "incorrect username or password".to_string(),
                         );
@@ -162,7 +162,7 @@ async fn handle_client_reader_packet(
                 let mut transaction = match db_pool.begin().await {
                     Ok(transaction) => transaction,
                     Err(error) => {
-                        error!("transaction begin error: {:?}", error);
+                        warn!("transaction begin error: {:?}", error);
                         let packet =
                             proto_util::register_err_packet("transaction begin error".to_string());
                         let _ = client_command_sender.send(Command::SendPacket { packet });
@@ -171,14 +171,14 @@ async fn handle_client_reader_packet(
                 };
 
                 if username.is_empty() {
-                    error!("username is empty: {:?}", username);
+                    warn!("username is empty: {:?}", username);
                     let packet = proto_util::register_err_packet("username is empty".to_string());
                     let _ = client_command_sender.send(Command::SendPacket { packet });
                     return;
                 }
 
                 if username.len() > 16 {
-                    error!("username too long: {:?}", username);
+                    warn!("username too long: {:?}", username);
                     let packet = proto_util::register_err_packet("username too long".to_string());
                     let _ = client_command_sender.send(Command::SendPacket { packet });
                     return;
@@ -193,7 +193,7 @@ async fn handle_client_reader_packet(
                 .await;
 
                 if query_result.is_ok() {
-                    error!("auth already exists: {:?}", username);
+                    warn!("auth already exists: {:?}", username);
                     let packet =
                         proto_util::register_err_packet("username already exists".to_string());
                     let _ = client_command_sender.send(Command::SendPacket { packet });
@@ -203,7 +203,7 @@ async fn handle_client_reader_packet(
                 let password = match bcrypt::hash(password, bcrypt::DEFAULT_COST) {
                     Ok(password) => password,
                     Err(error) => {
-                        error!("password hash error: {:?}", error);
+                        warn!("password hash error: {:?}", error);
                         let packet =
                             proto_util::register_err_packet("password hash error".to_string());
                         let _ = client_command_sender.send(Command::SendPacket { packet });
@@ -223,7 +223,7 @@ async fn handle_client_reader_packet(
                 let auth_id = match query_result {
                     Ok(query_result) => query_result.last_insert_rowid(),
                     Err(error) => {
-                        error!("auth insert error: {:?}", error);
+                        warn!("auth insert error: {:?}", error);
                         let packet =
                             proto_util::register_err_packet("auth insert error".to_string());
                         let _ = client_command_sender.send(Command::SendPacket { packet });
@@ -242,14 +242,14 @@ async fn handle_client_reader_packet(
                 .await;
 
                 if let Err(error) = query_result {
-                    error!("player insert error: {:?}", error);
+                    warn!("player insert error: {:?}", error);
                     let packet = proto_util::register_err_packet("player insert error".to_string());
                     let _ = client_command_sender.send(Command::SendPacket { packet });
                     return;
                 }
 
                 if let Err(error) = transaction.commit().await {
-                    error!("transaction commit error: {:?}", error);
+                    warn!("transaction commit error: {:?}", error);
                     let packet =
                         proto_util::register_err_packet("transaction commit error".to_string());
                     let _ = client_command_sender.send(Command::SendPacket { packet });
@@ -264,7 +264,7 @@ async fn handle_client_reader_packet(
                 let db_player = match &*db_player {
                     Some(db_player) => db_player,
                     None => {
-                        error!("join without login");
+                        warn!("join without login");
                         let packet =
                             proto_util::register_err_packet("transaction commit error".to_string());
                         let _ = client_command_sender.send(Command::SendPacket { packet });
@@ -272,8 +272,8 @@ async fn handle_client_reader_packet(
                     }
                 };
                 let _ = hub_command_sender.send(Command::Join {
-                    player_db_id: db_player.id,
                     connection_id,
+                    player_db_id: db_player.id,
                     nickname: db_player.nickname.clone(),
                     color: db_player.color as i32,
                 });
@@ -382,6 +382,12 @@ async fn client_writer_pump(
                         tokio::time::sleep(Duration::from_millis(50)).await;
                     }
                 });
+            }
+            Command::DisconnectClinet => {
+                warn!("Command::DisconnectClinet");
+                let mut client_writer = client_writer.lock().await;
+                let _ = client_writer.close().await;
+                break;
             }
             _ => {
                 warn!("unknow command: {:?}", command);
