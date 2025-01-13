@@ -6,6 +6,7 @@ const release_server_url := "wss://agarust-server.d8s.fun"
 
 var server_url := debug_server_url
 var connection_id := ""
+var show_server_position := false
 
 func _ready() -> void:
 	if not OS.is_debug_build():

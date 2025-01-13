@@ -78,7 +78,7 @@ func _physics_process(delta) -> void:
 
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, Color.BLUE_VIOLET)
-	if OS.is_debug_build():
+	if Global.show_server_position:
 		draw_circle(server_position - position, radius, Color.WHEAT)
 
 func _input(event):

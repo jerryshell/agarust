@@ -6,14 +6,18 @@ extends Node2D
 @onready var send_chat_button: Button = %SendChatButton
 @onready var leaderboard: Leaderboard = %Leaderboard
 @onready var logger: Logger = %Logger
+@onready var show_server_position_check: CheckButton = %ShowServerPositionCheck
 
 var player_map: Dictionary = {}
 var spore_map: Dictionary = {}
 
 func _ready() -> void:
 	WsClient.packet_received.connect(_on_ws_packet_received)
-	chat_edit.text_submitted.connect(_on_chat_edit_text_submited)
 	logout_button.pressed.connect(_on_logout_button_pressed)
+	chat_edit.text_submitted.connect(_on_chat_edit_text_submited)
+	send_chat_button.pressed.connect(_on_send_chat_button_pressed)
+	show_server_position_check.button_pressed = Global.show_server_position
+	show_server_position_check.toggled.connect(_on_show_server_position_check_toggled)
 	_send_join()
 
 func _send_join() -> void:
@@ -41,6 +45,9 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	else:
 		print_debug("unknow packet: ", packet)
 
+func _on_logout_button_pressed() -> void:
+	WsClient.close()
+
 func _on_chat_edit_text_submited(new_text: String) -> void:
 	if new_text.is_empty():
 		return
@@ -50,8 +57,11 @@ func _on_chat_edit_text_submited(new_text: String) -> void:
 	WsClient.send(packet)
 	chat_edit.text = ""
 
-func _on_logout_button_pressed() -> void:
-	WsClient.close()
+func _on_send_chat_button_pressed() -> void:
+	_on_chat_edit_text_submited(chat_edit.text)
+
+func _on_show_server_position_check_toggled(toggled_on: bool) -> void:
+	Global.show_server_position = toggled_on
 
 func _handle_chat_msg(chat_msg: Global.proto.Chat) -> void:
 	var connection_id = chat_msg.get_connection_id()
