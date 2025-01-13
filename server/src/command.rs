@@ -28,6 +28,7 @@ pub enum Command {
     Join {
         player_db_id: i64,
         connection_id: String,
+        nickname: String,
         color: i32,
     },
     BroadcastPacket {

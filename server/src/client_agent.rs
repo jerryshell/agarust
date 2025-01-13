@@ -6,7 +6,7 @@ use futures_util::{
 };
 use prost::Message as _;
 use sqlx::query_as;
-use std::{io::Cursor, net::SocketAddr, result, sync::Arc, time::Duration};
+use std::{io::Cursor, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::TcpStream,
     sync::{
@@ -274,6 +274,7 @@ async fn handle_client_reader_packet(
                 let _ = hub_command_sender.send(Command::Join {
                     player_db_id: db_player.id,
                     connection_id,
+                    nickname: db_player.nickname.clone(),
                     color: db_player.color as i32,
                 });
             }

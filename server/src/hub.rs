@@ -102,11 +102,12 @@ impl Hub {
             Command::Join {
                 player_db_id,
                 connection_id,
+                nickname,
                 color,
             } => {
                 info!(
-                    "PlayerJoin: {:?} {:?} {:?}",
-                    player_db_id, connection_id, color
+                    "PlayerJoin: {:?} {:?} {:?} {:?}",
+                    player_db_id, connection_id, nickname, color
                 );
 
                 let client = match self.client_map.get_mut(&connection_id) {
@@ -117,12 +118,7 @@ impl Hub {
                     }
                 };
 
-                let player = Player::random(
-                    player_db_id,
-                    connection_id.clone(),
-                    connection_id.clone(),
-                    color,
-                );
+                let player = Player::random(player_db_id, connection_id.clone(), nickname, color);
 
                 let packet = proto_util::update_player_packet(&player);
                 let _ = client.command_sender.send(Command::SendPacket { packet });
