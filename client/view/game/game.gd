@@ -208,6 +208,7 @@ func _update_actor(connection_id: String, x: float, y: float, direction: float, 
 	_set_actor_mass(actor, _radius_to_mass(radius))
 
 	actor.speed = speed
+	actor.is_player = is_player
 
 	var server_position := Vector2(x, y)
 	if actor.position.distance_squared_to(server_position) > 20:

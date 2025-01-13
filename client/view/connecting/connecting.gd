@@ -10,7 +10,6 @@ func _ready() -> void:
 
 func _on_ws_connected() -> void:
 	print_debug("server connected")
-	get_tree().change_scene_to_packed(login_scene)
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	print_debug(packet)
@@ -19,3 +18,4 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 
 func _handle_hello_msg(hello_msg: Global.proto.Hello) -> void:
 	Global.connection_id = hello_msg.get_connection_id()
+	get_tree().change_scene_to_packed(login_scene)

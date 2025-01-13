@@ -6,7 +6,7 @@ use futures_util::{
 };
 use prost::Message as _;
 use sqlx::query_as;
-use std::{io::Cursor, net::SocketAddr, sync::Arc, time::Duration};
+use std::{io::Cursor, net::SocketAddr, result, sync::Arc, time::Duration};
 use tokio::{
     net::TcpStream,
     sync::{
@@ -105,12 +105,25 @@ async fn handle_client_reader_packet(
                     }
                 };
 
-                if let Err(e) = bcrypt::verify(password, &auth.password) {
-                    error!("bcrypt verify error: {:?}", e);
-                    let packet =
-                        proto_util::login_err_packet("incorrect username or password".to_string());
-                    let _ = client_command_sender.send(Command::SendPacket { packet });
-                    return;
+                match bcrypt::verify(password, &auth.password) {
+                    Ok(valid) => {
+                        if !valid {
+                            error!("bcrypt valid false");
+                            let packet = proto_util::login_err_packet(
+                                "incorrect username or password".to_string(),
+                            );
+                            let _ = client_command_sender.send(Command::SendPacket { packet });
+                            return;
+                        }
+                    }
+                    Err(error) => {
+                        error!("bcrypt verify error: {:?}", error);
+                        let packet = proto_util::login_err_packet(
+                            "incorrect username or password".to_string(),
+                        );
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
                 }
 
                 let query_result = query_as!(

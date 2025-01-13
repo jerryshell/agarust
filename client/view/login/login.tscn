@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://brcr5qfnvbrao"]
+[gd_scene load_steps=6 format=3 uid="uid://brcr5qfnvbrao"]
 
 [ext_resource type="Script" path="res://view/login/login.gd" id="1_cvf3h"]
 [ext_resource type="PackedScene" uid="uid://b6eavbvcua5hk" path="res://view/game/game.tscn" id="2_q24ma"]
@@ -6,6 +6,9 @@
 
 [sub_resource type="LabelSettings" id="LabelSettings_yei6d"]
 font_size = 32
+
+[sub_resource type="LabelSettings" id="LabelSettings_g1chx"]
+font_size = 40
 
 [node name="Login" type="Node2D"]
 script = ExtResource("1_cvf3h")
@@ -86,3 +89,34 @@ offset_right = 162.0
 offset_bottom = -17.0
 grow_vertical = 0
 text = "Connection ID: ABC"
+
+[node name="MessagePanel" type="Panel" parent="Gui"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -200.0
+offset_right = 300.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MessageLabel" type="Label" parent="Gui/MessagePanel"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -11.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Message Label"
+label_settings = SubResource("LabelSettings_g1chx")
+horizontal_alignment = 1
+vertical_alignment = 1
