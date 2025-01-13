@@ -49,6 +49,9 @@ pub enum Command {
         interval: Interval,
     },
     SyncPlayer,
+    SyncPlayerBestScore {
+        current_score: i64,
+    },
     Chat {
         connection_id: String,
         msg: String,

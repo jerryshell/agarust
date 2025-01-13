@@ -31,9 +31,12 @@ impl ClientAgent {
 
         let (command_sender, command_receiver) = unbounded_channel::<Command>();
 
+        let db_player = Arc::new(RwLock::new(None));
+
         let mut client_reader_task = {
             let socket_addr = self.socket_addr;
             let connection_id = self.connection_id.clone();
+            let db_player = db_player.clone();
             let db_pool = self.db_pool.clone();
             let client_command_sender = command_sender.clone();
             let hub_command_sender = self.hub_command_sender.clone();
@@ -42,6 +45,7 @@ impl ClientAgent {
                     socket_addr,
                     connection_id,
                     client_reader,
+                    db_player,
                     db_pool,
                     client_command_sender,
                     hub_command_sender,
@@ -51,7 +55,11 @@ impl ClientAgent {
         };
 
         let mut client_writer_task = {
-            tokio::spawn(async move { client_writer_pump(command_receiver, client_writer).await })
+            let db_player = db_player.clone();
+            let db_pool = self.db_pool.clone();
+            tokio::spawn(async move {
+                client_writer_pump(command_receiver, client_writer, db_player, db_pool).await
+            })
         };
 
         let command_send_result = self.hub_command_sender.send(Command::RegisterClient {
@@ -313,11 +321,11 @@ async fn client_reader_pump(
     socket_addr: SocketAddr,
     connection_id: String,
     mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
+    db_player: Arc<RwLock<Option<db::Player>>>,
     db_pool: sqlx::Pool<sqlx::Sqlite>,
     client_command_sender: UnboundedSender<Command>,
     hub_command_sender: UnboundedSender<Command>,
 ) {
-    let db_player = Arc::new(RwLock::new(None));
     while let Some(read_result) = client_reader.next().await {
         match read_result {
             Ok(message) => {
@@ -351,11 +359,14 @@ async fn client_reader_pump(
             }
         }
     }
+    warn!("exit client_reader_pump");
 }
 
 async fn client_writer_pump(
     mut command_receiver: UnboundedReceiver<Command>,
     client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
+    db_player: Arc<RwLock<Option<db::Player>>>,
+    db_pool: sqlx::Pool<sqlx::Sqlite>,
 ) {
     let client_writer = Arc::new(Mutex::new(client_writer));
     while let Some(command) = command_receiver.recv().await {
@@ -383,6 +394,35 @@ async fn client_writer_pump(
                     }
                 });
             }
+            Command::SyncPlayerBestScore { current_score } => {
+                let mut db_player = db_player.write().await;
+                let db_player = match &mut *db_player {
+                    Some(db_player) => db_player,
+                    None => {
+                        warn!("sync player best score without login");
+                        continue;
+                    }
+                };
+                if db_player.best_score > current_score {
+                    continue;
+                }
+
+                db_player.best_score = current_score;
+
+                let query_result = query_as!(
+                    db::Player,
+                    r#"UPDATE player SET best_score = ? WHERE id = ?"#,
+                    current_score,
+                    db_player.id,
+                )
+                .execute(&db_pool)
+                .await;
+
+                if let Err(error) = query_result {
+                    warn!("UPDATE player SET best_score error: {:?}", error);
+                    continue;
+                }
+            }
             Command::DisconnectClinet => {
                 warn!("Command::DisconnectClinet");
                 let mut client_writer = client_writer.lock().await;
@@ -394,4 +434,5 @@ async fn client_writer_pump(
             }
         }
     }
+    warn!("exit client_writer_pump");
 }

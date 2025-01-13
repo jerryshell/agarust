@@ -206,9 +206,10 @@ impl Hub {
                 connection_id,
                 spore_id,
             } => {
-                if let (Some(player), Some(spore)) = (
+                if let (Some(player), Some(spore), Some(client)) = (
                     self.player_map.get_mut(&connection_id),
                     self.spore_map.get_mut(&spore_id),
+                    self.client_map.get_mut(&connection_id),
                 ) {
                     let is_close = check_distance_is_close(
                         player.x,
@@ -233,6 +234,11 @@ impl Hub {
                     let _ = self
                         .command_sender
                         .send(Command::BroadcastPacket { packet });
+
+                    let current_score = radius_to_mass(player.radius) as i64;
+                    let _ = client
+                        .command_sender
+                        .send(Command::SyncPlayerBestScore { current_score });
                 }
             }
             Command::ConsumePlayer {
