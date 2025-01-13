@@ -1,5 +1,6 @@
 mod client_agent;
 mod command;
+mod db;
 mod hub;
 mod player;
 mod proto;
@@ -24,6 +25,7 @@ use tracing::info;
 pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,
     socket_addr: SocketAddr,
+    db_pool: sqlx::Pool<sqlx::Sqlite>,
     hub_command_sender: UnboundedSender<Command>,
 ) -> Result<(), Box<dyn Error>> {
     let ws_stream = tokio_tungstenite::accept_async(tcp_stream).await?;
@@ -37,6 +39,7 @@ pub async fn handle_tcp_stream(
         let client_agent = ClientAgent {
             socket_addr,
             connection_id,
+            db_pool,
             hub_command_sender,
         };
         tokio::spawn(async move { client_agent.run(ws_stream).await })

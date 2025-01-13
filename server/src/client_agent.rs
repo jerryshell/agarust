@@ -5,12 +5,13 @@ use futures_util::{
     SinkExt, StreamExt,
 };
 use prost::Message as _;
+use sqlx::query_as;
 use std::{io::Cursor, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::TcpStream,
     sync::{
         mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        Mutex,
+        Mutex, RwLock,
     },
 };
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
@@ -20,6 +21,7 @@ use tracing::{error, warn};
 pub struct ClientAgent {
     pub socket_addr: SocketAddr,
     pub connection_id: String,
+    pub db_pool: sqlx::Pool<sqlx::Sqlite>,
     pub hub_command_sender: UnboundedSender<Command>,
 }
 
@@ -32,12 +34,16 @@ impl ClientAgent {
         let mut client_reader_task = {
             let socket_addr = self.socket_addr;
             let connection_id = self.connection_id.clone();
+            let db_pool = self.db_pool.clone();
+            let client_command_sender = command_sender.clone();
             let hub_command_sender = self.hub_command_sender.clone();
             tokio::spawn(async move {
                 client_reader_pump(
                     socket_addr,
                     connection_id,
                     client_reader,
+                    db_pool,
+                    client_command_sender,
                     hub_command_sender,
                 )
                 .await
@@ -49,11 +55,9 @@ impl ClientAgent {
         };
 
         let command_send_result = self.hub_command_sender.send(Command::RegisterClient {
-            client_register_entry: ClientRegisterEntry {
-                socket_addr: self.socket_addr,
-                connection_id: self.connection_id.clone(),
-                command_sender,
-            },
+            socket_addr: self.socket_addr,
+            connection_id: self.connection_id.clone(),
+            command_sender,
         });
         if let Err(error) = command_send_result {
             error!("send Command::RegisterClient error: {:?}", error);
@@ -67,13 +71,199 @@ impl ClientAgent {
     }
 }
 
-fn handle_packet(
+async fn handle_client_reader_packet(
+    db_player: Arc<RwLock<Option<db::Player>>>,
     connection_id: String,
     packet: proto::Packet,
+    db_pool: sqlx::Pool<sqlx::Sqlite>,
+    client_command_sender: UnboundedSender<Command>,
     hub_command_sender: UnboundedSender<Command>,
 ) {
     if let Some(data) = packet.clone().data {
         match data {
+            proto::packet::Data::Login(login) => {
+                let username = login.username;
+                let password = login.password;
+
+                let query_result = query_as!(
+                    db::Auth,
+                    r#"SELECT * FROM auth WHERE username = ? LIMIT 1"#,
+                    username
+                )
+                .fetch_one(&db_pool)
+                .await;
+
+                let auth = match query_result {
+                    Ok(auth) => auth,
+                    Err(error) => {
+                        error!("auth query error: {:?}", error);
+                        let packet = proto_util::login_err_packet(
+                            "incorrect username or password".to_string(),
+                        );
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
+                };
+
+                if let Err(e) = bcrypt::verify(password, &auth.password) {
+                    error!("bcrypt verify error: {:?}", e);
+                    let packet =
+                        proto_util::login_err_packet("incorrect username or password".to_string());
+                    let _ = client_command_sender.send(Command::SendPacket { packet });
+                    return;
+                }
+
+                let query_result = query_as!(
+                    db::Player,
+                    r#"SELECT * FROM player WHERE auth_id = ? LIMIT 1"#,
+                    auth.id
+                )
+                .fetch_one(&db_pool)
+                .await;
+
+                let player = match query_result {
+                    Ok(player) => player,
+                    Err(error) => {
+                        error!("player query error: {:?}", error);
+                        let packet = proto_util::login_err_packet(
+                            "incorrect username or password".to_string(),
+                        );
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
+                };
+
+                {
+                    let mut db_player = db_player.write().await;
+                    *db_player = Some(player);
+                }
+
+                let packet = proto_util::login_ok_packet();
+                let _ = client_command_sender.send(Command::SendPacket { packet });
+            }
+            proto::packet::Data::Register(register) => {
+                let username = register.username;
+                let password = register.password;
+                let color = register.color as i64;
+
+                let mut transaction = match db_pool.begin().await {
+                    Ok(transaction) => transaction,
+                    Err(error) => {
+                        error!("transaction begin error: {:?}", error);
+                        let packet =
+                            proto_util::register_err_packet("transaction begin error".to_string());
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
+                };
+
+                if username.is_empty() {
+                    error!("username is empty: {:?}", username);
+                    let packet = proto_util::register_err_packet("username is empty".to_string());
+                    let _ = client_command_sender.send(Command::SendPacket { packet });
+                    return;
+                }
+
+                if username.len() > 16 {
+                    error!("username too long: {:?}", username);
+                    let packet = proto_util::register_err_packet("username too long".to_string());
+                    let _ = client_command_sender.send(Command::SendPacket { packet });
+                    return;
+                }
+
+                let query_result = query_as!(
+                    db::Auth,
+                    r#"SELECT * FROM auth WHERE username = ? LIMIT 1"#,
+                    username
+                )
+                .fetch_one(&mut *transaction)
+                .await;
+
+                if query_result.is_ok() {
+                    error!("auth already exists: {:?}", username);
+                    let packet =
+                        proto_util::register_err_packet("username already exists".to_string());
+                    let _ = client_command_sender.send(Command::SendPacket { packet });
+                    return;
+                }
+
+                let password = match bcrypt::hash(password, bcrypt::DEFAULT_COST) {
+                    Ok(password) => password,
+                    Err(error) => {
+                        error!("password hash error: {:?}", error);
+                        let packet =
+                            proto_util::register_err_packet("password hash error".to_string());
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
+                };
+
+                let query_result = query_as!(
+                    db::Auth,
+                    r#"INSERT INTO auth ( username, password ) VALUES ( ?, ? )"#,
+                    username,
+                    password,
+                )
+                .execute(&mut *transaction)
+                .await;
+
+                let auth_id = match query_result {
+                    Ok(query_result) => query_result.last_insert_rowid(),
+                    Err(error) => {
+                        error!("auth insert error: {:?}", error);
+                        let packet =
+                            proto_util::register_err_packet("auth insert error".to_string());
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
+                };
+
+                let query_result = query_as!(
+                    db::Player,
+                    r#"INSERT INTO player ( auth_id, nickname, color ) VALUES ( ?, ?, ? )"#,
+                    auth_id,
+                    username,
+                    color,
+                )
+                .execute(&mut *transaction)
+                .await;
+
+                if let Err(error) = query_result {
+                    error!("player insert error: {:?}", error);
+                    let packet = proto_util::register_err_packet("player insert error".to_string());
+                    let _ = client_command_sender.send(Command::SendPacket { packet });
+                    return;
+                }
+
+                if let Err(error) = transaction.commit().await {
+                    error!("transaction commit error: {:?}", error);
+                    let packet =
+                        proto_util::register_err_packet("transaction commit error".to_string());
+                    let _ = client_command_sender.send(Command::SendPacket { packet });
+                    return;
+                }
+
+                let packet = proto_util::register_ok_packet();
+                let _ = client_command_sender.send(Command::SendPacket { packet });
+            }
+            proto::packet::Data::Join(_) => {
+                let db_player = db_player.read().await;
+                let db_player = match &*db_player {
+                    Some(db_player) => db_player,
+                    None => {
+                        error!("join without login");
+                        let packet =
+                            proto_util::register_err_packet("transaction commit error".to_string());
+                        let _ = client_command_sender.send(Command::SendPacket { packet });
+                        return;
+                    }
+                };
+                let _ = hub_command_sender.send(Command::Join {
+                    player_db_id: db_player.id,
+                    connection_id,
+                    color: db_player.color as i32,
+                });
+            }
             proto::packet::Data::Chat(chat) => {
                 let _ = hub_command_sender.send(Command::Chat {
                     connection_id,
@@ -109,16 +299,30 @@ async fn client_reader_pump(
     socket_addr: SocketAddr,
     connection_id: String,
     mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
+    db_pool: sqlx::Pool<sqlx::Sqlite>,
+    client_command_sender: UnboundedSender<Command>,
     hub_command_sender: UnboundedSender<Command>,
 ) {
+    let db_player = Arc::new(RwLock::new(None));
     while let Some(read_result) = client_reader.next().await {
         match read_result {
             Ok(message) => {
                 if let Message::Binary(bytes) = message {
                     match proto::Packet::decode(Cursor::new(bytes)) {
                         Ok(packet) => {
+                            let db_player = db_player.clone();
+                            let db_pool = db_pool.clone();
+                            let client_command_sender = client_command_sender.clone();
                             let hub_command_sender = hub_command_sender.clone();
-                            handle_packet(connection_id.clone(), packet, hub_command_sender);
+                            handle_client_reader_packet(
+                                db_player,
+                                connection_id.clone(),
+                                packet,
+                                db_pool,
+                                client_command_sender,
+                                hub_command_sender,
+                            )
+                            .await;
                         }
                         Err(error) => {
                             warn!("proto decode error {:?}: {:?}", socket_addr, error);

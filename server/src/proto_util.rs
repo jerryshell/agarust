@@ -8,6 +8,32 @@ pub fn hello_packet(connection_id: String) -> proto::Packet {
     }
 }
 
+pub fn login_ok_packet() -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::LoginOk(proto::LoginOk {})),
+    }
+}
+
+pub fn login_err_packet(reason: String) -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::LoginErr(proto::LoginErr { reason })),
+    }
+}
+
+pub fn register_ok_packet() -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::RegisterOk(proto::RegisterOk {})),
+    }
+}
+
+pub fn register_err_packet(reason: String) -> proto::Packet {
+    proto::Packet {
+        data: Some(proto::packet::Data::RegisterErr(proto::RegisterErr {
+            reason,
+        })),
+    }
+}
+
 pub fn chat_packet(connection_id: String, msg: String) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::Chat(proto::Chat {

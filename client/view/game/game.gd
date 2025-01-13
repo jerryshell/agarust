@@ -11,18 +11,18 @@ var player_map: Dictionary = {}
 var spore_map: Dictionary = {}
 
 func _ready() -> void:
-	WsClient.connect_to_server(Global.server_url)
-	WsClient.connected.connect(_on_ws_connected)
 	WsClient.packet_received.connect(_on_ws_packet_received)
 	chat_edit.text_submitted.connect(_on_chat_edit_text_submited)
+	logout_button.pressed.connect(_on_logout_button_pressed)
+	_send_join()
 
-func _on_ws_connected() -> void:
-	logger.info("Server connected")
+func _send_join() -> void:
+	var packet := Global.proto.Packet.new()
+	var join := packet.new_join()
+	WsClient.send(packet)
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
-	if packet.has_hello():
-		_handle_hello_msg(packet.get_hello())
-	elif packet.has_chat():
+	if packet.has_chat():
 		print_debug(packet)
 		_handle_chat_msg(packet.get_chat())
 	elif packet.has_update_player():
@@ -31,7 +31,6 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	elif packet.has_update_player_batch():
 		_handle_update_player_batch_msg(packet.get_update_player_batch())
 	elif packet.has_update_spore():
-		print_debug(packet)
 		_handle_update_spore_msg(packet.get_update_spore())
 	elif packet.has_update_spore_batch():
 		_handle_update_spore_batch_msg(packet.get_update_spore_batch())
@@ -42,7 +41,7 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	else:
 		print_debug("unknow packet: ", packet)
 
-func _on_chat_edit_text_submited(new_text: String):
+func _on_chat_edit_text_submited(new_text: String) -> void:
 	if new_text.is_empty():
 		return
 	var packet := Global.proto.Packet.new()
@@ -51,9 +50,8 @@ func _on_chat_edit_text_submited(new_text: String):
 	WsClient.send(packet)
 	chat_edit.text = ""
 
-func _handle_hello_msg(hello_msg: Global.proto.Hello) -> void:
-	logger.info(hello_msg.to_string())
-	Global.connection_id = hello_msg.get_connection_id()
+func _on_logout_button_pressed() -> void:
+	WsClient.close()
 
 func _handle_chat_msg(chat_msg: Global.proto.Chat) -> void:
 	var connection_id = chat_msg.get_connection_id()
@@ -202,7 +200,7 @@ func _update_actor(connection_id: String, x: float, y: float, direction: float, 
 	actor.speed = speed
 
 	var server_position := Vector2(x, y)
-	if actor.position.distance_squared_to(server_position) > 50:
+	if actor.position.distance_squared_to(server_position) > 20:
 		actor.server_position = server_position
 
 	if not is_player:

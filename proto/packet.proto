@@ -5,19 +5,47 @@ package proto;
 message Packet {
   oneof data {
     Hello hello = 1;
-    Chat chat = 2;
-    UpdatePlayer update_player = 3;
-    UpdatePlayerBatch update_player_batch = 4;
-    UpdatePlayerDirectionAngle update_player_direction_angle = 5;
-    UpdateSpore update_spore = 6;
-    UpdateSporeBatch update_spore_batch = 7;
-    ConsumeSpore consume_spore = 8;
-    ConsumePlayer consume_player = 9;
-    Disconnect disconnect = 10;
+    Login login = 2;
+    LoginOk login_ok = 3;
+    LoginErr login_err = 4;
+    Register register = 5;
+    RegisterOk register_ok = 6;
+    RegisterErr register_err = 7;
+    Join join = 9;
+    Chat chat = 10;
+    UpdatePlayer update_player = 11;
+    UpdatePlayerBatch update_player_batch = 12;
+    UpdatePlayerDirectionAngle update_player_direction_angle = 13;
+    UpdateSpore update_spore = 14;
+    UpdateSporeBatch update_spore_batch = 15;
+    ConsumeSpore consume_spore = 16;
+    ConsumePlayer consume_player = 17;
+    Disconnect disconnect = 18;
   }
 }
 
 message Hello { string connection_id = 1; }
+
+message Login {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginOk {}
+
+message LoginErr { string reason = 1; }
+
+message Register {
+  string username = 1;
+  string password = 2;
+  int32 color = 3;
+}
+
+message RegisterOk {}
+
+message RegisterErr { string reason = 1; }
+
+message Join {}
 
 message Chat {
   string connection_id = 1;

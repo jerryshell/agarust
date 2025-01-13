@@ -1,0 +1,55 @@
+extends Node2D
+
+@export
+var game_scene: PackedScene
+
+@onready var username_edit: LineEdit = %UsernameEdit
+@onready var password_edit: LineEdit = %PasswordEdit
+@onready var login_button: Button = %LoginButton
+@onready var register_button: Button = %RegisterButton
+@onready var leaderboard_button: Button = %LeaderboardButton
+@onready var logger: Logger = %Logger
+@onready var connection_id_label: Label = %ConnectionIdLabel
+
+func _ready() -> void:
+	WsClient.packet_received.connect(_on_ws_packet_received)
+	login_button.pressed.connect(_on_login_button_pressed)
+	register_button.pressed.connect(_on_register_button_pressed)
+	connection_id_label.text = "Connection ID: %s" % [Global.connection_id]
+
+func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
+	print_debug(packet)
+	if packet.has_login_ok():
+		get_tree().change_scene_to_packed(game_scene)
+	elif packet.has_login_err():
+		logger.error(packet.get_login_err().get_reason())
+	elif packet.has_register_ok():
+		logger.success("register success")
+	elif packet.has_register_err():
+		logger.error(packet.get_register_err().get_reason())
+	else:
+		print_debug("unknow packet: ", packet)
+
+func _on_login_button_pressed() -> void:
+	var username := username_edit.text.strip_edges()
+	var password := password_edit.text.strip_edges()
+	if username.is_empty() or password.is_empty():
+		return
+
+	var packet := Global.proto.Packet.new()
+	var login_message := packet.new_login()
+	login_message.set_username(username)
+	login_message.set_password(password)
+	WsClient.send(packet)
+
+func _on_register_button_pressed() -> void:
+	var username := username_edit.text.strip_edges()
+	var password := password_edit.text.strip_edges()
+	if username.is_empty() or password.is_empty():
+		return
+
+	var packet := Global.proto.Packet.new()
+	var register_message := packet.new_register()
+	register_message.set_username(username)
+	register_message.set_password(password)
+	WsClient.send(packet)

@@ -13,9 +13,16 @@ const TICK_DURATION: Duration = Duration::from_millis(50);
 const SPAWN_SPORE_DURATION: Duration = Duration::from_millis(2000);
 const MAX_SPORE_COUNT: usize = 1000;
 
+#[derive(Debug, Clone)]
+pub struct Client {
+    pub socket_addr: SocketAddr,
+    pub connection_id: String,
+    pub command_sender: UnboundedSender<Command>,
+}
+
 #[derive(Debug)]
 pub struct Hub {
-    pub client_map: HashMap<String, ClientRegisterEntry>,
+    pub client_map: HashMap<String, Client>,
     pub player_map: HashMap<String, Player>,
     pub spore_map: HashMap<String, Spore>,
     pub command_sender: UnboundedSender<Command>,
@@ -58,30 +65,28 @@ impl Hub {
     fn handle_command(&mut self, command: Command) {
         match command {
             Command::RegisterClient {
-                client_register_entry,
+                socket_addr,
+                connection_id,
+                command_sender,
             } => {
-                info!("RegisterClient: {:?}", client_register_entry);
+                info!(
+                    "RegisterClient: {:?} {:?} {:?}",
+                    socket_addr, connection_id, command_sender
+                );
 
-                let client_agent_command_sender = client_register_entry.command_sender.clone();
-                let connection_id = client_register_entry.connection_id.clone();
-                self.client_map
-                    .insert(connection_id.clone(), client_register_entry);
+                let client_command_sender = command_sender.clone();
 
                 let packet = proto_util::hello_packet(connection_id.clone());
-                let _ = client_agent_command_sender.send(Command::SendPacket { packet });
+                let _ = client_command_sender.send(Command::SendPacket { packet });
 
-                let player = Player::random(connection_id.clone(), connection_id.clone(), 0);
-
-                let packet = proto_util::update_player_packet(&player);
-                let _ = client_agent_command_sender.send(Command::SendPacket { packet });
-
-                let mut spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
-                spore_batch.sort_by_cached_key(|spore| {
-                    ((player.x - spore.x).powi(2) + (player.y - spore.y).powi(2)) as i64
-                });
-                let _ = client_agent_command_sender.send(Command::UpdateSporeBatch { spore_batch });
-
-                self.player_map.insert(connection_id, player);
+                self.client_map.insert(
+                    connection_id.clone(),
+                    Client {
+                        socket_addr,
+                        connection_id,
+                        command_sender,
+                    },
+                );
             }
             Command::UnregisterClient { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);
@@ -94,6 +99,45 @@ impl Hub {
                     .command_sender
                     .send(Command::BroadcastPacket { packet });
             }
+            Command::Join {
+                player_db_id,
+                connection_id,
+                color,
+            } => {
+                info!(
+                    "PlayerJoin: {:?} {:?} {:?}",
+                    player_db_id, connection_id, color
+                );
+
+                let client = match self.client_map.get_mut(&connection_id) {
+                    Some(client) => client,
+                    None => {
+                        error!("client not found: {:?}", connection_id);
+                        return;
+                    }
+                };
+
+                let player = Player::random(
+                    player_db_id,
+                    connection_id.clone(),
+                    connection_id.clone(),
+                    color,
+                );
+
+                let packet = proto_util::update_player_packet(&player);
+                let _ = client.command_sender.send(Command::SendPacket { packet });
+
+                let mut spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
+                spore_batch.sort_by_cached_key(|spore| {
+                    ((player.x - spore.x).powi(2) + (player.y - spore.y).powi(2)) as i64
+                });
+
+                let _ = client
+                    .command_sender
+                    .send(Command::UpdateSporeBatch { spore_batch });
+
+                self.player_map.insert(connection_id, player);
+            }
             Command::BroadcastPacket { packet } => {
                 let raw_data = packet.encode_to_vec();
                 let _ = self
@@ -101,7 +145,10 @@ impl Hub {
                     .send(Command::BroadcastRawData { raw_data });
             }
             Command::BroadcastRawData { raw_data } => {
-                self.client_map.values().for_each(|client| {
+                self.client_map.iter().for_each(|(connection_id, client)| {
+                    if !self.player_map.contains_key(connection_id) {
+                        return;
+                    }
                     let raw_data = raw_data.clone();
                     let _ = client
                         .command_sender

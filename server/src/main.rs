@@ -3,6 +3,8 @@ const DEFAULT_DATABASE_URL: &str = "sqlite:agarust_db.sqlite";
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
+
     tracing_subscriber::fmt::init();
 
     let bind_addr = match std::env::var("BIND_ADDR") {
@@ -33,16 +35,22 @@ async fn main() {
         }
     };
 
-    let mut hub = agarust_server::Hub::new(db_pool);
+    let mut hub = agarust_server::Hub::new(db_pool.clone());
     let hub_command_sender = hub.command_sender.clone();
     let hub_task = tokio::spawn(async move { hub.run().await });
 
     while let Ok((tcp_stream, socket_addr)) = tcp_listener.accept().await {
         tracing::info!("tcp_listener accept: {:?}", socket_addr);
+        let db_pool = db_pool.clone();
         let hub_command_sender = hub_command_sender.clone();
         tokio::spawn(async move {
-            if let Err(error) =
-                agarust_server::handle_tcp_stream(tcp_stream, socket_addr, hub_command_sender).await
+            if let Err(error) = agarust_server::handle_tcp_stream(
+                tcp_stream,
+                socket_addr,
+                db_pool,
+                hub_command_sender,
+            )
+            .await
             {
                 tracing::error!("handle_tcp_stream error: {:?}", error);
             }

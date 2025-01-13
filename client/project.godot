@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Agarust"
-run/main_scene="res://main.tscn"
+run/main_scene="res://view/connecting/connecting.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 boot_splash/image="res://icon.png"
 boot_splash/fullsize=false

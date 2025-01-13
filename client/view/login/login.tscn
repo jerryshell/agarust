@@ -1,0 +1,88 @@
+[gd_scene load_steps=5 format=3 uid="uid://brcr5qfnvbrao"]
+
+[ext_resource type="Script" path="res://view/login/login.gd" id="1_cvf3h"]
+[ext_resource type="PackedScene" uid="uid://b6eavbvcua5hk" path="res://view/game/game.tscn" id="2_q24ma"]
+[ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="3_m0dil"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_yei6d"]
+font_size = 32
+
+[node name="Login" type="Node2D"]
+script = ExtResource("1_cvf3h")
+game_scene = ExtResource("2_q24ma")
+
+[node name="Gui" type="CanvasLayer" parent="."]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Gui"]
+custom_minimum_size = Vector2(500, 0)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -33.5
+offset_top = -33.0
+offset_right = 33.5
+offset_bottom = 33.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="Gui/VBoxContainer"]
+layout_mode = 2
+text = "Agarust"
+label_settings = SubResource("LabelSettings_yei6d")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="UsernameEdit" type="LineEdit" parent="Gui/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Username"
+
+[node name="PasswordEdit" type="LineEdit" parent="Gui/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Password"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Gui/VBoxContainer"]
+layout_mode = 2
+
+[node name="LoginButton" type="Button" parent="Gui/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Login"
+
+[node name="RegisterButton" type="Button" parent="Gui/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Register"
+
+[node name="LeaderboardButton" type="Button" parent="Gui/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 10
+text = "Leaderboard"
+
+[node name="Logger" parent="Gui" instance=ExtResource("3_m0dil")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+offset_left = -248.0
+offset_top = -376.0
+offset_right = 252.0
+offset_bottom = -16.0
+grow_vertical = 0
+
+[node name="ConnectionIdLabel" type="Label" parent="Gui"]
+unique_name_in_owner = true
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -40.0
+offset_right = 162.0
+offset_bottom = -17.0
+grow_vertical = 0
+text = "Connection ID: ABC"

@@ -9,10 +9,26 @@ use tokio::{
 #[derive(Debug)]
 pub enum Command {
     RegisterClient {
-        client_register_entry: ClientRegisterEntry,
+        socket_addr: SocketAddr,
+        connection_id: String,
+        command_sender: UnboundedSender<Command>,
     },
     UnregisterClient {
         connection_id: String,
+    },
+    Login {
+        username: String,
+        password: String,
+    },
+    Register {
+        username: String,
+        password: String,
+        color: i32,
+    },
+    Join {
+        player_db_id: i64,
+        connection_id: String,
+        color: i32,
     },
     BroadcastPacket {
         packet: proto::Packet,
@@ -53,11 +69,4 @@ pub enum Command {
     SpawnSpore {
         interval: Interval,
     },
-}
-
-#[derive(Debug, Clone)]
-pub struct ClientRegisterEntry {
-    pub socket_addr: SocketAddr,
-    pub connection_id: String,
-    pub command_sender: UnboundedSender<Command>,
 }

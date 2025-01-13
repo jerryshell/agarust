@@ -59,7 +59,3 @@ func send(packet: Global.proto.Packet) -> int:
 func close(code: int = 1000, reason: String = "") -> void:
 	socket.close(code, reason)
 	last_state = socket.get_ready_state()
-
-func clear() -> void:
-	socket = WebSocketPeer.new()
-	last_state = socket.get_ready_state()
