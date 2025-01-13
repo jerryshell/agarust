@@ -22,7 +22,7 @@ func _ready() -> void:
 
 func _send_join() -> void:
 	var packet := Global.proto.Packet.new()
-	var join := packet.new_join()
+	packet.new_join()
 	WsClient.send(packet)
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
@@ -67,7 +67,7 @@ func _handle_chat_msg(chat_msg: Global.proto.Chat) -> void:
 	var connection_id = chat_msg.get_connection_id()
 	if connection_id in player_map:
 		var player = player_map[connection_id]
-		logger.chat(player.actor_name, chat_msg.get_msg())
+		logger.chat(player.actor_nickname, chat_msg.get_msg())
 
 func _handle_update_player_batch_msg(update_player_batch_msg: Global.proto.UpdatePlayerBatch) -> void:
 	for update_player_msg: Global.proto.UpdatePlayer in update_player_batch_msg.get_update_player_batch():
@@ -75,7 +75,7 @@ func _handle_update_player_batch_msg(update_player_batch_msg: Global.proto.Updat
 
 func _handle_update_player_msg(update_player_msg: Global.proto.UpdatePlayer) -> void:
 	var actor_connection_id := update_player_msg.get_connection_id()
-	var actor_name := update_player_msg.get_name()
+	var actor_nickname := update_player_msg.get_nickname()
 	var x := update_player_msg.get_x()
 	var y := update_player_msg.get_y()
 	var radius := update_player_msg.get_radius()
@@ -86,7 +86,7 @@ func _handle_update_player_msg(update_player_msg: Global.proto.UpdatePlayer) -> 
 	var is_player := actor_connection_id == Global.connection_id
 
 	if actor_connection_id not in player_map:
-		_add_actor(actor_connection_id, actor_name, x, y, radius, speed, color, is_player)
+		_add_actor(actor_connection_id, actor_nickname, x, y, radius, speed, color, is_player)
 	else:
 		var direction := update_player_msg.get_direction_angle()
 		_update_actor(actor_connection_id, x, y, direction, speed, radius, is_player)
@@ -131,11 +131,11 @@ func _handle_disconnect_msg(disconnect_msg: Global.proto.Disconnect) -> void:
 	if connection_id in player_map:
 		var player = player_map[connection_id]
 		var reason := disconnect_msg.get_reason()
-		logger.info("%s disconnected because %s" % [player.actor_name, reason])
+		logger.info("%s disconnected because %s" % [player.actor_nickname, reason])
 		_remove_actor(player)
 
-func _add_actor(connection_id: String, actor_name: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
-	var actor := Actor.instantiate(connection_id, actor_name, x, y, radius, speed, color, is_player)
+func _add_actor(connection_id: String, actor_nickname: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
+	var actor := Actor.instantiate(connection_id, actor_nickname, x, y, radius, speed, color, is_player)
 	actor.z_index = 1
 	world.add_child(actor)
 	var mass := _radius_to_mass(radius)
@@ -150,7 +150,7 @@ func _radius_to_mass(radius: float) -> float:
 
 func _set_actor_mass(actor: Actor, mass: float) -> void:
 	actor.radius = sqrt(mass / PI)
-	leaderboard.set_score(actor.actor_name, roundi(mass))
+	leaderboard.set_score(actor.actor_nickname, roundi(mass))
 
 func _on_player_area_entered(area: Area2D) -> void:
 	if area is Spore:
@@ -200,7 +200,7 @@ func _consume_actor(actor: Actor) -> void:
 func _remove_actor(actor: Actor) -> void:
 	player_map.erase(actor.connection_id)
 	actor.queue_free()
-	leaderboard.remove(actor.actor_name)
+	leaderboard.remove(actor.actor_nickname)
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
 	var actor = player_map[connection_id]

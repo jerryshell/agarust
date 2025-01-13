@@ -8,7 +8,7 @@ const INIT_SPEED: f64 = 150.0;
 pub struct Player {
     pub db_id: i64,
     pub connection_id: String,
-    pub name: String,
+    pub nickname: String,
     pub x: f64,
     pub y: f64,
     pub radius: f64,
@@ -18,11 +18,11 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn random(db_id: i64, connection_id: String, name: String, color: i32) -> Self {
+    pub fn random(db_id: i64, connection_id: String, nickname: String, color: i32) -> Self {
         Self {
             db_id,
             connection_id,
-            name,
+            nickname,
             x: 0.0,
             y: 0.0,
             radius: INIT_RADIUS,

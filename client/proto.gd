@@ -1946,10 +1946,10 @@ class UpdatePlayer:
 		service.field = _connection_id
 		data[_connection_id.tag] = service
 
-		_name = PBField.new("name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _name
-		data[_name.tag] = service
+		service.field = _nickname
+		data[_nickname.tag] = service
 
 		_x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
@@ -1992,14 +1992,14 @@ class UpdatePlayer:
 	func set_connection_id(value: String) -> void:
 		_connection_id.value = value
 
-	var _name: PBField
-	func get_name() -> String:
-		return _name.value
-	func clear_name() -> void:
+	var _nickname: PBField
+	func get_nickname() -> String:
+		return _nickname.value
+	func clear_nickname() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_name(value: String) -> void:
-		_name.value = value
+		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_nickname(value: String) -> void:
+		_nickname.value = value
 
 	var _x: PBField
 	func get_x() -> float:

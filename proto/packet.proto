@@ -54,7 +54,7 @@ message Chat {
 
 message UpdatePlayer {
   string connection_id = 1;
-  string name = 2;
+  string nickname = 2;
   double x = 3;
   double y = 4;
   double radius = 5;

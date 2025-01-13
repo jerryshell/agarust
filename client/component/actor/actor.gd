@@ -8,7 +8,7 @@ const ACTOR = preload("res://component/actor/actor.tscn")
 @onready var camera: Camera2D = %Camera
 
 var connection_id: String
-var actor_name: String
+var actor_nickname: String
 var start_x: float
 var start_y: float
 var start_radius: float
@@ -29,10 +29,10 @@ var furthest_zoom_allowed := target_zoom
 
 var server_position: Vector2
 
-static func instantiate(p_connection_id: String, p_actor_name: String, p_start_x: float, p_start_y: float, p_start_radius: float, p_speed: float, p_color: Color, p_is_player: bool) -> Actor:
+static func instantiate(p_connection_id: String, p_actor_nickname: String, p_start_x: float, p_start_y: float, p_start_radius: float, p_speed: float, p_color: Color, p_is_player: bool) -> Actor:
 	var actor := ACTOR.instantiate()
 	actor.connection_id = p_connection_id
-	actor.actor_name = p_actor_name
+	actor.actor_nickname = p_actor_nickname
 	actor.start_x = p_start_x
 	actor.start_y = p_start_y
 	actor.start_radius = p_start_radius
@@ -48,7 +48,7 @@ func _ready():
 	direction = Vector2.RIGHT
 	radius = start_radius
 	collision_shape.shape.radius = radius
-	nameplate.text = actor_name
+	nameplate.text = actor_nickname
 	camera.enabled = is_player
 
 func _process(_delta: float) -> void:

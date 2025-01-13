@@ -96,7 +96,7 @@ pub struct UpdatePlayer {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
+    pub nickname: ::prost::alloc::string::String,
     #[prost(double, tag = "3")]
     pub x: f64,
     #[prost(double, tag = "4")]

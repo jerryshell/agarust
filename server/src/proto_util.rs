@@ -46,7 +46,7 @@ pub fn chat_packet(connection_id: String, msg: String) -> proto::Packet {
 pub fn update_player(player: &Player) -> proto::UpdatePlayer {
     proto::UpdatePlayer {
         connection_id: player.connection_id.clone(),
-        name: player.name.clone(),
+        nickname: player.nickname.clone(),
         x: player.x,
         y: player.y,
         radius: player.radius,
