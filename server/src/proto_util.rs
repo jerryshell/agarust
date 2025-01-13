@@ -43,7 +43,7 @@ pub fn chat_packet(connection_id: String, msg: String) -> proto::Packet {
     }
 }
 
-pub fn update_player(player: &Player) -> proto::UpdatePlayer {
+pub fn update_player(player: &player::Player) -> proto::UpdatePlayer {
     proto::UpdatePlayer {
         connection_id: player.connection_id.clone(),
         nickname: player.nickname.clone(),
@@ -56,13 +56,13 @@ pub fn update_player(player: &Player) -> proto::UpdatePlayer {
     }
 }
 
-pub fn update_player_packet(player: &Player) -> proto::Packet {
+pub fn update_player_packet(player: &player::Player) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::UpdatePlayer(update_player(player))),
     }
 }
 
-pub fn update_player_batch_packet(player_map: &HashMap<String, Player>) -> proto::Packet {
+pub fn update_player_batch_packet(player_map: &HashMap<String, player::Player>) -> proto::Packet {
     let update_player_batch = player_map
         .values()
         .map(update_player)
@@ -76,7 +76,7 @@ pub fn update_player_batch_packet(player_map: &HashMap<String, Player>) -> proto
     }
 }
 
-pub fn update_spore(spore: &Spore) -> proto::UpdateSpore {
+pub fn update_spore(spore: &spore::Spore) -> proto::UpdateSpore {
     proto::UpdateSpore {
         id: spore.id.clone(),
         x: spore.x,
@@ -85,13 +85,13 @@ pub fn update_spore(spore: &Spore) -> proto::UpdateSpore {
     }
 }
 
-pub fn update_spore_pack(spore: &Spore) -> proto::Packet {
+pub fn update_spore_pack(spore: &spore::Spore) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::UpdateSpore(update_spore(spore))),
     }
 }
 
-pub fn update_spore_batch_packet(spore_list: &[Spore]) -> proto::Packet {
+pub fn update_spore_batch_packet(spore_list: &[spore::Spore]) -> proto::Packet {
     let update_spore_batch = spore_list
         .iter()
         .map(update_spore)

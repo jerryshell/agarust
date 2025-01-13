@@ -35,7 +35,7 @@ async fn main() {
         }
     };
 
-    let mut hub = agarust_server::Hub::new(db_pool.clone());
+    let mut hub = agarust_server::hub::Hub::new(db_pool.clone());
     let hub_command_sender = hub.command_sender.clone();
     let hub_task = tokio::spawn(async move { hub.run().await });
 

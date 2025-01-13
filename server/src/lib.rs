@@ -1,21 +1,12 @@
-mod client_agent;
-mod command;
-mod db;
-mod hub;
-mod player;
-mod proto;
-mod proto_util;
-mod spore;
-mod util;
-
-pub use client_agent::*;
-pub use command::*;
-pub use hub::*;
-pub use player::*;
-pub use proto::*;
-pub use proto_util::*;
-pub use spore::*;
-pub use util::*;
+pub mod client_agent;
+pub mod command;
+pub mod db;
+pub mod hub;
+pub mod player;
+pub mod proto;
+pub mod proto_util;
+pub mod spore;
+pub mod util;
 
 use nanoid::nanoid;
 use std::{error::Error, net::SocketAddr};
@@ -26,7 +17,7 @@ pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,
     socket_addr: SocketAddr,
     db_pool: sqlx::Pool<sqlx::Sqlite>,
-    hub_command_sender: UnboundedSender<Command>,
+    hub_command_sender: UnboundedSender<command::Command>,
 ) -> Result<(), Box<dyn Error>> {
     let ws_stream = tokio_tungstenite::accept_async(tcp_stream).await?;
     info!("Accept WebSocket stream: {:?}", ws_stream);
@@ -36,7 +27,7 @@ pub async fn handle_tcp_stream(
     let client_agent_task = {
         let connection_id = connection_id.clone();
         let hub_command_sender = hub_command_sender.clone();
-        let client_agent = ClientAgent {
+        let client_agent = client_agent::ClientAgent {
             socket_addr,
             connection_id,
             db_pool,
@@ -47,7 +38,7 @@ pub async fn handle_tcp_stream(
 
     let _ = client_agent_task.await;
 
-    let unregister_command = Command::UnregisterClient { connection_id };
+    let unregister_command = command::Command::UnregisterClient { connection_id };
     let _ = hub_command_sender.send(unregister_command);
 
     Ok(())

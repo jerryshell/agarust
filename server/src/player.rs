@@ -40,10 +40,10 @@ impl Player {
     }
 
     pub fn increase_mass(&mut self, mass: f64) {
-        let mut player_mass = radius_to_mass(self.radius);
+        let mut player_mass = util::radius_to_mass(self.radius);
         player_mass += mass;
 
-        self.radius = mass_to_radius(player_mass);
+        self.radius = util::mass_to_radius(player_mass);
     }
 
     pub fn try_decrease_mass(&mut self, mass: f64) -> bool {
@@ -51,20 +51,20 @@ impl Player {
             return false;
         }
 
-        let mut player_mass = radius_to_mass(self.radius);
+        let mut player_mass = util::radius_to_mass(self.radius);
         player_mass -= mass;
         if player_mass <= 0.0 {
             return false;
         }
 
-        self.radius = mass_to_radius(player_mass);
+        self.radius = util::mass_to_radius(player_mass);
 
         true
     }
 
     pub fn try_drop_mass(&mut self) -> Option<f64> {
         let target_radius = (5.0 + self.radius / 50.0).min(15.0);
-        let target_mass = radius_to_mass(target_radius);
+        let target_mass = util::radius_to_mass(target_radius);
         if self.try_decrease_mass(target_mass) {
             return Some(target_mass);
         }

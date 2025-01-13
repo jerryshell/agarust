@@ -61,7 +61,7 @@ pub enum Command {
         direction_angle: f64,
     },
     UpdateSporeBatch {
-        spore_batch: Vec<Spore>,
+        spore_batch: Vec<spore::Spore>,
     },
     ConsumeSpore {
         connection_id: String,
