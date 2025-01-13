@@ -74,4 +74,15 @@ pub enum Command {
     SpawnSpore {
         interval: Interval,
     },
+    LeaderboardRequest,
+    LeaderboardResponse {
+        entry_list: Vec<LeaderboardEntry>,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub struct LeaderboardEntry {
+    pub rank: u64,
+    pub player_nickname: String,
+    pub score: u64,
 }

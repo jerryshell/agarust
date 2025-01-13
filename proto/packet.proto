@@ -4,23 +4,25 @@ package proto;
 
 message Packet {
   oneof data {
-    Hello hello = 1;
-    Login login = 2;
-    LoginOk login_ok = 3;
-    LoginErr login_err = 4;
-    Register register = 5;
-    RegisterOk register_ok = 6;
-    RegisterErr register_err = 7;
-    Join join = 9;
-    Chat chat = 10;
-    UpdatePlayer update_player = 11;
-    UpdatePlayerBatch update_player_batch = 12;
-    UpdatePlayerDirectionAngle update_player_direction_angle = 13;
-    UpdateSpore update_spore = 14;
-    UpdateSporeBatch update_spore_batch = 15;
-    ConsumeSpore consume_spore = 16;
-    ConsumePlayer consume_player = 17;
-    Disconnect disconnect = 18;
+    Hello hello = 10;
+    Login login = 20;
+    LoginOk login_ok = 30;
+    LoginErr login_err = 40;
+    Register register = 50;
+    RegisterOk register_ok = 60;
+    RegisterErr register_err = 70;
+    Join join = 90;
+    Disconnect disconnect = 100;
+    Chat chat = 110;
+    UpdatePlayer update_player = 120;
+    UpdatePlayerBatch update_player_batch = 130;
+    UpdatePlayerDirectionAngle update_player_direction_angle = 140;
+    UpdateSpore update_spore = 150;
+    UpdateSporeBatch update_spore_batch = 160;
+    ConsumeSpore consume_spore = 170;
+    ConsumePlayer consume_player = 180;
+    LeaderboardRequest leaderboard_request = 190;
+    LeaderboardResponse leaderboard_response = 200;
   }
 }
 
@@ -46,6 +48,11 @@ message RegisterOk {}
 message RegisterErr { string reason = 1; }
 
 message Join {}
+
+message Disconnect {
+  string connection_id = 1;
+  string reason = 2;
+}
 
 message Chat {
   string connection_id = 1;
@@ -86,7 +93,14 @@ message ConsumePlayer {
   string victim_connection_id = 2;
 }
 
-message Disconnect {
-  string connection_id = 1;
-  string reason = 2;
+message LeaderboardRequest {}
+
+message LeaderboardEntry {
+  uint64 rank = 1;
+  string player_nickname = 2;
+  uint64 score = 3;
+}
+
+message LeaderboardResponse {
+  repeated LeaderboardEntry leaderboard_entry_list = 1;
 }

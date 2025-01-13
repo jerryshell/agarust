@@ -52,11 +52,13 @@ layout_mode = 2
 
 [node name="LoginButton" type="Button" parent="Gui/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Login"
 
 [node name="RegisterButton" type="Button" parent="Gui/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Register"
 

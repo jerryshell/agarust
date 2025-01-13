@@ -3,7 +3,7 @@
 pub struct Packet {
     #[prost(
         oneof = "packet::Data",
-        tags = "1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18"
+        tags = "10, 20, 30, 40, 50, 60, 70, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200"
     )]
     pub data: ::core::option::Option<packet::Data>,
 }
@@ -11,40 +11,44 @@ pub struct Packet {
 pub mod packet {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Data {
-        #[prost(message, tag = "1")]
-        Hello(super::Hello),
-        #[prost(message, tag = "2")]
-        Login(super::Login),
-        #[prost(message, tag = "3")]
-        LoginOk(super::LoginOk),
-        #[prost(message, tag = "4")]
-        LoginErr(super::LoginErr),
-        #[prost(message, tag = "5")]
-        Register(super::Register),
-        #[prost(message, tag = "6")]
-        RegisterOk(super::RegisterOk),
-        #[prost(message, tag = "7")]
-        RegisterErr(super::RegisterErr),
-        #[prost(message, tag = "9")]
-        Join(super::Join),
         #[prost(message, tag = "10")]
-        Chat(super::Chat),
-        #[prost(message, tag = "11")]
-        UpdatePlayer(super::UpdatePlayer),
-        #[prost(message, tag = "12")]
-        UpdatePlayerBatch(super::UpdatePlayerBatch),
-        #[prost(message, tag = "13")]
-        UpdatePlayerDirectionAngle(super::UpdatePlayerDirectionAngle),
-        #[prost(message, tag = "14")]
-        UpdateSpore(super::UpdateSpore),
-        #[prost(message, tag = "15")]
-        UpdateSporeBatch(super::UpdateSporeBatch),
-        #[prost(message, tag = "16")]
-        ConsumeSpore(super::ConsumeSpore),
-        #[prost(message, tag = "17")]
-        ConsumePlayer(super::ConsumePlayer),
-        #[prost(message, tag = "18")]
+        Hello(super::Hello),
+        #[prost(message, tag = "20")]
+        Login(super::Login),
+        #[prost(message, tag = "30")]
+        LoginOk(super::LoginOk),
+        #[prost(message, tag = "40")]
+        LoginErr(super::LoginErr),
+        #[prost(message, tag = "50")]
+        Register(super::Register),
+        #[prost(message, tag = "60")]
+        RegisterOk(super::RegisterOk),
+        #[prost(message, tag = "70")]
+        RegisterErr(super::RegisterErr),
+        #[prost(message, tag = "90")]
+        Join(super::Join),
+        #[prost(message, tag = "100")]
         Disconnect(super::Disconnect),
+        #[prost(message, tag = "110")]
+        Chat(super::Chat),
+        #[prost(message, tag = "120")]
+        UpdatePlayer(super::UpdatePlayer),
+        #[prost(message, tag = "130")]
+        UpdatePlayerBatch(super::UpdatePlayerBatch),
+        #[prost(message, tag = "140")]
+        UpdatePlayerDirectionAngle(super::UpdatePlayerDirectionAngle),
+        #[prost(message, tag = "150")]
+        UpdateSpore(super::UpdateSpore),
+        #[prost(message, tag = "160")]
+        UpdateSporeBatch(super::UpdateSporeBatch),
+        #[prost(message, tag = "170")]
+        ConsumeSpore(super::ConsumeSpore),
+        #[prost(message, tag = "180")]
+        ConsumePlayer(super::ConsumePlayer),
+        #[prost(message, tag = "190")]
+        LeaderboardRequest(super::LeaderboardRequest),
+        #[prost(message, tag = "200")]
+        LeaderboardResponse(super::LeaderboardResponse),
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -84,6 +88,13 @@ pub struct RegisterErr {
 }
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Join {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Disconnect {
+    #[prost(string, tag = "1")]
+    pub connection_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub reason: ::prost::alloc::string::String,
+}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Chat {
     #[prost(string, tag = "1")]
@@ -150,10 +161,19 @@ pub struct ConsumePlayer {
     #[prost(string, tag = "2")]
     pub victim_connection_id: ::prost::alloc::string::String,
 }
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct LeaderboardRequest {}
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Disconnect {
-    #[prost(string, tag = "1")]
-    pub connection_id: ::prost::alloc::string::String,
+pub struct LeaderboardEntry {
+    #[prost(uint64, tag = "1")]
+    pub rank: u64,
     #[prost(string, tag = "2")]
-    pub reason: ::prost::alloc::string::String,
+    pub player_nickname: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "3")]
+    pub score: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LeaderboardResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub leaderboard_entry_list: ::prost::alloc::vec::Vec<LeaderboardEntry>,
 }

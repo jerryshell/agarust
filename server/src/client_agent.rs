@@ -79,6 +79,126 @@ impl ClientAgent {
     }
 }
 
+async fn client_reader_pump(
+    socket_addr: SocketAddr,
+    connection_id: String,
+    mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
+    db_player: Arc<RwLock<Option<db::Player>>>,
+    db_pool: sqlx::Pool<sqlx::Sqlite>,
+    client_command_sender: UnboundedSender<Command>,
+    hub_command_sender: UnboundedSender<Command>,
+) {
+    while let Some(read_result) = client_reader.next().await {
+        match read_result {
+            Ok(message) => {
+                if let Message::Binary(bytes) = message {
+                    match proto::Packet::decode(Cursor::new(bytes)) {
+                        Ok(packet) => {
+                            let db_player = db_player.clone();
+                            let db_pool = db_pool.clone();
+                            let client_command_sender = client_command_sender.clone();
+                            let hub_command_sender = hub_command_sender.clone();
+                            handle_client_reader_packet(
+                                db_player,
+                                connection_id.clone(),
+                                packet,
+                                db_pool,
+                                client_command_sender,
+                                hub_command_sender,
+                            )
+                            .await;
+                        }
+                        Err(error) => {
+                            warn!("proto decode error {:?}: {:?}", socket_addr, error);
+                            continue;
+                        }
+                    }
+                }
+            }
+            Err(error) => {
+                warn!("client_reader error {:?}: {:?}", socket_addr, error);
+                break;
+            }
+        }
+    }
+    warn!("exit client_reader_pump");
+}
+
+async fn client_writer_pump(
+    mut command_receiver: UnboundedReceiver<Command>,
+    client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
+    db_player: Arc<RwLock<Option<db::Player>>>,
+    db_pool: sqlx::Pool<sqlx::Sqlite>,
+) {
+    let client_writer = Arc::new(Mutex::new(client_writer));
+    while let Some(command) = command_receiver.recv().await {
+        let client_writer = client_writer.clone();
+        match command {
+            Command::SendPacket { packet } => {
+                let raw_data = packet.encode_to_vec();
+                let mut client_writer = client_writer.lock().await;
+                let _ = client_writer.send(Message::binary(raw_data)).await;
+            }
+            Command::SendRawData { raw_data } => {
+                let mut client_writer = client_writer.lock().await;
+                let _ = client_writer.send(Message::binary(raw_data)).await;
+            }
+            Command::UpdateSporeBatch { spore_batch } => {
+                tokio::spawn(async move {
+                    for spore_window in spore_batch.windows(32) {
+                        let packet = proto_util::update_spore_batch_packet(spore_window);
+                        let raw_data = packet.encode_to_vec();
+                        {
+                            let mut client_writer = client_writer.lock().await;
+                            let _ = client_writer.send(Message::binary(raw_data)).await;
+                        }
+                        tokio::time::sleep(Duration::from_millis(50)).await;
+                    }
+                });
+            }
+            Command::SyncPlayerBestScore { current_score } => {
+                let mut db_player = db_player.write().await;
+                let db_player = match &mut *db_player {
+                    Some(db_player) => db_player,
+                    None => {
+                        warn!("sync player best score without login");
+                        continue;
+                    }
+                };
+                if db_player.best_score > current_score {
+                    continue;
+                }
+
+                db_player.best_score = current_score;
+
+                let query_result = query_as!(
+                    db::Player,
+                    r#"UPDATE player SET best_score = ? WHERE id = ?"#,
+                    current_score,
+                    db_player.id,
+                )
+                .execute(&db_pool)
+                .await;
+
+                if let Err(error) = query_result {
+                    warn!("UPDATE player SET best_score error: {:?}", error);
+                    continue;
+                }
+            }
+            Command::DisconnectClinet => {
+                warn!("Command::DisconnectClinet");
+                let mut client_writer = client_writer.lock().await;
+                let _ = client_writer.close().await;
+                break;
+            }
+            _ => {
+                warn!("unknow command: {:?}", command);
+            }
+        }
+    }
+    warn!("exit client_writer_pump");
+}
+
 async fn handle_client_reader_packet(
     db_player: Arc<RwLock<Option<db::Player>>>,
     connection_id: String,
@@ -310,129 +430,37 @@ async fn handle_client_reader_packet(
                     victim_connection_id: consume_player.victim_connection_id,
                 });
             }
+            proto::packet::Data::LeaderboardRequest(_) => {
+                let query_result = query_as!(
+                    db::Player,
+                    r#"SELECT * FROM player ORDER BY best_score DESC LIMIT ?"#,
+                    100,
+                )
+                .fetch_all(&db_pool)
+                .await;
+
+                let leaderboard_entry_list = match query_result {
+                    Ok(player_list) => player_list
+                        .iter()
+                        .enumerate()
+                        .map(|(index, player)| command::LeaderboardEntry {
+                            rank: (index + 1) as u64,
+                            player_nickname: player.nickname.clone(),
+                            score: player.best_score as u64,
+                        })
+                        .collect::<Vec<_>>(),
+                    Err(error) => {
+                        error!("fetch leaderboard error: {:?}", error);
+                        return;
+                    }
+                };
+
+                let packet = proto_util::leaderboard_response(&leaderboard_entry_list);
+                let _ = client_command_sender.send(Command::SendPacket { packet });
+            }
             _ => {
                 warn!("unknow packet: {:?}", packet);
             }
         }
     }
-}
-
-async fn client_reader_pump(
-    socket_addr: SocketAddr,
-    connection_id: String,
-    mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
-    db_player: Arc<RwLock<Option<db::Player>>>,
-    db_pool: sqlx::Pool<sqlx::Sqlite>,
-    client_command_sender: UnboundedSender<Command>,
-    hub_command_sender: UnboundedSender<Command>,
-) {
-    while let Some(read_result) = client_reader.next().await {
-        match read_result {
-            Ok(message) => {
-                if let Message::Binary(bytes) = message {
-                    match proto::Packet::decode(Cursor::new(bytes)) {
-                        Ok(packet) => {
-                            let db_player = db_player.clone();
-                            let db_pool = db_pool.clone();
-                            let client_command_sender = client_command_sender.clone();
-                            let hub_command_sender = hub_command_sender.clone();
-                            handle_client_reader_packet(
-                                db_player,
-                                connection_id.clone(),
-                                packet,
-                                db_pool,
-                                client_command_sender,
-                                hub_command_sender,
-                            )
-                            .await;
-                        }
-                        Err(error) => {
-                            warn!("proto decode error {:?}: {:?}", socket_addr, error);
-                            continue;
-                        }
-                    }
-                }
-            }
-            Err(error) => {
-                warn!("client_reader error {:?}: {:?}", socket_addr, error);
-                break;
-            }
-        }
-    }
-    warn!("exit client_reader_pump");
-}
-
-async fn client_writer_pump(
-    mut command_receiver: UnboundedReceiver<Command>,
-    client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
-    db_player: Arc<RwLock<Option<db::Player>>>,
-    db_pool: sqlx::Pool<sqlx::Sqlite>,
-) {
-    let client_writer = Arc::new(Mutex::new(client_writer));
-    while let Some(command) = command_receiver.recv().await {
-        let client_writer = client_writer.clone();
-        match command {
-            Command::SendPacket { packet } => {
-                let raw_data = packet.encode_to_vec();
-                let mut client_writer = client_writer.lock().await;
-                let _ = client_writer.send(Message::binary(raw_data)).await;
-            }
-            Command::SendRawData { raw_data } => {
-                let mut client_writer = client_writer.lock().await;
-                let _ = client_writer.send(Message::binary(raw_data)).await;
-            }
-            Command::UpdateSporeBatch { spore_batch } => {
-                tokio::spawn(async move {
-                    for spore_window in spore_batch.windows(32) {
-                        let packet = proto_util::update_spore_batch_packet(spore_window);
-                        let raw_data = packet.encode_to_vec();
-                        {
-                            let mut client_writer = client_writer.lock().await;
-                            let _ = client_writer.send(Message::binary(raw_data)).await;
-                        }
-                        tokio::time::sleep(Duration::from_millis(50)).await;
-                    }
-                });
-            }
-            Command::SyncPlayerBestScore { current_score } => {
-                let mut db_player = db_player.write().await;
-                let db_player = match &mut *db_player {
-                    Some(db_player) => db_player,
-                    None => {
-                        warn!("sync player best score without login");
-                        continue;
-                    }
-                };
-                if db_player.best_score > current_score {
-                    continue;
-                }
-
-                db_player.best_score = current_score;
-
-                let query_result = query_as!(
-                    db::Player,
-                    r#"UPDATE player SET best_score = ? WHERE id = ?"#,
-                    current_score,
-                    db_player.id,
-                )
-                .execute(&db_pool)
-                .await;
-
-                if let Err(error) = query_result {
-                    warn!("UPDATE player SET best_score error: {:?}", error);
-                    continue;
-                }
-            }
-            Command::DisconnectClinet => {
-                warn!("Command::DisconnectClinet");
-                let mut client_writer = client_writer.lock().await;
-                let _ = client_writer.close().await;
-                break;
-            }
-            _ => {
-                warn!("unknow command: {:?}", command);
-            }
-        }
-    }
-    warn!("exit client_writer_pump");
 }

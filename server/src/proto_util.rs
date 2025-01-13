@@ -120,3 +120,21 @@ pub fn disconnect_packet(connection_id: String, reason: String) -> proto::Packet
         })),
     }
 }
+
+pub fn leaderboard_response(leaderboard_entry_list: &[command::LeaderboardEntry]) -> proto::Packet {
+    let leaderboard_entry_list = leaderboard_entry_list
+        .iter()
+        .map(|entry| proto::LeaderboardEntry {
+            rank: entry.rank,
+            player_nickname: entry.player_nickname.clone(),
+            score: entry.score,
+        })
+        .collect::<Vec<_>>();
+    proto::Packet {
+        data: Some(proto::packet::Data::LeaderboardResponse(
+            proto::LeaderboardResponse {
+                leaderboard_entry_list,
+            },
+        )),
+    }
+}

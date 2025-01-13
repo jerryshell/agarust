@@ -17,6 +17,7 @@ func _ready() -> void:
 	WsClient.packet_received.connect(_on_ws_packet_received)
 	login_button.pressed.connect(_on_login_button_pressed)
 	register_button.pressed.connect(_on_register_button_pressed)
+	leaderboard_button.pressed.connect(_on_leaderboard_button_pressed)
 	connection_id_label.text = "Connection ID: %s" % [Global.connection_id]
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
@@ -65,3 +66,6 @@ func _on_register_button_pressed() -> void:
 	register_message.set_username(username)
 	register_message.set_password(password)
 	WsClient.send(packet)
+
+func _on_leaderboard_button_pressed() -> void:
+	get_tree().change_scene_to_file("res://view/leaderboard_view/leaderboard_view.tscn")

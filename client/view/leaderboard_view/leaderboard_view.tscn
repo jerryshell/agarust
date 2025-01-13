@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3 uid="uid://cflrdsvgrarhq"]
+
+[ext_resource type="Script" path="res://view/leaderboard_view/leaderboard_view.gd" id="1_qr5vi"]
+[ext_resource type="PackedScene" uid="uid://dis1cx3bi13xh" path="res://component/leaderboard/leaderboard.tscn" id="2_rkw7s"]
+
+[node name="LeaderboardView" type="Node2D"]
+script = ExtResource("1_qr5vi")
+
+[node name="Gui" type="CanvasLayer" parent="."]
+
+[node name="BackButton" type="Button" parent="Gui"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 61.0
+offset_bottom = 47.0
+text = "Back"
+
+[node name="Leaderboard" parent="Gui" instance=ExtResource("2_rkw7s")]
+unique_name_in_owner = true
+offset_left = 320.0
+offset_top = 16.0
+offset_right = -320.0
+offset_bottom = -16.0
