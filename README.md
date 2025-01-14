@@ -2,7 +2,15 @@
 
 _Agarust_ is a multiplayer online game powered by Godot 4 and Rust 🤖🦀 inspired by agar.io
 
-Play now: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/agarust)
+Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/agarust)
+
+## Tech stack
+
+- Godot 4
+- Rust
+- Protocol Buffers
+- WebScoket
+- SQLite
 
 ## Setup server
 
@@ -17,7 +25,7 @@ cargo install sqlx-cli
 ```
 
 ```bash
-sqlx migrate run --database-url sqlite:agarust_db.sqlite?mode=rwc
+sqlx migrate run --database-url "sqlite:agarust_db.sqlite?mode=rwc"
 ```
 
 ### Run
@@ -28,7 +36,7 @@ cargo run
 
 ## Setup client
 
-Open the `client` folder using [Godot 4](https://godotengine.org)
+Import the `client` folder using [Godot 4](https://godotengine.org)
 
 ### Change server url
 
