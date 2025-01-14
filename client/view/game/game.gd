@@ -58,8 +58,6 @@ func _on_chat_edit_text_submited(new_text: String) -> void:
 	chat_edit.text = ""
 
 func _on_send_chat_button_pressed() -> void:
-	WsClient.close()
-	WsClient.clear()
 	_on_chat_edit_text_submited(chat_edit.text)
 
 func _on_show_server_position_check_toggled(toggled_on: bool) -> void:
