@@ -35,6 +35,10 @@ window/stretch/aspect="expand"
 
 enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
 
+[gui]
+
+theme/custom_font="res://assets/SmileySans-Oblique.ttf.woff2"
+
 [input]
 
 zoom_in={
