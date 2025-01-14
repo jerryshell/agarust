@@ -1,5 +1,6 @@
 use crate::*;
 
+const PLAYER_BOUND: f64 = 3000.0;
 const INIT_RADIUS: f64 = 20.0;
 const INIT_DIRECTION_ANGLE: f64 = 0.0;
 const INIT_SPEED: f64 = 150.0;
@@ -23,8 +24,8 @@ impl Player {
             db_id,
             connection_id,
             nickname,
-            x: 0.0,
-            y: 0.0,
+            x: (rand::random::<f64>() * 2.0 - 1.0) * PLAYER_BOUND,
+            y: (rand::random::<f64>() * 2.0 - 1.0) * PLAYER_BOUND,
             radius: INIT_RADIUS,
             direction_angle: INIT_DIRECTION_ANGLE,
             speed: INIT_SPEED,
