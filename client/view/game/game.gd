@@ -203,9 +203,10 @@ func _remove_actor(actor: Actor) -> void:
 	leaderboard.remove(actor.actor_nickname)
 
 func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
-	var actor = player_map[connection_id]
+	var actor: Actor = player_map[connection_id]
 
 	_set_actor_mass(actor, _radius_to_mass(radius))
+	actor.server_radius = radius
 
 	actor.speed = speed
 	actor.is_player = is_player

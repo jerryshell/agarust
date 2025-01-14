@@ -28,6 +28,7 @@ var target_zoom := 2.0
 var furthest_zoom_allowed := target_zoom
 
 var server_position: Vector2
+var server_radius: float
 
 static func instantiate(p_connection_id: String, p_actor_nickname: String, p_start_x: float, p_start_y: float, p_start_radius: float, p_speed: float, p_color: Color, p_is_player: bool) -> Actor:
 	var actor := ACTOR.instantiate()
@@ -47,6 +48,7 @@ func _ready():
 	server_position = position
 	direction = Vector2.RIGHT
 	radius = start_radius
+	server_radius = start_radius
 	collision_shape.shape.radius = radius
 	nameplate.text = actor_nickname
 	camera.enabled = is_player
@@ -101,12 +103,15 @@ func _send_direction_angle():
 
 func _update_zoom() -> void:
 	if is_node_ready():
-		nameplate.add_theme_font_size_override("font_size", max(16, radius / 2))
+		_update_nameplate_font_size()
 
 	if not is_player:
 		return
 
-	var new_furthest_zoom_allowed := 2 * start_radius / radius
+	var new_furthest_zoom_allowed := 2 * start_radius / server_radius
 	if is_equal_approx(target_zoom, furthest_zoom_allowed):
 		target_zoom = new_furthest_zoom_allowed
 	furthest_zoom_allowed = new_furthest_zoom_allowed
+
+func _update_nameplate_font_size():
+	nameplate.add_theme_font_size_override("font_size", max(16, radius / 2))

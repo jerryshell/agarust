@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://mmhkm2wt0wko"
-path="res://.godot/imported/SmileySans-Oblique.ttf.woff2-db185a99ddcc5a645765c73b36e506af.fontdata"
+uid="uid://0gqv8bre2w8q"
+path="res://.godot/imported/SmileySans-Oblique.ttf-9acd062d3c2416566a4a852adb8376bb.fontdata"
 
 [deps]
 
-source_file="res://assets/SmileySans-Oblique.ttf.woff2"
-dest_files=["res://.godot/imported/SmileySans-Oblique.ttf.woff2-db185a99ddcc5a645765c73b36e506af.fontdata"]
+source_file="res://assets/SmileySans-Oblique.ttf"
+dest_files=["res://.godot/imported/SmileySans-Oblique.ttf-9acd062d3c2416566a4a852adb8376bb.fontdata"]
 
 [params]
 

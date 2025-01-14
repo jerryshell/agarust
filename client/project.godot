@@ -37,7 +37,7 @@ enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
 
 [gui]
 
-theme/custom_font="res://assets/SmileySans-Oblique.ttf.woff2"
+theme/custom_font="res://assets/SmileySans-Oblique.ttf"
 
 [input]
 
