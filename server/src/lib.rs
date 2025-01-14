@@ -9,7 +9,7 @@ pub mod spore;
 pub mod util;
 
 use nanoid::nanoid;
-use std::{error::Error, net::SocketAddr};
+use std::{error::Error, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::mpsc::UnboundedSender};
 use tracing::info;
 
@@ -25,15 +25,12 @@ pub async fn handle_tcp_stream(
     let connection_id = nanoid!();
 
     let client_agent_task = {
-        let connection_id = connection_id.clone();
+        let connection_id = Arc::new(connection_id.clone());
         let hub_command_sender = hub_command_sender.clone();
-        let client_agent = client_agent::ClientAgent {
-            socket_addr,
-            connection_id,
-            db_pool,
-            hub_command_sender,
-        };
-        tokio::spawn(async move { client_agent.run(ws_stream).await })
+        let client_agent =
+            client_agent::ClientAgent::new(socket_addr, connection_id, db_pool, hub_command_sender);
+        let client_agent = Arc::new(client_agent);
+        tokio::spawn(async move { client_agent::run(client_agent, ws_stream).await })
     };
 
     let _ = client_agent_task.await;

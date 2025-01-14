@@ -20,75 +20,75 @@ use tracing::{error, warn};
 #[derive(Debug, Clone)]
 pub struct ClientAgent {
     pub socket_addr: SocketAddr,
-    pub connection_id: String,
+    pub connection_id: Arc<String>,
     pub db_pool: sqlx::Pool<sqlx::Sqlite>,
     pub hub_command_sender: UnboundedSender<command::Command>,
+    pub client_command_sender: UnboundedSender<command::Command>,
+    pub client_command_receiver: Arc<Mutex<UnboundedReceiver<command::Command>>>,
+    pub db_player: Arc<RwLock<Option<db::Player>>>,
 }
 
 impl ClientAgent {
-    pub async fn run(&self, ws_stream: WebSocketStream<TcpStream>) {
-        let (client_writer, client_reader) = ws_stream.split();
-
-        let (command_sender, command_receiver) = unbounded_channel::<command::Command>();
-
+    pub fn new(
+        socket_addr: SocketAddr,
+        connection_id: Arc<String>,
+        db_pool: sqlx::Pool<sqlx::Sqlite>,
+        hub_command_sender: UnboundedSender<command::Command>,
+    ) -> Self {
+        let (client_command_sender, client_command_receiver) =
+            unbounded_channel::<command::Command>();
+        let client_command_receiver = Arc::new(Mutex::new(client_command_receiver));
         let db_player = Arc::new(RwLock::new(None));
-
-        let mut client_reader_task = {
-            let socket_addr = self.socket_addr;
-            let connection_id = self.connection_id.clone();
-            let db_player = db_player.clone();
-            let db_pool = self.db_pool.clone();
-            let client_command_sender = command_sender.clone();
-            let hub_command_sender = self.hub_command_sender.clone();
-            tokio::spawn(async move {
-                client_reader_pump(
-                    socket_addr,
-                    connection_id,
-                    client_reader,
-                    db_player,
-                    db_pool,
-                    client_command_sender,
-                    hub_command_sender,
-                )
-                .await
-            })
-        };
-
-        let mut client_writer_task = {
-            let db_player = db_player.clone();
-            let db_pool = self.db_pool.clone();
-            tokio::spawn(async move {
-                client_writer_pump(command_receiver, client_writer, db_player, db_pool).await
-            })
-        };
-
-        let command_send_result = self
-            .hub_command_sender
-            .send(command::Command::RegisterClient {
-                socket_addr: self.socket_addr,
-                connection_id: self.connection_id.clone(),
-                command_sender,
-            });
-        if let Err(error) = command_send_result {
-            error!("send Command::RegisterClient error: {:?}", error);
-            return;
+        Self {
+            socket_addr,
+            connection_id,
+            db_pool,
+            hub_command_sender,
+            client_command_sender,
+            client_command_receiver,
+            db_player,
         }
-
-        tokio::select! {
-            _ = (&mut client_reader_task) => client_writer_task.abort(),
-            _ = (&mut client_writer_task) => client_reader_task.abort(),
-        };
     }
 }
 
+pub async fn run(client_agent: Arc<ClientAgent>, ws_stream: WebSocketStream<TcpStream>) {
+    let (client_writer, client_reader) = ws_stream.split();
+
+    let mut client_writer_task = {
+        let client_agent = client_agent.clone();
+        tokio::spawn(async move { client_writer_pump(client_agent, client_writer).await })
+    };
+
+    let mut client_reader_task = {
+        let client_agent = client_agent.clone();
+        tokio::spawn(async move {
+            let client_agent = client_agent.clone();
+            client_reader_pump(client_agent, client_reader).await
+        })
+    };
+
+    let client_agent_register_rsult =
+        client_agent
+            .hub_command_sender
+            .send(command::Command::RegisterClient {
+                socket_addr: client_agent.socket_addr,
+                connection_id: client_agent.connection_id.to_string(),
+                command_sender: client_agent.client_command_sender.clone(),
+            });
+    if let Err(error) = client_agent_register_rsult {
+        error!("client_agent_register_rsult error: {:?}", error);
+        return;
+    }
+
+    tokio::select! {
+        _ = (&mut client_reader_task) => client_writer_task.abort(),
+        _ = (&mut client_writer_task) => client_reader_task.abort(),
+    };
+}
+
 async fn client_reader_pump(
-    socket_addr: SocketAddr,
-    connection_id: String,
+    client_agent: Arc<ClientAgent>,
     mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
-    db_player: Arc<RwLock<Option<db::Player>>>,
-    db_pool: sqlx::Pool<sqlx::Sqlite>,
-    client_command_sender: UnboundedSender<command::Command>,
-    hub_command_sender: UnboundedSender<command::Command>,
 ) {
     while let Some(read_result) = client_reader.next().await {
         match read_result {
@@ -96,29 +96,24 @@ async fn client_reader_pump(
                 if let Message::Binary(bytes) = message {
                     match proto::Packet::decode(Cursor::new(bytes)) {
                         Ok(packet) => {
-                            let db_player = db_player.clone();
-                            let db_pool = db_pool.clone();
-                            let client_command_sender = client_command_sender.clone();
-                            let hub_command_sender = hub_command_sender.clone();
-                            handle_client_reader_packet(
-                                db_player,
-                                connection_id.clone(),
-                                packet,
-                                db_pool,
-                                client_command_sender,
-                                hub_command_sender,
-                            )
-                            .await;
+                            let client_agent = client_agent.clone();
+                            handle_client_reader_packet(client_agent, packet).await;
                         }
                         Err(error) => {
-                            warn!("proto decode error {:?}: {:?}", socket_addr, error);
+                            warn!(
+                                "proto decode error {:?}: {:?}",
+                                client_agent.socket_addr, error
+                            );
                             continue;
                         }
                     }
                 }
             }
             Err(error) => {
-                warn!("client_reader error {:?}: {:?}", socket_addr, error);
+                warn!(
+                    "client_reader error {:?}: {:?}",
+                    client_agent.socket_addr, error
+                );
                 break;
             }
         }
@@ -127,13 +122,12 @@ async fn client_reader_pump(
 }
 
 async fn client_writer_pump(
-    mut command_receiver: UnboundedReceiver<command::Command>,
+    client_agent: Arc<ClientAgent>,
     client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
-    db_player: Arc<RwLock<Option<db::Player>>>,
-    db_pool: sqlx::Pool<sqlx::Sqlite>,
 ) {
+    let mut client_command_receiver = client_agent.client_command_receiver.lock().await;
     let client_writer = Arc::new(Mutex::new(client_writer));
-    while let Some(command) = command_receiver.recv().await {
+    while let Some(command) = client_command_receiver.recv().await {
         let client_writer = client_writer.clone();
         match command {
             command::Command::SendPacket { packet } => {
@@ -159,7 +153,7 @@ async fn client_writer_pump(
                 });
             }
             command::Command::SyncPlayerBestScore { current_score } => {
-                let mut db_player = db_player.write().await;
+                let mut db_player = client_agent.db_player.write().await;
                 let db_player = match &mut *db_player {
                     Some(db_player) => db_player,
                     None => {
@@ -179,7 +173,7 @@ async fn client_writer_pump(
                     current_score,
                     db_player.id,
                 )
-                .execute(&db_pool)
+                .execute(&client_agent.db_pool)
                 .await;
 
                 if let Err(error) = query_result {
@@ -201,14 +195,7 @@ async fn client_writer_pump(
     warn!("exit client_writer_pump");
 }
 
-async fn handle_client_reader_packet(
-    db_player: Arc<RwLock<Option<db::Player>>>,
-    connection_id: String,
-    packet: proto::Packet,
-    db_pool: sqlx::Pool<sqlx::Sqlite>,
-    client_command_sender: UnboundedSender<command::Command>,
-    hub_command_sender: UnboundedSender<command::Command>,
-) {
+async fn handle_client_reader_packet(client_agent: Arc<ClientAgent>, packet: proto::Packet) {
     if let Some(data) = packet.clone().data {
         match data {
             proto::packet::Data::Login(login) => {
@@ -220,7 +207,7 @@ async fn handle_client_reader_packet(
                     r#"SELECT * FROM auth WHERE username = ? LIMIT 1"#,
                     username
                 )
-                .fetch_one(&db_pool)
+                .fetch_one(&client_agent.db_pool)
                 .await;
 
                 let auth = match query_result {
@@ -230,7 +217,9 @@ async fn handle_client_reader_packet(
                         let packet = proto_util::login_err_packet(
                             "incorrect username or password".to_string(),
                         );
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 };
@@ -242,8 +231,9 @@ async fn handle_client_reader_packet(
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".to_string(),
                             );
-                            let _ =
-                                client_command_sender.send(command::Command::SendPacket { packet });
+                            let _ = client_agent
+                                .client_command_sender
+                                .send(command::Command::SendPacket { packet });
                             return;
                         }
                     }
@@ -252,7 +242,9 @@ async fn handle_client_reader_packet(
                         let packet = proto_util::login_err_packet(
                             "incorrect username or password".to_string(),
                         );
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 }
@@ -262,7 +254,7 @@ async fn handle_client_reader_packet(
                     r#"SELECT * FROM player WHERE auth_id = ? LIMIT 1"#,
                     auth.id
                 )
-                .fetch_one(&db_pool)
+                .fetch_one(&client_agent.db_pool)
                 .await;
 
                 let player = match query_result {
@@ -272,31 +264,37 @@ async fn handle_client_reader_packet(
                         let packet = proto_util::login_err_packet(
                             "incorrect username or password".to_string(),
                         );
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 };
 
                 {
-                    let mut db_player = db_player.write().await;
+                    let mut db_player = client_agent.db_player.write().await;
                     *db_player = Some(player);
                 }
 
                 let packet = proto_util::login_ok_packet();
-                let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                let _ = client_agent
+                    .client_command_sender
+                    .send(command::Command::SendPacket { packet });
             }
             proto::packet::Data::Register(register) => {
                 let username = register.username;
                 let password = register.password;
                 let color = register.color;
 
-                let mut transaction = match db_pool.begin().await {
+                let mut transaction = match client_agent.db_pool.begin().await {
                     Ok(transaction) => transaction,
                     Err(error) => {
                         warn!("transaction begin error: {:?}", error);
                         let packet =
                             proto_util::register_err_packet("transaction begin error".to_string());
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 };
@@ -304,14 +302,18 @@ async fn handle_client_reader_packet(
                 if username.is_empty() {
                     warn!("username is empty: {:?}", username);
                     let packet = proto_util::register_err_packet("username is empty".to_string());
-                    let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                    let _ = client_agent
+                        .client_command_sender
+                        .send(command::Command::SendPacket { packet });
                     return;
                 }
 
                 if username.len() > 16 {
                     warn!("username too long: {:?}", username);
                     let packet = proto_util::register_err_packet("username too long".to_string());
-                    let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                    let _ = client_agent
+                        .client_command_sender
+                        .send(command::Command::SendPacket { packet });
                     return;
                 }
 
@@ -327,7 +329,9 @@ async fn handle_client_reader_packet(
                     warn!("auth already exists: {:?}", username);
                     let packet =
                         proto_util::register_err_packet("username already exists".to_string());
-                    let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                    let _ = client_agent
+                        .client_command_sender
+                        .send(command::Command::SendPacket { packet });
                     return;
                 }
 
@@ -337,7 +341,9 @@ async fn handle_client_reader_packet(
                         warn!("password hash error: {:?}", error);
                         let packet =
                             proto_util::register_err_packet("password hash error".to_string());
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 };
@@ -357,7 +363,9 @@ async fn handle_client_reader_packet(
                         warn!("auth insert error: {:?}", error);
                         let packet =
                             proto_util::register_err_packet("auth insert error".to_string());
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 };
@@ -375,7 +383,9 @@ async fn handle_client_reader_packet(
                 if let Err(error) = query_result {
                     warn!("player insert error: {:?}", error);
                     let packet = proto_util::register_err_packet("player insert error".to_string());
-                    let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                    let _ = client_agent
+                        .client_command_sender
+                        .send(command::Command::SendPacket { packet });
                     return;
                 }
 
@@ -383,58 +393,76 @@ async fn handle_client_reader_packet(
                     warn!("transaction commit error: {:?}", error);
                     let packet =
                         proto_util::register_err_packet("transaction commit error".to_string());
-                    let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                    let _ = client_agent
+                        .client_command_sender
+                        .send(command::Command::SendPacket { packet });
                     return;
                 }
 
                 let packet = proto_util::register_ok_packet();
-                let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                let _ = client_agent
+                    .client_command_sender
+                    .send(command::Command::SendPacket { packet });
             }
             proto::packet::Data::Join(_) => {
-                let db_player = db_player.read().await;
+                let db_player = client_agent.db_player.read().await;
                 let db_player = match &*db_player {
                     Some(db_player) => db_player,
                     None => {
                         warn!("join without login");
                         let packet =
                             proto_util::register_err_packet("transaction commit error".to_string());
-                        let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                        let _ = client_agent
+                            .client_command_sender
+                            .send(command::Command::SendPacket { packet });
                         return;
                     }
                 };
-                let _ = hub_command_sender.send(command::Command::Join {
-                    connection_id,
-                    player_db_id: db_player.id,
-                    nickname: db_player.nickname.clone(),
-                    color: db_player.color,
-                });
+                let _ = client_agent
+                    .hub_command_sender
+                    .send(command::Command::Join {
+                        connection_id: client_agent.connection_id.to_string(),
+                        player_db_id: db_player.id,
+                        nickname: db_player.nickname.clone(),
+                        color: db_player.color,
+                    });
             }
             proto::packet::Data::Chat(chat) => {
-                let _ = hub_command_sender.send(command::Command::Chat {
-                    connection_id,
-                    msg: chat.msg,
-                });
+                let _ = client_agent
+                    .hub_command_sender
+                    .send(command::Command::Chat {
+                        connection_id: client_agent.connection_id.to_string(),
+                        msg: chat.msg,
+                    });
             }
             proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
-                let _ = hub_command_sender.send(command::Command::UpdatePlayerDirectionAngle {
-                    connection_id,
-                    direction_angle: update_player_direction_angle.direction_angle,
-                });
+                let _ = client_agent.hub_command_sender.send(
+                    command::Command::UpdatePlayerDirectionAngle {
+                        connection_id: client_agent.connection_id.to_string(),
+                        direction_angle: update_player_direction_angle.direction_angle,
+                    },
+                );
             }
             proto::packet::Data::ConsumeSpore(consume_spore) => {
-                let _ = hub_command_sender.send(command::Command::ConsumeSpore {
-                    connection_id,
-                    spore_id: consume_spore.spore_id,
-                });
+                let _ = client_agent
+                    .hub_command_sender
+                    .send(command::Command::ConsumeSpore {
+                        connection_id: client_agent.connection_id.to_string(),
+                        spore_id: consume_spore.spore_id,
+                    });
             }
             proto::packet::Data::ConsumePlayer(consume_player) => {
-                let _ = hub_command_sender.send(command::Command::ConsumePlayer {
-                    connection_id,
-                    victim_connection_id: consume_player.victim_connection_id,
-                });
+                let _ = client_agent
+                    .hub_command_sender
+                    .send(command::Command::ConsumePlayer {
+                        connection_id: client_agent.connection_id.to_string(),
+                        victim_connection_id: consume_player.victim_connection_id,
+                    });
             }
             proto::packet::Data::Disconnect(_) => {
-                let _ = client_command_sender.send(command::Command::DisconnectClinet);
+                let _ = client_agent
+                    .client_command_sender
+                    .send(command::Command::DisconnectClinet);
             }
             proto::packet::Data::LeaderboardRequest(_) => {
                 let query_result = query_as!(
@@ -442,7 +470,7 @@ async fn handle_client_reader_packet(
                     r#"SELECT * FROM player ORDER BY best_score DESC LIMIT ?"#,
                     100,
                 )
-                .fetch_all(&db_pool)
+                .fetch_all(&client_agent.db_pool)
                 .await;
 
                 let leaderboard_entry_list = match query_result {
@@ -462,7 +490,9 @@ async fn handle_client_reader_packet(
                 };
 
                 let packet = proto_util::leaderboard_response(&leaderboard_entry_list);
-                let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                let _ = client_agent
+                    .client_command_sender
+                    .send(command::Command::SendPacket { packet });
             }
             _ => {
                 warn!("unknown packet: {:?}", packet);
