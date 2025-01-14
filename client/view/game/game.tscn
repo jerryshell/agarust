@@ -1,22 +1,23 @@
-[gd_scene load_steps=6 format=3 uid="uid://b6eavbvcua5hk"]
+[gd_scene load_steps=5 format=3 uid="uid://b6eavbvcua5hk"]
 
 [ext_resource type="Script" path="res://view/game/game.gd" id="1_dhpwo"]
-[ext_resource type="Texture2D" uid="uid://brlbwsgc364e8" path="res://assets/floor.svg" id="2_42iok"]
 [ext_resource type="PackedScene" uid="uid://dis1cx3bi13xh" path="res://component/leaderboard/leaderboard.tscn" id="3_vpl7a"]
 [ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="4_8v2iv"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_h6q5m"]
+[ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_nyaor"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_dhpwo")
 
-[node name="Background" type="Sprite2D" parent="."]
-visible = false
+[node name="ParallaxBackground" type="Parallax2D" parent="."]
+repeat_size = Vector2(12000, 12000)
+repeat_times = 2
+
+[node name="Background" type="Sprite2D" parent="ParallaxBackground"]
 texture_repeat = 2
-material = SubResource("ShaderMaterial_h6q5m")
-texture = ExtResource("2_42iok")
+texture = ExtResource("4_nyaor")
+centered = false
 region_enabled = true
-region_rect = Rect2(0, 0, 10000, 10000)
+region_rect = Rect2(0, 0, 12000, 12000)
 
 [node name="World" type="Node2D" parent="."]
 unique_name_in_owner = true
@@ -49,7 +50,7 @@ text = "Logout"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "Chat ..."
+placeholder_text = "Chat..."
 
 [node name="SendChatButton" type="Button" parent="Gui/MarginContainer/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true

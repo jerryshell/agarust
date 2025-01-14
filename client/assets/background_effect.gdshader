@@ -1,6 +1,5 @@
 shader_type canvas_item;
 
-// --- Uniforms --- //
 uniform vec2 amplitutde = vec2(1.0, 0.0);
 uniform vec2 speed = vec2(1.0, 0.0);
 

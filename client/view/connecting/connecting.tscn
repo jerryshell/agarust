@@ -1,7 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://i8esfsijgi4"]
+[gd_scene load_steps=7 format=3 uid="uid://i8esfsijgi4"]
 
 [ext_resource type="Script" path="res://view/connecting/connecting.gd" id="1_36lmk"]
 [ext_resource type="PackedScene" uid="uid://brcr5qfnvbrao" path="res://view/login/login.tscn" id="2_4whc4"]
+[ext_resource type="Shader" path="res://assets/background_effect.gdshader" id="3_08j1f"]
+[ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_5br80"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4xac1"]
+shader = ExtResource("3_08j1f")
+shader_parameter/amplitutde = Vector2(1, 0)
+shader_parameter/speed = Vector2(1, 0)
 
 [sub_resource type="LabelSettings" id="LabelSettings_dxj85"]
 font_size = 64
@@ -9,6 +16,18 @@ font_size = 64
 [node name="Connection" type="Node2D"]
 script = ExtResource("1_36lmk")
 login_scene = ExtResource("2_4whc4")
+
+[node name="ParallaxBackground" type="Parallax2D" parent="."]
+repeat_size = Vector2(12000, 12000)
+repeat_times = 2
+
+[node name="Background" type="Sprite2D" parent="ParallaxBackground"]
+texture_repeat = 2
+material = SubResource("ShaderMaterial_4xac1")
+texture = ExtResource("4_5br80")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 12000, 12000)
 
 [node name="Gui" type="CanvasLayer" parent="."]
 
