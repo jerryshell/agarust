@@ -43,10 +43,10 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	elif packet.has_disconnect():
 		_handle_disconnect_msg(packet.get_disconnect())
 	else:
-		print_debug("unknow packet: ", packet)
+		print_debug("unknown packet: ", packet)
 
 func _on_logout_button_pressed() -> void:
-	WsClient.close()
+	get_tree().change_scene_to_file("res://view/connecting/connecting.tscn")
 
 func _on_chat_edit_text_submited(new_text: String) -> void:
 	if new_text.is_empty():
@@ -58,6 +58,8 @@ func _on_chat_edit_text_submited(new_text: String) -> void:
 	chat_edit.text = ""
 
 func _on_send_chat_button_pressed() -> void:
+	WsClient.close()
+	WsClient.clear()
 	_on_chat_edit_text_submited(chat_edit.text)
 
 func _on_show_server_position_check_toggled(toggled_on: bool) -> void:

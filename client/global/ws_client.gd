@@ -1,6 +1,6 @@
 extends Node
 
-var socket := WebSocketPeer.new()
+var socket: WebSocketPeer
 var last_state := WebSocketPeer.STATE_CLOSED
 
 signal connected()
@@ -44,6 +44,7 @@ func _get_packet() -> Global.proto.Packet:
 	return packet
 
 func connect_to_server(url: String, tls_options: TLSOptions = null) -> int:
+	socket = WebSocketPeer.new()
 	var err := socket.connect_to_url(url, tls_options)
 	if err != OK:
 		return err

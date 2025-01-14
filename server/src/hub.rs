@@ -292,7 +292,7 @@ impl Hub {
                 });
             }
             _ => {
-                warn!("unknow command: {:?}", command);
+                warn!("unknown command: {:?}", command);
             }
         }
     }

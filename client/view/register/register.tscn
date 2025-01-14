@@ -74,6 +74,7 @@ secret = true
 [node name="ColorPicker" type="ColorPicker" parent="Gui/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+color = Color(1, 0.839216, 0.352941, 1)
 edit_alpha = false
 sampler_visible = false
 color_modes_visible = false

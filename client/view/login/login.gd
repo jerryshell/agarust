@@ -32,7 +32,7 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		message_panel.hide()
 		logger.error(packet.get_register_err().get_reason())
 	else:
-		print_debug("unknow packet: ", packet)
+		print_debug("unknown packet: ", packet)
 
 func _on_login_button_pressed() -> void:
 	var username := username_edit.text.strip_edges()

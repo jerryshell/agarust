@@ -18,7 +18,7 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 			var score: int = entry.get_score()
 			leaderboard.set_score(rank_and_name, score)
 	else:
-		print_debug("unknow packet: ", packet)
+		print_debug("unknown packet: ", packet)
 
 func _fetch_leaderboard() -> void:
 	var packet := Global.proto.Packet.new()

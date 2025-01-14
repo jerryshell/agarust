@@ -194,7 +194,7 @@ async fn client_writer_pump(
                 break;
             }
             _ => {
-                warn!("unknow command: {:?}", command);
+                warn!("unknown command: {:?}", command);
             }
         }
     }
@@ -433,6 +433,9 @@ async fn handle_client_reader_packet(
                     victim_connection_id: consume_player.victim_connection_id,
                 });
             }
+            proto::packet::Data::Disconnect(_) => {
+                let _ = client_command_sender.send(command::Command::DisconnectClinet);
+            }
             proto::packet::Data::LeaderboardRequest(_) => {
                 let query_result = query_as!(
                     db::Player,
@@ -462,7 +465,7 @@ async fn handle_client_reader_packet(
                 let _ = client_command_sender.send(command::Command::SendPacket { packet });
             }
             _ => {
-                warn!("unknow packet: {:?}", packet);
+                warn!("unknown packet: {:?}", packet);
             }
         }
     }
