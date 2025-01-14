@@ -23,13 +23,13 @@ pub enum Command {
     Register {
         username: String,
         password: String,
-        color: i32,
+        color: i64,
     },
     Join {
         connection_id: String,
         player_db_id: i64,
         nickname: String,
-        color: i32,
+        color: i64,
     },
     DisconnectClinet,
     BroadcastPacket {

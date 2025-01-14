@@ -40,7 +40,7 @@ message LoginErr { string reason = 1; }
 message Register {
   string username = 1;
   string password = 2;
-  int32 color = 3;
+  int64 color = 3;
 }
 
 message RegisterOk {}
@@ -67,7 +67,7 @@ message UpdatePlayer {
   double radius = 5;
   double direction_angle = 6;
   double speed = 7;
-  int32 color = 8;
+  int64 color = 8;
 }
 
 message UpdatePlayerBatch { repeated UpdatePlayer update_player_batch = 1; }

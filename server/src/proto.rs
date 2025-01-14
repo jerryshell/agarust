@@ -76,8 +76,8 @@ pub struct Register {
     pub username: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub password: ::prost::alloc::string::String,
-    #[prost(int32, tag = "3")]
-    pub color: i32,
+    #[prost(int64, tag = "3")]
+    pub color: i64,
 }
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct RegisterOk {}
@@ -118,8 +118,8 @@ pub struct UpdatePlayer {
     pub direction_angle: f64,
     #[prost(double, tag = "7")]
     pub speed: f64,
-    #[prost(int32, tag = "8")]
-    pub color: i32,
+    #[prost(int64, tag = "8")]
+    pub color: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdatePlayerBatch {

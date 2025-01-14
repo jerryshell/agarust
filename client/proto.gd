@@ -190,7 +190,7 @@ class PBPacker:
 			else:
 				varint.append(b)
 				break
-		if varint.size() == 9 && varint[8] == 0xFF:
+		if varint.size() == 9 && (varint[8] & 0x80 != 0):
 			varint.append(0x01)
 		return varint
 
@@ -376,6 +376,19 @@ class PBPacker:
 		else:
 			return data
 
+	static func skip_unknown_field(bytes: PackedByteArray, offset: int, type: int) -> int:
+		if type == PB_TYPE.VARINT:
+			return offset + isolate_varint(bytes, offset).size()
+		if type == PB_TYPE.FIX64:
+			return offset + 8
+		if type == PB_TYPE.LENGTHDEL:
+			var length_bytes: PackedByteArray = isolate_varint(bytes, offset)
+			var length: int = unpack_varint(length_bytes)
+			return offset + length_bytes.size() + length
+		if type == PB_TYPE.FIX32:
+			return offset + 4
+		return PB_ERR.UNDEFINED_STATE
+
 	static func unpack_field(bytes: PackedByteArray, offset: int, field: PBField, type: int, message_func_ref) -> int:
 		if field.rule == PB_RULE.REPEATED && type != PB_TYPE.LENGTHDEL && field.option_packed:
 			var count = isolate_varint(bytes, offset)
@@ -520,6 +533,18 @@ class PBPacker:
 							return res
 						else:
 							break
+				else:
+					var res: int = skip_unknown_field(bytes, offset, tt.type)
+					if res > 0:
+						offset = res
+						if offset == limit:
+							return offset
+						elif offset > limit:
+							return PB_ERR.PACKAGE_SIZE_MISMATCH
+					elif res < 0:
+						return res
+					else:
+						break
 			else:
 				return offset
 		return PB_ERR.UNDEFINED_STATE
@@ -664,1052 +689,1090 @@ class Packet:
 	func _init():
 		var service
 
-		_hello = PBField.new("hello", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 10, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__hello = PBField.new("hello", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 10, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _hello
+		service.field = __hello
 		service.func_ref = Callable(self, "new_hello")
-		data[_hello.tag] = service
+		data[__hello.tag] = service
 
-		_login = PBField.new("login", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 20, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__login = PBField.new("login", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 20, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _login
+		service.field = __login
 		service.func_ref = Callable(self, "new_login")
-		data[_login.tag] = service
+		data[__login.tag] = service
 
-		_login_ok = PBField.new("login_ok", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 30, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__login_ok = PBField.new("login_ok", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 30, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _login_ok
+		service.field = __login_ok
 		service.func_ref = Callable(self, "new_login_ok")
-		data[_login_ok.tag] = service
+		data[__login_ok.tag] = service
 
-		_login_err = PBField.new("login_err", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 40, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__login_err = PBField.new("login_err", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 40, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _login_err
+		service.field = __login_err
 		service.func_ref = Callable(self, "new_login_err")
-		data[_login_err.tag] = service
+		data[__login_err.tag] = service
 
-		_register = PBField.new("register", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 50, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__register = PBField.new("register", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 50, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _register
+		service.field = __register
 		service.func_ref = Callable(self, "new_register")
-		data[_register.tag] = service
+		data[__register.tag] = service
 
-		_register_ok = PBField.new("register_ok", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 60, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__register_ok = PBField.new("register_ok", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 60, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _register_ok
+		service.field = __register_ok
 		service.func_ref = Callable(self, "new_register_ok")
-		data[_register_ok.tag] = service
+		data[__register_ok.tag] = service
 
-		_register_err = PBField.new("register_err", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 70, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__register_err = PBField.new("register_err", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 70, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _register_err
+		service.field = __register_err
 		service.func_ref = Callable(self, "new_register_err")
-		data[_register_err.tag] = service
+		data[__register_err.tag] = service
 
-		_join = PBField.new("join", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 90, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__join = PBField.new("join", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 90, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _join
+		service.field = __join
 		service.func_ref = Callable(self, "new_join")
-		data[_join.tag] = service
+		data[__join.tag] = service
 
-		_disconnect = PBField.new("disconnect", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 100, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__disconnect = PBField.new("disconnect", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 100, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _disconnect
+		service.field = __disconnect
 		service.func_ref = Callable(self, "new_disconnect")
-		data[_disconnect.tag] = service
+		data[__disconnect.tag] = service
 
-		_chat = PBField.new("chat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 110, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__chat = PBField.new("chat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 110, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _chat
+		service.field = __chat
 		service.func_ref = Callable(self, "new_chat")
-		data[_chat.tag] = service
+		data[__chat.tag] = service
 
-		_update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 120, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 120, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_player
+		service.field = __update_player
 		service.func_ref = Callable(self, "new_update_player")
-		data[_update_player.tag] = service
+		data[__update_player.tag] = service
 
-		_update_player_batch = PBField.new("update_player_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 130, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_player_batch = PBField.new("update_player_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 130, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_player_batch
+		service.field = __update_player_batch
 		service.func_ref = Callable(self, "new_update_player_batch")
-		data[_update_player_batch.tag] = service
+		data[__update_player_batch.tag] = service
 
-		_update_player_direction_angle = PBField.new("update_player_direction_angle", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 140, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_player_direction_angle = PBField.new("update_player_direction_angle", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 140, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_player_direction_angle
+		service.field = __update_player_direction_angle
 		service.func_ref = Callable(self, "new_update_player_direction_angle")
-		data[_update_player_direction_angle.tag] = service
+		data[__update_player_direction_angle.tag] = service
 
-		_update_spore = PBField.new("update_spore", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 150, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_spore = PBField.new("update_spore", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 150, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_spore
+		service.field = __update_spore
 		service.func_ref = Callable(self, "new_update_spore")
-		data[_update_spore.tag] = service
+		data[__update_spore.tag] = service
 
-		_update_spore_batch = PBField.new("update_spore_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 160, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_spore_batch = PBField.new("update_spore_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 160, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_spore_batch
+		service.field = __update_spore_batch
 		service.func_ref = Callable(self, "new_update_spore_batch")
-		data[_update_spore_batch.tag] = service
+		data[__update_spore_batch.tag] = service
 
-		_consume_spore = PBField.new("consume_spore", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 170, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__consume_spore = PBField.new("consume_spore", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 170, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _consume_spore
+		service.field = __consume_spore
 		service.func_ref = Callable(self, "new_consume_spore")
-		data[_consume_spore.tag] = service
+		data[__consume_spore.tag] = service
 
-		_consume_player = PBField.new("consume_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 180, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__consume_player = PBField.new("consume_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 180, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _consume_player
+		service.field = __consume_player
 		service.func_ref = Callable(self, "new_consume_player")
-		data[_consume_player.tag] = service
+		data[__consume_player.tag] = service
 
-		_leaderboard_request = PBField.new("leaderboard_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 190, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__leaderboard_request = PBField.new("leaderboard_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 190, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _leaderboard_request
+		service.field = __leaderboard_request
 		service.func_ref = Callable(self, "new_leaderboard_request")
-		data[_leaderboard_request.tag] = service
+		data[__leaderboard_request.tag] = service
 
-		_leaderboard_response = PBField.new("leaderboard_response", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 200, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__leaderboard_response = PBField.new("leaderboard_response", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 200, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _leaderboard_response
+		service.field = __leaderboard_response
 		service.func_ref = Callable(self, "new_leaderboard_response")
-		data[_leaderboard_response.tag] = service
+		data[__leaderboard_response.tag] = service
 
 	var data = {}
 
-	var _hello: PBField
+	var __hello: PBField
 	func has_hello() -> bool:
-		return data[10].state == PB_SERVICE_STATE.FILLED
+		if __hello.value != null:
+			return true
+		return false
 	func get_hello() -> Hello:
-		return _hello.value
+		return __hello.value
 	func clear_hello() -> void:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_hello() -> Hello:
 		data[10].state = PB_SERVICE_STATE.FILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_hello.value = Hello.new()
-		return _hello.value
+		__hello.value = Hello.new()
+		return __hello.value
 
-	var _login: PBField
+	var __login: PBField
 	func has_login() -> bool:
-		return data[20].state == PB_SERVICE_STATE.FILLED
+		if __login.value != null:
+			return true
+		return false
 	func get_login() -> Login:
-		return _login.value
+		return __login.value
 	func clear_login() -> void:
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_login() -> Login:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		data[20].state = PB_SERVICE_STATE.FILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = Login.new()
-		return _login.value
+		__login.value = Login.new()
+		return __login.value
 
-	var _login_ok: PBField
+	var __login_ok: PBField
 	func has_login_ok() -> bool:
-		return data[30].state == PB_SERVICE_STATE.FILLED
+		if __login_ok.value != null:
+			return true
+		return false
 	func get_login_ok() -> LoginOk:
-		return _login_ok.value
+		return __login_ok.value
 	func clear_login_ok() -> void:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_login_ok() -> LoginOk:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
 		data[30].state = PB_SERVICE_STATE.FILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = LoginOk.new()
-		return _login_ok.value
+		__login_ok.value = LoginOk.new()
+		return __login_ok.value
 
-	var _login_err: PBField
+	var __login_err: PBField
 	func has_login_err() -> bool:
-		return data[40].state == PB_SERVICE_STATE.FILLED
+		if __login_err.value != null:
+			return true
+		return false
 	func get_login_err() -> LoginErr:
-		return _login_err.value
+		return __login_err.value
 	func clear_login_err() -> void:
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_login_err() -> LoginErr:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		data[40].state = PB_SERVICE_STATE.FILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = LoginErr.new()
-		return _login_err.value
+		__login_err.value = LoginErr.new()
+		return __login_err.value
 
-	var _register: PBField
+	var __register: PBField
 	func has_register() -> bool:
-		return data[50].state == PB_SERVICE_STATE.FILLED
+		if __register.value != null:
+			return true
+		return false
 	func get_register() -> Register:
-		return _register.value
+		return __register.value
 	func clear_register() -> void:
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_register() -> Register:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
 		data[50].state = PB_SERVICE_STATE.FILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = Register.new()
-		return _register.value
+		__register.value = Register.new()
+		return __register.value
 
-	var _register_ok: PBField
+	var __register_ok: PBField
 	func has_register_ok() -> bool:
-		return data[60].state == PB_SERVICE_STATE.FILLED
+		if __register_ok.value != null:
+			return true
+		return false
 	func get_register_ok() -> RegisterOk:
-		return _register_ok.value
+		return __register_ok.value
 	func clear_register_ok() -> void:
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_register_ok() -> RegisterOk:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
 		data[60].state = PB_SERVICE_STATE.FILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = RegisterOk.new()
-		return _register_ok.value
+		__register_ok.value = RegisterOk.new()
+		return __register_ok.value
 
-	var _register_err: PBField
+	var __register_err: PBField
 	func has_register_err() -> bool:
-		return data[70].state == PB_SERVICE_STATE.FILLED
+		if __register_err.value != null:
+			return true
+		return false
 	func get_register_err() -> RegisterErr:
-		return _register_err.value
+		return __register_err.value
 	func clear_register_err() -> void:
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_register_err() -> RegisterErr:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
 		data[70].state = PB_SERVICE_STATE.FILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = RegisterErr.new()
-		return _register_err.value
+		__register_err.value = RegisterErr.new()
+		return __register_err.value
 
-	var _join: PBField
+	var __join: PBField
 	func has_join() -> bool:
-		return data[90].state == PB_SERVICE_STATE.FILLED
+		if __join.value != null:
+			return true
+		return false
 	func get_join() -> Join:
-		return _join.value
+		return __join.value
 	func clear_join() -> void:
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_join() -> Join:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
 		data[90].state = PB_SERVICE_STATE.FILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = Join.new()
-		return _join.value
+		__join.value = Join.new()
+		return __join.value
 
-	var _disconnect: PBField
+	var __disconnect: PBField
 	func has_disconnect() -> bool:
-		return data[100].state == PB_SERVICE_STATE.FILLED
+		if __disconnect.value != null:
+			return true
+		return false
 	func get_disconnect() -> Disconnect:
-		return _disconnect.value
+		return __disconnect.value
 	func clear_disconnect() -> void:
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_disconnect() -> Disconnect:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
 		data[100].state = PB_SERVICE_STATE.FILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = Disconnect.new()
-		return _disconnect.value
+		__disconnect.value = Disconnect.new()
+		return __disconnect.value
 
-	var _chat: PBField
+	var __chat: PBField
 	func has_chat() -> bool:
-		return data[110].state == PB_SERVICE_STATE.FILLED
+		if __chat.value != null:
+			return true
+		return false
 	func get_chat() -> Chat:
-		return _chat.value
+		return __chat.value
 	func clear_chat() -> void:
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_chat() -> Chat:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
 		data[110].state = PB_SERVICE_STATE.FILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = Chat.new()
-		return _chat.value
+		__chat.value = Chat.new()
+		return __chat.value
 
-	var _update_player: PBField
+	var __update_player: PBField
 	func has_update_player() -> bool:
-		return data[120].state == PB_SERVICE_STATE.FILLED
+		if __update_player.value != null:
+			return true
+		return false
 	func get_update_player() -> UpdatePlayer:
-		return _update_player.value
+		return __update_player.value
 	func clear_update_player() -> void:
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_player() -> UpdatePlayer:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
 		data[120].state = PB_SERVICE_STATE.FILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = UpdatePlayer.new()
-		return _update_player.value
+		__update_player.value = UpdatePlayer.new()
+		return __update_player.value
 
-	var _update_player_batch: PBField
+	var __update_player_batch: PBField
 	func has_update_player_batch() -> bool:
-		return data[130].state == PB_SERVICE_STATE.FILLED
+		if __update_player_batch.value != null:
+			return true
+		return false
 	func get_update_player_batch() -> UpdatePlayerBatch:
-		return _update_player_batch.value
+		return __update_player_batch.value
 	func clear_update_player_batch() -> void:
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_player_batch() -> UpdatePlayerBatch:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
 		data[130].state = PB_SERVICE_STATE.FILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = UpdatePlayerBatch.new()
-		return _update_player_batch.value
+		__update_player_batch.value = UpdatePlayerBatch.new()
+		return __update_player_batch.value
 
-	var _update_player_direction_angle: PBField
+	var __update_player_direction_angle: PBField
 	func has_update_player_direction_angle() -> bool:
-		return data[140].state == PB_SERVICE_STATE.FILLED
+		if __update_player_direction_angle.value != null:
+			return true
+		return false
 	func get_update_player_direction_angle() -> UpdatePlayerDirectionAngle:
-		return _update_player_direction_angle.value
+		return __update_player_direction_angle.value
 	func clear_update_player_direction_angle() -> void:
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_player_direction_angle() -> UpdatePlayerDirectionAngle:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
 		data[140].state = PB_SERVICE_STATE.FILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = UpdatePlayerDirectionAngle.new()
-		return _update_player_direction_angle.value
+		__update_player_direction_angle.value = UpdatePlayerDirectionAngle.new()
+		return __update_player_direction_angle.value
 
-	var _update_spore: PBField
+	var __update_spore: PBField
 	func has_update_spore() -> bool:
-		return data[150].state == PB_SERVICE_STATE.FILLED
+		if __update_spore.value != null:
+			return true
+		return false
 	func get_update_spore() -> UpdateSpore:
-		return _update_spore.value
+		return __update_spore.value
 	func clear_update_spore() -> void:
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_spore() -> UpdateSpore:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
 		data[150].state = PB_SERVICE_STATE.FILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = UpdateSpore.new()
-		return _update_spore.value
+		__update_spore.value = UpdateSpore.new()
+		return __update_spore.value
 
-	var _update_spore_batch: PBField
+	var __update_spore_batch: PBField
 	func has_update_spore_batch() -> bool:
-		return data[160].state == PB_SERVICE_STATE.FILLED
+		if __update_spore_batch.value != null:
+			return true
+		return false
 	func get_update_spore_batch() -> UpdateSporeBatch:
-		return _update_spore_batch.value
+		return __update_spore_batch.value
 	func clear_update_spore_batch() -> void:
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_spore_batch() -> UpdateSporeBatch:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
 		data[160].state = PB_SERVICE_STATE.FILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = UpdateSporeBatch.new()
-		return _update_spore_batch.value
+		__update_spore_batch.value = UpdateSporeBatch.new()
+		return __update_spore_batch.value
 
-	var _consume_spore: PBField
+	var __consume_spore: PBField
 	func has_consume_spore() -> bool:
-		return data[170].state == PB_SERVICE_STATE.FILLED
+		if __consume_spore.value != null:
+			return true
+		return false
 	func get_consume_spore() -> ConsumeSpore:
-		return _consume_spore.value
+		return __consume_spore.value
 	func clear_consume_spore() -> void:
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_consume_spore() -> ConsumeSpore:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
 		data[170].state = PB_SERVICE_STATE.FILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = ConsumeSpore.new()
-		return _consume_spore.value
+		__consume_spore.value = ConsumeSpore.new()
+		return __consume_spore.value
 
-	var _consume_player: PBField
+	var __consume_player: PBField
 	func has_consume_player() -> bool:
-		return data[180].state == PB_SERVICE_STATE.FILLED
+		if __consume_player.value != null:
+			return true
+		return false
 	func get_consume_player() -> ConsumePlayer:
-		return _consume_player.value
+		return __consume_player.value
 	func clear_consume_player() -> void:
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_consume_player() -> ConsumePlayer:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
 		data[180].state = PB_SERVICE_STATE.FILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = ConsumePlayer.new()
-		return _consume_player.value
+		__consume_player.value = ConsumePlayer.new()
+		return __consume_player.value
 
-	var _leaderboard_request: PBField
+	var __leaderboard_request: PBField
 	func has_leaderboard_request() -> bool:
-		return data[190].state == PB_SERVICE_STATE.FILLED
+		if __leaderboard_request.value != null:
+			return true
+		return false
 	func get_leaderboard_request() -> LeaderboardRequest:
-		return _leaderboard_request.value
+		return __leaderboard_request.value
 	func clear_leaderboard_request() -> void:
 		data[190].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_leaderboard_request() -> LeaderboardRequest:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
 		data[190].state = PB_SERVICE_STATE.FILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = LeaderboardRequest.new()
-		return _leaderboard_request.value
+		__leaderboard_request.value = LeaderboardRequest.new()
+		return __leaderboard_request.value
 
-	var _leaderboard_response: PBField
+	var __leaderboard_response: PBField
 	func has_leaderboard_response() -> bool:
-		return data[200].state == PB_SERVICE_STATE.FILLED
+		if __leaderboard_response.value != null:
+			return true
+		return false
 	func get_leaderboard_response() -> LeaderboardResponse:
-		return _leaderboard_response.value
+		return __leaderboard_response.value
 	func clear_leaderboard_response() -> void:
 		data[200].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_leaderboard_response() -> LeaderboardResponse:
-		_hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
-		_login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
-		_login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[40].state = PB_SERVICE_STATE.UNFILLED
-		_register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[50].state = PB_SERVICE_STATE.UNFILLED
-		_register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[60].state = PB_SERVICE_STATE.UNFILLED
-		_register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[70].state = PB_SERVICE_STATE.UNFILLED
-		_join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[90].state = PB_SERVICE_STATE.UNFILLED
-		_disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[100].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[110].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[120].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[130].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[140].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[150].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[160].state = PB_SERVICE_STATE.UNFILLED
-		_consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[170].state = PB_SERVICE_STATE.UNFILLED
-		_consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[180].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[190].state = PB_SERVICE_STATE.UNFILLED
 		data[200].state = PB_SERVICE_STATE.FILLED
-		_leaderboard_response.value = LeaderboardResponse.new()
-		return _leaderboard_response.value
+		__leaderboard_response.value = LeaderboardResponse.new()
+		return __leaderboard_response.value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1736,21 +1799,25 @@ class Hello:
 	func _init():
 		var service
 
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
+		service.field = __connection_id
+		data[__connection_id.tag] = service
 
 	var data = {}
 
-	var _connection_id: PBField
+	var __connection_id: PBField
+	func has_connection_id() -> bool:
+		if __connection_id.value != null:
+			return true
+		return false
 	func get_connection_id() -> String:
-		return _connection_id.value
+		return __connection_id.value
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
-		_connection_id.value = value
+		__connection_id.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1777,35 +1844,43 @@ class Login:
 	func _init():
 		var service
 
-		_username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _username
-		data[_username.tag] = service
+		service.field = __username
+		data[__username.tag] = service
 
-		_password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _password
-		data[_password.tag] = service
+		service.field = __password
+		data[__password.tag] = service
 
 	var data = {}
 
-	var _username: PBField
+	var __username: PBField
+	func has_username() -> bool:
+		if __username.value != null:
+			return true
+		return false
 	func get_username() -> String:
-		return _username.value
+		return __username.value
 	func clear_username() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_username(value: String) -> void:
-		_username.value = value
+		__username.value = value
 
-	var _password: PBField
+	var __password: PBField
+	func has_password() -> bool:
+		if __password.value != null:
+			return true
+		return false
 	func get_password() -> String:
-		return _password.value
+		return __password.value
 	func clear_password() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_password(value: String) -> void:
-		_password.value = value
+		__password.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1859,21 +1934,25 @@ class LoginErr:
 	func _init():
 		var service
 
-		_reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _reason
-		data[_reason.tag] = service
+		service.field = __reason
+		data[__reason.tag] = service
 
 	var data = {}
 
-	var _reason: PBField
+	var __reason: PBField
+	func has_reason() -> bool:
+		if __reason.value != null:
+			return true
+		return false
 	func get_reason() -> String:
-		return _reason.value
+		return __reason.value
 	func clear_reason() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_reason(value: String) -> void:
-		_reason.value = value
+		__reason.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1900,49 +1979,61 @@ class Register:
 	func _init():
 		var service
 
-		_username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _username
-		data[_username.tag] = service
+		service.field = __username
+		data[__username.tag] = service
 
-		_password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _password
-		data[_password.tag] = service
+		service.field = __password
+		data[__password.tag] = service
 
-		_color = PBField.new("color", PB_DATA_TYPE.INT32, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT32])
+		__color = PBField.new("color", PB_DATA_TYPE.INT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT64])
 		service = PBServiceField.new()
-		service.field = _color
-		data[_color.tag] = service
+		service.field = __color
+		data[__color.tag] = service
 
 	var data = {}
 
-	var _username: PBField
+	var __username: PBField
+	func has_username() -> bool:
+		if __username.value != null:
+			return true
+		return false
 	func get_username() -> String:
-		return _username.value
+		return __username.value
 	func clear_username() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_username(value: String) -> void:
-		_username.value = value
+		__username.value = value
 
-	var _password: PBField
+	var __password: PBField
+	func has_password() -> bool:
+		if __password.value != null:
+			return true
+		return false
 	func get_password() -> String:
-		return _password.value
+		return __password.value
 	func clear_password() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_password(value: String) -> void:
-		_password.value = value
+		__password.value = value
 
-	var _color: PBField
+	var __color: PBField
+	func has_color() -> bool:
+		if __color.value != null:
+			return true
+		return false
 	func get_color() -> int:
-		return _color.value
+		return __color.value
 	func clear_color() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT32]
+		__color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT64]
 	func set_color(value: int) -> void:
-		_color.value = value
+		__color.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1996,21 +2087,25 @@ class RegisterErr:
 	func _init():
 		var service
 
-		_reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _reason
-		data[_reason.tag] = service
+		service.field = __reason
+		data[__reason.tag] = service
 
 	var data = {}
 
-	var _reason: PBField
+	var __reason: PBField
+	func has_reason() -> bool:
+		if __reason.value != null:
+			return true
+		return false
 	func get_reason() -> String:
-		return _reason.value
+		return __reason.value
 	func clear_reason() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_reason(value: String) -> void:
-		_reason.value = value
+		__reason.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2064,35 +2159,43 @@ class Disconnect:
 	func _init():
 		var service
 
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
+		service.field = __connection_id
+		data[__connection_id.tag] = service
 
-		_reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _reason
-		data[_reason.tag] = service
+		service.field = __reason
+		data[__reason.tag] = service
 
 	var data = {}
 
-	var _connection_id: PBField
+	var __connection_id: PBField
+	func has_connection_id() -> bool:
+		if __connection_id.value != null:
+			return true
+		return false
 	func get_connection_id() -> String:
-		return _connection_id.value
+		return __connection_id.value
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
-		_connection_id.value = value
+		__connection_id.value = value
 
-	var _reason: PBField
+	var __reason: PBField
+	func has_reason() -> bool:
+		if __reason.value != null:
+			return true
+		return false
 	func get_reason() -> String:
-		return _reason.value
+		return __reason.value
 	func clear_reason() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_reason(value: String) -> void:
-		_reason.value = value
+		__reason.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2119,35 +2222,43 @@ class Chat:
 	func _init():
 		var service
 
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
+		service.field = __connection_id
+		data[__connection_id.tag] = service
 
-		_msg = PBField.new("msg", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__msg = PBField.new("msg", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _msg
-		data[_msg.tag] = service
+		service.field = __msg
+		data[__msg.tag] = service
 
 	var data = {}
 
-	var _connection_id: PBField
+	var __connection_id: PBField
+	func has_connection_id() -> bool:
+		if __connection_id.value != null:
+			return true
+		return false
 	func get_connection_id() -> String:
-		return _connection_id.value
+		return __connection_id.value
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
-		_connection_id.value = value
+		__connection_id.value = value
 
-	var _msg: PBField
+	var __msg: PBField
+	func has_msg() -> bool:
+		if __msg.value != null:
+			return true
+		return false
 	func get_msg() -> String:
-		return _msg.value
+		return __msg.value
 	func clear_msg() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_msg.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__msg.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_msg(value: String) -> void:
-		_msg.value = value
+		__msg.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2174,119 +2285,151 @@ class UpdatePlayer:
 	func _init():
 		var service
 
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
+		service.field = __connection_id
+		data[__connection_id.tag] = service
 
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _nickname
-		data[_nickname.tag] = service
+		service.field = __nickname
+		data[__nickname.tag] = service
 
-		_x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _x
-		data[_x.tag] = service
+		service.field = __x
+		data[__x.tag] = service
 
-		_y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _y
-		data[_y.tag] = service
+		service.field = __y
+		data[__y.tag] = service
 
-		_radius = PBField.new("radius", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__radius = PBField.new("radius", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _radius
-		data[_radius.tag] = service
+		service.field = __radius
+		data[__radius.tag] = service
 
-		_direction_angle = PBField.new("direction_angle", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__direction_angle = PBField.new("direction_angle", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _direction_angle
-		data[_direction_angle.tag] = service
+		service.field = __direction_angle
+		data[__direction_angle.tag] = service
 
-		_speed = PBField.new("speed", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__speed = PBField.new("speed", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _speed
-		data[_speed.tag] = service
+		service.field = __speed
+		data[__speed.tag] = service
 
-		_color = PBField.new("color", PB_DATA_TYPE.INT32, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT32])
+		__color = PBField.new("color", PB_DATA_TYPE.INT64, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT64])
 		service = PBServiceField.new()
-		service.field = _color
-		data[_color.tag] = service
+		service.field = __color
+		data[__color.tag] = service
 
 	var data = {}
 
-	var _connection_id: PBField
+	var __connection_id: PBField
+	func has_connection_id() -> bool:
+		if __connection_id.value != null:
+			return true
+		return false
 	func get_connection_id() -> String:
-		return _connection_id.value
+		return __connection_id.value
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
-		_connection_id.value = value
+		__connection_id.value = value
 
-	var _nickname: PBField
+	var __nickname: PBField
+	func has_nickname() -> bool:
+		if __nickname.value != null:
+			return true
+		return false
 	func get_nickname() -> String:
-		return _nickname.value
+		return __nickname.value
 	func clear_nickname() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value: String) -> void:
-		_nickname.value = value
+		__nickname.value = value
 
-	var _x: PBField
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
 	func get_x() -> float:
-		return _x.value
+		return __x.value
 	func clear_x() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_x(value: float) -> void:
-		_x.value = value
+		__x.value = value
 
-	var _y: PBField
+	var __y: PBField
+	func has_y() -> bool:
+		if __y.value != null:
+			return true
+		return false
 	func get_y() -> float:
-		return _y.value
+		return __y.value
 	func clear_y() -> void:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_y(value: float) -> void:
-		_y.value = value
+		__y.value = value
 
-	var _radius: PBField
+	var __radius: PBField
+	func has_radius() -> bool:
+		if __radius.value != null:
+			return true
+		return false
 	func get_radius() -> float:
-		return _radius.value
+		return __radius.value
 	func clear_radius() -> void:
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_radius(value: float) -> void:
-		_radius.value = value
+		__radius.value = value
 
-	var _direction_angle: PBField
+	var __direction_angle: PBField
+	func has_direction_angle() -> bool:
+		if __direction_angle.value != null:
+			return true
+		return false
 	func get_direction_angle() -> float:
-		return _direction_angle.value
+		return __direction_angle.value
 	func clear_direction_angle() -> void:
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_direction_angle(value: float) -> void:
-		_direction_angle.value = value
+		__direction_angle.value = value
 
-	var _speed: PBField
+	var __speed: PBField
+	func has_speed() -> bool:
+		if __speed.value != null:
+			return true
+		return false
 	func get_speed() -> float:
-		return _speed.value
+		return __speed.value
 	func clear_speed() -> void:
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_speed(value: float) -> void:
-		_speed.value = value
+		__speed.value = value
 
-	var _color: PBField
+	var __color: PBField
+	func has_color() -> bool:
+		if __color.value != null:
+			return true
+		return false
 	func get_color() -> int:
-		return _color.value
+		return __color.value
 	func clear_color() -> void:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT32]
+		__color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT64]
 	func set_color(value: int) -> void:
-		_color.value = value
+		__color.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2313,23 +2456,24 @@ class UpdatePlayerBatch:
 	func _init():
 		var service
 
-		_update_player_batch = PBField.new("update_player_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, [])
+		var __update_player_batch_default: Array[UpdatePlayer] = []
+		__update_player_batch = PBField.new("update_player_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, __update_player_batch_default)
 		service = PBServiceField.new()
-		service.field = _update_player_batch
+		service.field = __update_player_batch
 		service.func_ref = Callable(self, "add_update_player_batch")
-		data[_update_player_batch.tag] = service
+		data[__update_player_batch.tag] = service
 
 	var data = {}
 
-	var _update_player_batch: PBField
-	func get_update_player_batch() -> Array:
-		return _update_player_batch.value
+	var __update_player_batch: PBField
+	func get_update_player_batch() -> Array[UpdatePlayer]:
+		return __update_player_batch.value
 	func clear_update_player_batch() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_update_player_batch.value = []
+		__update_player_batch.value.clear()
 	func add_update_player_batch() -> UpdatePlayer:
 		var element = UpdatePlayer.new()
-		_update_player_batch.value.append(element)
+		__update_player_batch.value.append(element)
 		return element
 
 	func _to_string() -> String:
@@ -2357,21 +2501,25 @@ class UpdatePlayerDirectionAngle:
 	func _init():
 		var service
 
-		_direction_angle = PBField.new("direction_angle", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__direction_angle = PBField.new("direction_angle", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _direction_angle
-		data[_direction_angle.tag] = service
+		service.field = __direction_angle
+		data[__direction_angle.tag] = service
 
 	var data = {}
 
-	var _direction_angle: PBField
+	var __direction_angle: PBField
+	func has_direction_angle() -> bool:
+		if __direction_angle.value != null:
+			return true
+		return false
 	func get_direction_angle() -> float:
-		return _direction_angle.value
+		return __direction_angle.value
 	func clear_direction_angle() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_direction_angle(value: float) -> void:
-		_direction_angle.value = value
+		__direction_angle.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2398,63 +2546,79 @@ class UpdateSpore:
 	func _init():
 		var service
 
-		_id = PBField.new("id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__id = PBField.new("id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _id
-		data[_id.tag] = service
+		service.field = __id
+		data[__id.tag] = service
 
-		_x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _x
-		data[_x.tag] = service
+		service.field = __x
+		data[__x.tag] = service
 
-		_y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _y
-		data[_y.tag] = service
+		service.field = __y
+		data[__y.tag] = service
 
-		_radius = PBField.new("radius", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__radius = PBField.new("radius", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _radius
-		data[_radius.tag] = service
+		service.field = __radius
+		data[__radius.tag] = service
 
 	var data = {}
 
-	var _id: PBField
+	var __id: PBField
+	func has_id() -> bool:
+		if __id.value != null:
+			return true
+		return false
 	func get_id() -> String:
-		return _id.value
+		return __id.value
 	func clear_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_id(value: String) -> void:
-		_id.value = value
+		__id.value = value
 
-	var _x: PBField
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
 	func get_x() -> float:
-		return _x.value
+		return __x.value
 	func clear_x() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_x(value: float) -> void:
-		_x.value = value
+		__x.value = value
 
-	var _y: PBField
+	var __y: PBField
+	func has_y() -> bool:
+		if __y.value != null:
+			return true
+		return false
 	func get_y() -> float:
-		return _y.value
+		return __y.value
 	func clear_y() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_y(value: float) -> void:
-		_y.value = value
+		__y.value = value
 
-	var _radius: PBField
+	var __radius: PBField
+	func has_radius() -> bool:
+		if __radius.value != null:
+			return true
+		return false
 	func get_radius() -> float:
-		return _radius.value
+		return __radius.value
 	func clear_radius() -> void:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__radius.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_radius(value: float) -> void:
-		_radius.value = value
+		__radius.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2481,23 +2645,24 @@ class UpdateSporeBatch:
 	func _init():
 		var service
 
-		_update_spore_batch = PBField.new("update_spore_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, [])
+		var __update_spore_batch_default: Array[UpdateSpore] = []
+		__update_spore_batch = PBField.new("update_spore_batch", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, __update_spore_batch_default)
 		service = PBServiceField.new()
-		service.field = _update_spore_batch
+		service.field = __update_spore_batch
 		service.func_ref = Callable(self, "add_update_spore_batch")
-		data[_update_spore_batch.tag] = service
+		data[__update_spore_batch.tag] = service
 
 	var data = {}
 
-	var _update_spore_batch: PBField
-	func get_update_spore_batch() -> Array:
-		return _update_spore_batch.value
+	var __update_spore_batch: PBField
+	func get_update_spore_batch() -> Array[UpdateSpore]:
+		return __update_spore_batch.value
 	func clear_update_spore_batch() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_update_spore_batch.value = []
+		__update_spore_batch.value.clear()
 	func add_update_spore_batch() -> UpdateSpore:
 		var element = UpdateSpore.new()
-		_update_spore_batch.value.append(element)
+		__update_spore_batch.value.append(element)
 		return element
 
 	func _to_string() -> String:
@@ -2525,35 +2690,43 @@ class ConsumeSpore:
 	func _init():
 		var service
 
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
+		service.field = __connection_id
+		data[__connection_id.tag] = service
 
-		_spore_id = PBField.new("spore_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__spore_id = PBField.new("spore_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _spore_id
-		data[_spore_id.tag] = service
+		service.field = __spore_id
+		data[__spore_id.tag] = service
 
 	var data = {}
 
-	var _connection_id: PBField
+	var __connection_id: PBField
+	func has_connection_id() -> bool:
+		if __connection_id.value != null:
+			return true
+		return false
 	func get_connection_id() -> String:
-		return _connection_id.value
+		return __connection_id.value
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
-		_connection_id.value = value
+		__connection_id.value = value
 
-	var _spore_id: PBField
+	var __spore_id: PBField
+	func has_spore_id() -> bool:
+		if __spore_id.value != null:
+			return true
+		return false
 	func get_spore_id() -> String:
-		return _spore_id.value
+		return __spore_id.value
 	func clear_spore_id() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_spore_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__spore_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_spore_id(value: String) -> void:
-		_spore_id.value = value
+		__spore_id.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2580,35 +2753,43 @@ class ConsumePlayer:
 	func _init():
 		var service
 
-		_connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__connection_id = PBField.new("connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _connection_id
-		data[_connection_id.tag] = service
+		service.field = __connection_id
+		data[__connection_id.tag] = service
 
-		_victim_connection_id = PBField.new("victim_connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__victim_connection_id = PBField.new("victim_connection_id", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _victim_connection_id
-		data[_victim_connection_id.tag] = service
+		service.field = __victim_connection_id
+		data[__victim_connection_id.tag] = service
 
 	var data = {}
 
-	var _connection_id: PBField
+	var __connection_id: PBField
+	func has_connection_id() -> bool:
+		if __connection_id.value != null:
+			return true
+		return false
 	func get_connection_id() -> String:
-		return _connection_id.value
+		return __connection_id.value
 	func clear_connection_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_connection_id(value: String) -> void:
-		_connection_id.value = value
+		__connection_id.value = value
 
-	var _victim_connection_id: PBField
+	var __victim_connection_id: PBField
+	func has_victim_connection_id() -> bool:
+		if __victim_connection_id.value != null:
+			return true
+		return false
 	func get_victim_connection_id() -> String:
-		return _victim_connection_id.value
+		return __victim_connection_id.value
 	func clear_victim_connection_id() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_victim_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__victim_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_victim_connection_id(value: String) -> void:
-		_victim_connection_id.value = value
+		__victim_connection_id.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2662,49 +2843,61 @@ class LeaderboardEntry:
 	func _init():
 		var service
 
-		_rank = PBField.new("rank", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__rank = PBField.new("rank", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _rank
-		data[_rank.tag] = service
+		service.field = __rank
+		data[__rank.tag] = service
 
-		_player_nickname = PBField.new("player_nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__player_nickname = PBField.new("player_nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _player_nickname
-		data[_player_nickname.tag] = service
+		service.field = __player_nickname
+		data[__player_nickname.tag] = service
 
-		_score = PBField.new("score", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__score = PBField.new("score", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _score
-		data[_score.tag] = service
+		service.field = __score
+		data[__score.tag] = service
 
 	var data = {}
 
-	var _rank: PBField
+	var __rank: PBField
+	func has_rank() -> bool:
+		if __rank.value != null:
+			return true
+		return false
 	func get_rank() -> int:
-		return _rank.value
+		return __rank.value
 	func clear_rank() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_rank.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__rank.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_rank(value: int) -> void:
-		_rank.value = value
+		__rank.value = value
 
-	var _player_nickname: PBField
+	var __player_nickname: PBField
+	func has_player_nickname() -> bool:
+		if __player_nickname.value != null:
+			return true
+		return false
 	func get_player_nickname() -> String:
-		return _player_nickname.value
+		return __player_nickname.value
 	func clear_player_nickname() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_player_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__player_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_player_nickname(value: String) -> void:
-		_player_nickname.value = value
+		__player_nickname.value = value
 
-	var _score: PBField
+	var __score: PBField
+	func has_score() -> bool:
+		if __score.value != null:
+			return true
+		return false
 	func get_score() -> int:
-		return _score.value
+		return __score.value
 	func clear_score() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_score.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__score.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_score(value: int) -> void:
-		_score.value = value
+		__score.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2731,23 +2924,24 @@ class LeaderboardResponse:
 	func _init():
 		var service
 
-		_leaderboard_entry_list = PBField.new("leaderboard_entry_list", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, [])
+		var __leaderboard_entry_list_default: Array[LeaderboardEntry] = []
+		__leaderboard_entry_list = PBField.new("leaderboard_entry_list", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, __leaderboard_entry_list_default)
 		service = PBServiceField.new()
-		service.field = _leaderboard_entry_list
+		service.field = __leaderboard_entry_list
 		service.func_ref = Callable(self, "add_leaderboard_entry_list")
-		data[_leaderboard_entry_list.tag] = service
+		data[__leaderboard_entry_list.tag] = service
 
 	var data = {}
 
-	var _leaderboard_entry_list: PBField
-	func get_leaderboard_entry_list() -> Array:
-		return _leaderboard_entry_list.value
+	var __leaderboard_entry_list: PBField
+	func get_leaderboard_entry_list() -> Array[LeaderboardEntry]:
+		return __leaderboard_entry_list.value
 	func clear_leaderboard_entry_list() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_leaderboard_entry_list.value = []
+		__leaderboard_entry_list.value.clear()
 	func add_leaderboard_entry_list() -> LeaderboardEntry:
 		var element = LeaderboardEntry.new()
-		_leaderboard_entry_list.value.append(element)
+		__leaderboard_entry_list.value.append(element)
 		return element
 
 	func _to_string() -> String:

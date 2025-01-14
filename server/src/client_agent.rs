@@ -288,7 +288,7 @@ async fn handle_client_reader_packet(
             proto::packet::Data::Register(register) => {
                 let username = register.username;
                 let password = register.password;
-                let color = register.color as i64;
+                let color = register.color;
 
                 let mut transaction = match db_pool.begin().await {
                     Ok(transaction) => transaction,
@@ -406,7 +406,7 @@ async fn handle_client_reader_packet(
                     connection_id,
                     player_db_id: db_player.id,
                     nickname: db_player.nickname.clone(),
-                    color: db_player.color as i32,
+                    color: db_player.color,
                 });
             }
             proto::packet::Data::Chat(chat) => {

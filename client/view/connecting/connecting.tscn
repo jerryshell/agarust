@@ -1,7 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://i8esfsijgi4"]
+[gd_scene load_steps=6 format=3 uid="uid://i8esfsijgi4"]
 
 [ext_resource type="Script" path="res://view/connecting/connecting.gd" id="1_36lmk"]
-[ext_resource type="PackedScene" uid="uid://brcr5qfnvbrao" path="res://view/login/login.tscn" id="2_4whc4"]
 [ext_resource type="Shader" path="res://assets/background_effect.gdshader" id="3_08j1f"]
 [ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_5br80"]
 
@@ -15,7 +14,6 @@ font_size = 64
 
 [node name="Connection" type="Node2D"]
 script = ExtResource("1_36lmk")
-login_scene = ExtResource("2_4whc4")
 
 [node name="ParallaxBackground" type="Parallax2D" parent="."]
 repeat_size = Vector2(12000, 12000)

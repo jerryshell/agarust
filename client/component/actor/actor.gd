@@ -77,7 +77,7 @@ func _physics_process(delta) -> void:
 		_send_direction_angle()
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, radius, Color.BLUE_VIOLET)
+	draw_circle(Vector2.ZERO, radius, color)
 	if Global.show_server_position:
 		draw_circle(server_position - position, radius, Color.WHEAT)
 

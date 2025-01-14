@@ -1,8 +1,5 @@
 extends Node2D
 
-@export
-var login_scene: PackedScene
-
 func _ready() -> void:
 	WsClient.connect_to_server(Global.server_url)
 	WsClient.connected.connect(_on_ws_connected)
@@ -18,4 +15,4 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 
 func _handle_hello_msg(hello_msg: Global.proto.Hello) -> void:
 	Global.connection_id = hello_msg.get_connection_id()
-	get_tree().change_scene_to_packed(login_scene)
+	get_tree().change_scene_to_file("res://view/login/login.tscn")

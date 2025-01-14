@@ -14,11 +14,11 @@ pub struct Player {
     pub radius: f64,
     pub direction_angle: f64,
     pub speed: f64,
-    pub color: i32,
+    pub color: i64,
 }
 
 impl Player {
-    pub fn random(db_id: i64, connection_id: String, nickname: String, color: i32) -> Self {
+    pub fn random(db_id: i64, connection_id: String, nickname: String, color: i64) -> Self {
         Self {
             db_id,
             connection_id,
