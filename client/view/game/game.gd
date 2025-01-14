@@ -82,7 +82,7 @@ func _handle_update_player_msg(update_player_msg: Global.proto.UpdatePlayer) -> 
 	var speed := update_player_msg.get_speed()
 	var color_hex := update_player_msg.get_color()
 
-	var color := Color.hex(color_hex)
+	var color := Color.hex64(color_hex)
 	var is_player := actor_connection_id == Global.connection_id
 
 	if actor_connection_id not in player_map:
