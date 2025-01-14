@@ -3,7 +3,7 @@
 pub struct Packet {
     #[prost(
         oneof = "packet::Data",
-        tags = "10, 20, 30, 40, 50, 60, 70, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19"
     )]
     pub data: ::core::option::Option<packet::Data>,
 }
@@ -11,43 +11,43 @@ pub struct Packet {
 pub mod packet {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Data {
-        #[prost(message, tag = "10")]
+        #[prost(message, tag = "1")]
         Hello(super::Hello),
-        #[prost(message, tag = "20")]
+        #[prost(message, tag = "2")]
         Login(super::Login),
-        #[prost(message, tag = "30")]
+        #[prost(message, tag = "3")]
         LoginOk(super::LoginOk),
-        #[prost(message, tag = "40")]
+        #[prost(message, tag = "4")]
         LoginErr(super::LoginErr),
-        #[prost(message, tag = "50")]
+        #[prost(message, tag = "5")]
         Register(super::Register),
-        #[prost(message, tag = "60")]
+        #[prost(message, tag = "6")]
         RegisterOk(super::RegisterOk),
-        #[prost(message, tag = "70")]
+        #[prost(message, tag = "7")]
         RegisterErr(super::RegisterErr),
-        #[prost(message, tag = "90")]
+        #[prost(message, tag = "8")]
         Join(super::Join),
-        #[prost(message, tag = "100")]
+        #[prost(message, tag = "9")]
         Disconnect(super::Disconnect),
-        #[prost(message, tag = "110")]
+        #[prost(message, tag = "10")]
         Chat(super::Chat),
-        #[prost(message, tag = "120")]
+        #[prost(message, tag = "11")]
         UpdatePlayer(super::UpdatePlayer),
-        #[prost(message, tag = "130")]
+        #[prost(message, tag = "12")]
         UpdatePlayerBatch(super::UpdatePlayerBatch),
-        #[prost(message, tag = "140")]
+        #[prost(message, tag = "13")]
         UpdatePlayerDirectionAngle(super::UpdatePlayerDirectionAngle),
-        #[prost(message, tag = "150")]
+        #[prost(message, tag = "14")]
         UpdateSpore(super::UpdateSpore),
-        #[prost(message, tag = "160")]
+        #[prost(message, tag = "15")]
         UpdateSporeBatch(super::UpdateSporeBatch),
-        #[prost(message, tag = "170")]
+        #[prost(message, tag = "16")]
         ConsumeSpore(super::ConsumeSpore),
-        #[prost(message, tag = "180")]
+        #[prost(message, tag = "17")]
         ConsumePlayer(super::ConsumePlayer),
-        #[prost(message, tag = "190")]
+        #[prost(message, tag = "18")]
         LeaderboardRequest(super::LeaderboardRequest),
-        #[prost(message, tag = "200")]
+        #[prost(message, tag = "19")]
         LeaderboardResponse(super::LeaderboardResponse),
     }
 }
