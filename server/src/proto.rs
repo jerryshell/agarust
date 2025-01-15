@@ -122,6 +122,8 @@ pub struct UpdatePlayer {
     pub speed: f64,
     #[prost(int64, tag = "8")]
     pub color: i64,
+    #[prost(bool, tag = "9")]
+    pub is_rushing: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdatePlayerBatch {

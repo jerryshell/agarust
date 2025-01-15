@@ -291,7 +291,8 @@ impl Hub {
                         if player.rush_instant.is_some() {
                             return;
                         }
-                        let drop_mass = util::radius_to_mass(player.radius * 0.2);
+                        let player_mass = util::radius_to_mass(player.radius);
+                        let drop_mass = player_mass * 0.2;
                         if let Some(mass) = player.try_drop_mass(drop_mass) {
                             player.rush();
 

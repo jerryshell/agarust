@@ -55,6 +55,7 @@ pub fn update_player(player: &player::Player) -> proto::UpdatePlayer {
         direction_angle: player.direction_angle,
         speed: player.speed,
         color: player.color,
+        is_rushing: player.rush_instant.is_some(),
     }
 }
 

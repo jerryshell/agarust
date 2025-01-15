@@ -69,6 +69,7 @@ message UpdatePlayer {
   double direction_angle = 6;
   double speed = 7;
   int64 color = 8;
+  bool is_rushing = 9;
 }
 
 message UpdatePlayerBatch { repeated UpdatePlayer update_player_batch = 1; }
