@@ -16,12 +16,12 @@ const MAX_SPORE_COUNT: usize = 1000;
 #[derive(Debug, Clone)]
 pub struct Client {
     pub client_agent: client_agent::ClientAgent,
+    pub player: Option<player::Player>,
 }
 
 #[derive(Debug)]
 pub struct Hub {
     pub client_map: HashMap<Arc<str>, Client>,
-    pub player_map: HashMap<Arc<str>, player::Player>,
     pub spore_map: HashMap<String, spore::Spore>,
     pub command_sender: UnboundedSender<command::Command>,
     pub command_receiver: UnboundedReceiver<command::Command>,
@@ -33,7 +33,6 @@ impl Hub {
         let (command_sender, command_receiver) = unbounded_channel::<command::Command>();
         Self {
             client_map: HashMap::new(),
-            player_map: HashMap::new(),
             spore_map: HashMap::new(),
             command_sender,
             command_receiver,
@@ -70,8 +69,11 @@ impl Hub {
 
                 {
                     let connection_id = connection_id.clone();
-                    self.client_map
-                        .insert(connection_id, Client { client_agent });
+                    let client = Client {
+                        client_agent,
+                        player: None,
+                    };
+                    self.client_map.insert(connection_id, client);
                 }
 
                 let packet = proto_util::hello_packet(connection_id);
@@ -81,7 +83,6 @@ impl Hub {
                 info!("UnregisterClient: {:?}", connection_id);
 
                 self.client_map.remove(&connection_id);
-                self.player_map.remove(&connection_id);
 
                 let packet = proto_util::disconnect_packet(connection_id, "unregister".to_string());
                 let _ = self
@@ -96,20 +97,24 @@ impl Hub {
             } => {
                 info!(
                     "PlayerJoin: {:?} {:?} {:?} {:?}",
-                    player_db_id, connection_id, nickname, color
+                    connection_id, player_db_id, nickname, color
                 );
 
-                self.player_map.values().for_each(|online_player| {
-                    if online_player.db_id == player_db_id {
-                        if let Some(client) = self.client_map.get_mut(&online_player.connection_id)
-                        {
-                            let _ = client
-                                .client_agent
-                                .client_agent_command_sender
-                                .send(command::Command::DisconnectClinet);
+                self.client_map
+                    .values()
+                    .flat_map(|client| client.player.as_ref())
+                    .for_each(|online_player| {
+                        if online_player.db_id == player_db_id {
+                            if let Some(online_client) =
+                                self.client_map.get(&online_player.connection_id)
+                            {
+                                let _ = online_client
+                                    .client_agent
+                                    .client_agent_command_sender
+                                    .send(command::Command::DisconnectClinet);
+                            }
                         }
-                    }
-                });
+                    });
 
                 let client = match self.client_map.get_mut(&connection_id) {
                     Some(client) => client,
@@ -122,23 +127,20 @@ impl Hub {
                 let player =
                     player::Player::random(player_db_id, connection_id.clone(), nickname, color);
 
-                let packet = proto_util::update_player_packet(&player);
-                let _ = client
-                    .client_agent
-                    .client_agent_command_sender
-                    .send(command::Command::SendPacket { packet });
+                let player_x = player.x;
+                let player_y = player.y;
+
+                client.player = Some(player);
 
                 let mut spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
                 spore_batch.sort_by_cached_key(|spore| {
-                    ((player.x - spore.x).powi(2) + (player.y - spore.y).powi(2)) as i64
+                    ((player_x - spore.x).powi(2) + (player_y - spore.y).powi(2)) as i64
                 });
 
                 let _ = client
                     .client_agent
                     .client_agent_command_sender
                     .send(command::Command::UpdateSporeBatch { spore_batch });
-
-                self.player_map.insert(connection_id, player);
             }
             command::Command::BroadcastPacket { packet } => {
                 let raw_data = packet.encode_to_vec();
@@ -147,16 +149,16 @@ impl Hub {
                     .send(command::Command::BroadcastRawData { raw_data });
             }
             command::Command::BroadcastRawData { raw_data } => {
-                self.client_map.iter().for_each(|(connection_id, client)| {
-                    if !self.player_map.contains_key(connection_id) {
-                        return;
-                    }
-                    let raw_data = raw_data.clone();
-                    let _ = client
-                        .client_agent
-                        .client_agent_command_sender
-                        .send(command::Command::SendRawData { raw_data });
-                });
+                self.client_map
+                    .values()
+                    .filter(|client| client.player.is_some())
+                    .for_each(|client| {
+                        let raw_data = raw_data.clone();
+                        let _ = client
+                            .client_agent
+                            .client_agent_command_sender
+                            .send(command::Command::SendRawData { raw_data });
+                    });
             }
             command::Command::Tick {
                 mut last_tick,
@@ -181,7 +183,13 @@ impl Hub {
                 });
             }
             command::Command::SyncPlayer => {
-                let packet = proto_util::update_player_batch_packet(&self.player_map);
+                let player_list = self
+                    .client_map
+                    .values()
+                    .filter_map(|client| client.player.as_ref())
+                    .collect::<Vec<_>>();
+
+                let packet = proto_util::update_player_batch_packet(&player_list);
                 let _ = self
                     .command_sender
                     .send(command::Command::BroadcastPacket { packet });
@@ -196,59 +204,64 @@ impl Hub {
                 connection_id,
                 direction_angle,
             } => {
-                if let Some(player) = self.player_map.get_mut(&connection_id) {
-                    player.direction_angle = direction_angle;
+                if let Some(client) = self.client_map.get_mut(&connection_id) {
+                    if let Some(player) = client.player.as_mut() {
+                        player.direction_angle = direction_angle;
+                    }
                 }
             }
             command::Command::ConsumeSpore {
                 connection_id,
                 spore_id,
             } => {
-                if let (Some(player), Some(spore), Some(client)) = (
-                    self.player_map.get_mut(&connection_id),
-                    self.spore_map.get_mut(&spore_id),
+                if let (Some(client), Some(spore)) = (
                     self.client_map.get_mut(&connection_id),
+                    self.spore_map.get_mut(&spore_id),
                 ) {
-                    let is_close = util::check_distance_is_close(
-                        player.x,
-                        player.y,
-                        player.radius,
-                        spore.x,
-                        spore.y,
-                        spore.radius,
-                    );
+                    if let Some(player) = client.player.as_mut() {
+                        let is_close = util::check_distance_is_close(
+                            player.x,
+                            player.y,
+                            player.radius,
+                            spore.x,
+                            spore.y,
+                            spore.radius,
+                        );
 
-                    if !is_close {
-                        warn!("consume spore error, distance too far");
-                        return;
+                        if !is_close {
+                            warn!("consume spore error, distance too far");
+                            return;
+                        }
+
+                        let spore_mass = util::radius_to_mass(spore.radius);
+                        player.increase_mass(spore_mass);
+
+                        self.spore_map.remove(&spore_id);
+
+                        let packet = proto_util::consume_spore_packet(connection_id, spore_id);
+                        let _ = self
+                            .command_sender
+                            .send(command::Command::BroadcastPacket { packet });
+
+                        let current_score = util::radius_to_mass(player.radius) as i64;
+                        let _ = client
+                            .client_agent
+                            .client_agent_command_sender
+                            .send(command::Command::SyncPlayerBestScore { current_score });
                     }
-
-                    let spore_mass = util::radius_to_mass(spore.radius);
-                    player.increase_mass(spore_mass);
-
-                    self.spore_map.remove(&spore_id);
-
-                    let packet = proto_util::consume_spore_packet(connection_id, spore_id);
-                    let _ = self
-                        .command_sender
-                        .send(command::Command::BroadcastPacket { packet });
-
-                    let current_score = util::radius_to_mass(player.radius) as i64;
-                    let _ = client
-                        .client_agent
-                        .client_agent_command_sender
-                        .send(command::Command::SyncPlayerBestScore { current_score });
                 }
             }
             command::Command::ConsumePlayer {
                 connection_id,
                 victim_connection_id,
             } => {
-                match self
-                    .player_map
+                if let [Some(player_client), Some(victim_client)] = self
+                    .client_map
                     .get_many_mut([&connection_id, &victim_connection_id])
                 {
-                    [Some(player), Some(victim)] => {
+                    if let (Some(player), Some(victim)) =
+                        (&mut player_client.player, &mut victim_client.player)
+                    {
                         let is_close = util::check_distance_is_close(
                             player.x,
                             player.y,
@@ -267,9 +280,6 @@ impl Hub {
                         player.increase_mass(victim_mass);
 
                         victim.respawn();
-                    }
-                    _ => {
-                        warn!("not found player or victim in player_map, connection_id: {connection_id:?}, victim_connection_id: {victim_connection_id:?}");
                     }
                 }
             }
@@ -298,29 +308,32 @@ impl Hub {
 
     fn tick_player(&mut self, delta: Duration) {
         let delta_secs = delta.as_secs_f64();
-        self.player_map.values_mut().for_each(|player| {
-            let new_x = player.x + player.speed * player.direction_angle.cos() * delta_secs;
-            let new_y = player.y + player.speed * player.direction_angle.sin() * delta_secs;
+        self.client_map
+            .values_mut()
+            .flat_map(|client| client.player.as_mut())
+            .for_each(|player| {
+                let new_x = player.x + player.speed * player.direction_angle.cos() * delta_secs;
+                let new_y = player.y + player.speed * player.direction_angle.sin() * delta_secs;
 
-            player.x = new_x;
-            player.y = new_y;
+                player.x = new_x;
+                player.y = new_y;
 
-            let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 2.0);
-            if rand::random::<f64>() < drop_mass_probability {
-                if let Some(mass) = player.try_drop_mass() {
-                    let mut spore = spore::Spore::random();
-                    spore.x = player.x;
-                    spore.y = player.y;
-                    spore.radius = util::mass_to_radius(mass);
+                let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 2.0);
+                if rand::random::<f64>() < drop_mass_probability {
+                    if let Some(mass) = player.try_drop_mass() {
+                        let mut spore = spore::Spore::random();
+                        spore.x = player.x;
+                        spore.y = player.y;
+                        spore.radius = util::mass_to_radius(mass);
 
-                    let packet = proto_util::update_spore_pack(&spore);
-                    let _ = self
-                        .command_sender
-                        .send(command::Command::BroadcastPacket { packet });
+                        let packet = proto_util::update_spore_pack(&spore);
+                        let _ = self
+                            .command_sender
+                            .send(command::Command::BroadcastPacket { packet });
 
-                    self.spore_map.insert(spore.id.clone(), spore);
+                        self.spore_map.insert(spore.id.clone(), spore);
+                    }
                 }
-            }
-        });
+            });
     }
 }

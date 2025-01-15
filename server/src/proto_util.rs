@@ -1,7 +1,5 @@
 use crate::*;
 
-use hashbrown::HashMap;
-
 pub fn hello_packet(connection_id: Arc<str>) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::Hello(proto::Hello {
@@ -64,10 +62,10 @@ pub fn update_player_packet(player: &player::Player) -> proto::Packet {
     }
 }
 
-pub fn update_player_batch_packet(player_map: &HashMap<Arc<str>, player::Player>) -> proto::Packet {
-    let update_player_batch = player_map
-        .values()
-        .map(update_player)
+pub fn update_player_batch_packet(player_list: &[&player::Player]) -> proto::Packet {
+    let update_player_batch = player_list
+        .iter()
+        .map(|player| update_player(player))
         .collect::<Vec<proto::UpdatePlayer>>();
     proto::Packet {
         data: Some(proto::packet::Data::UpdatePlayerBatch(
