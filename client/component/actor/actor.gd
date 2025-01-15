@@ -21,6 +21,7 @@ var radius: float:
 	set(new_radius):
 		radius = new_radius
 		collision_shape.shape.set_radius(radius)
+		queue_redraw()
 
 var target_zoom := 2.0
 var furthest_zoom_allowed := target_zoom
@@ -57,7 +58,6 @@ func _process(_delta: float) -> void:
 	if not is_equal_approx(radius, server_radius):
 		radius = lerp(radius, server_radius, 0.05)
 		_update_zoom()
-		queue_redraw()
 
 func _physics_process(delta) -> void:
 	position += direction * speed * delta
