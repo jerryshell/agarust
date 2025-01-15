@@ -5,6 +5,10 @@ const INIT_RADIUS: f64 = 20.0;
 const INIT_DIRECTION_ANGLE: f64 = 0.0;
 const INIT_SPEED: f64 = 150.0;
 
+fn random_xy() -> f64 {
+    (rand::random::<f64>() * 2.0 - 1.0) * PLAYER_BOUND
+}
+
 #[derive(Debug, Clone)]
 pub struct Player {
     pub db_id: i64,
@@ -24,8 +28,8 @@ impl Player {
             db_id,
             connection_id,
             nickname,
-            x: (rand::random::<f64>() * 2.0 - 1.0) * PLAYER_BOUND,
-            y: (rand::random::<f64>() * 2.0 - 1.0) * PLAYER_BOUND,
+            x: random_xy(),
+            y: random_xy(),
             radius: INIT_RADIUS,
             direction_angle: INIT_DIRECTION_ANGLE,
             speed: INIT_SPEED,
@@ -34,8 +38,8 @@ impl Player {
     }
 
     pub fn respawn(&mut self) {
-        self.x = 0.0;
-        self.y = 0.0;
+        self.x = random_xy();
+        self.y = random_xy();
         self.radius = INIT_RADIUS;
         self.speed = INIT_SPEED;
     }
