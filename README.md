@@ -4,6 +4,11 @@ _Agarust_ is a multiplayer online game powered by Godot 4 and Rust 🤖🦀 insp
 
 Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/agarust)
 
+- Use the mouse to control the direction of movement
+- Press the left mouse button to sprint, sprinting will consume 20% of the mass, the mass of the player is too small to sprint
+- Mass difference is more than 1.5 times to eat another player
+- Mass and radius conversion formula: `Mass = PI * Radius * Radius`
+
 ## Tech stack
 
 - Godot 4
