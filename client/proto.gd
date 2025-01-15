@@ -791,13 +791,19 @@ class Packet:
 		service.func_ref = Callable(self, "new_consume_player")
 		data[__consume_player.tag] = service
 
-		__leaderboard_request = PBField.new("leaderboard_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 18, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__rush = PBField.new("rush", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 18, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __rush
+		service.func_ref = Callable(self, "new_rush")
+		data[__rush.tag] = service
+
+		__leaderboard_request = PBField.new("leaderboard_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 19, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __leaderboard_request
 		service.func_ref = Callable(self, "new_leaderboard_request")
 		data[__leaderboard_request.tag] = service
 
-		__leaderboard_response = PBField.new("leaderboard_response", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 19, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__leaderboard_response = PBField.new("leaderboard_response", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 20, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __leaderboard_response
 		service.func_ref = Callable(self, "new_leaderboard_response")
@@ -849,10 +855,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__hello.value = Hello.new()
 		return __hello.value
 
@@ -900,10 +908,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__login.value = Login.new()
 		return __login.value
 
@@ -951,10 +961,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__login_ok.value = LoginOk.new()
 		return __login_ok.value
 
@@ -1002,10 +1014,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__login_err.value = LoginErr.new()
 		return __login_err.value
 
@@ -1053,10 +1067,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__register.value = Register.new()
 		return __register.value
 
@@ -1104,10 +1120,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__register_ok.value = RegisterOk.new()
 		return __register_ok.value
 
@@ -1155,10 +1173,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__register_err.value = RegisterErr.new()
 		return __register_err.value
 
@@ -1206,10 +1226,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__join.value = Join.new()
 		return __join.value
 
@@ -1257,10 +1279,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__disconnect.value = Disconnect.new()
 		return __disconnect.value
 
@@ -1308,10 +1332,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__chat.value = Chat.new()
 		return __chat.value
 
@@ -1359,10 +1385,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_player.value = UpdatePlayer.new()
 		return __update_player.value
 
@@ -1410,10 +1438,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_player_batch.value = UpdatePlayerBatch.new()
 		return __update_player_batch.value
 
@@ -1461,10 +1491,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_player_direction_angle.value = UpdatePlayerDirectionAngle.new()
 		return __update_player_direction_angle.value
 
@@ -1512,10 +1544,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_spore.value = UpdateSpore.new()
 		return __update_spore.value
 
@@ -1563,10 +1597,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_spore_batch.value = UpdateSporeBatch.new()
 		return __update_spore_batch.value
 
@@ -1614,10 +1650,12 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.FILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__consume_spore.value = ConsumeSpore.new()
 		return __consume_spore.value
 
@@ -1665,12 +1703,67 @@ class Packet:
 		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		data[17].state = PB_SERVICE_STATE.FILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = ConsumePlayer.new()
 		return __consume_player.value
+
+	var __rush: PBField
+	func has_rush() -> bool:
+		if __rush.value != null:
+			return true
+		return false
+	func get_rush() -> Rush:
+		return __rush.value
+	func clear_rush() -> void:
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_rush() -> Rush:
+		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__login.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__login_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__login_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__register.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__register_ok.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__register_err.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__join.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__disconnect.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__update_player_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__update_player_direction_angle.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		__update_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__update_spore_batch.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__consume_spore.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		data[18].state = PB_SERVICE_STATE.FILLED
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__rush.value = Rush.new()
+		return __rush.value
 
 	var __leaderboard_request: PBField
 	func has_leaderboard_request() -> bool:
@@ -1680,7 +1773,7 @@ class Packet:
 	func get_leaderboard_request() -> LeaderboardRequest:
 		return __leaderboard_request.value
 	func clear_leaderboard_request() -> void:
-		data[18].state = PB_SERVICE_STATE.UNFILLED
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_leaderboard_request() -> LeaderboardRequest:
 		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1717,9 +1810,11 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		data[18].state = PB_SERVICE_STATE.FILLED
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		data[19].state = PB_SERVICE_STATE.FILLED
 		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-		data[19].state = PB_SERVICE_STATE.UNFILLED
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__leaderboard_request.value = LeaderboardRequest.new()
 		return __leaderboard_request.value
 
@@ -1731,7 +1826,7 @@ class Packet:
 	func get_leaderboard_response() -> LeaderboardResponse:
 		return __leaderboard_response.value
 	func clear_leaderboard_response() -> void:
-		data[19].state = PB_SERVICE_STATE.UNFILLED
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__leaderboard_response.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_leaderboard_response() -> LeaderboardResponse:
 		__hello.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1768,9 +1863,11 @@ class Packet:
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__consume_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__rush.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		data[19].state = PB_SERVICE_STATE.FILLED
+		__leaderboard_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		data[20].state = PB_SERVICE_STATE.FILLED
 		__leaderboard_response.value = LeaderboardResponse.new()
 		return __leaderboard_response.value
 
@@ -2790,6 +2887,33 @@ class ConsumePlayer:
 		__victim_connection_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_victim_connection_id(value: String) -> void:
 		__victim_connection_id.value = value
+
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+
+	func from_bytes(bytes: PackedByteArray, offset: int = 0, limit: int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+
+class Rush:
+	func _init():
+		var service
+
+	var data = {}
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

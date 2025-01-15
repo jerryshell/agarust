@@ -66,6 +66,9 @@ pub enum Command {
         connection_id: Arc<str>,
         victim_connection_id: Arc<str>,
     },
+    Rush {
+        connectin_id: Arc<str>,
+    },
     SpawnSpore {
         interval: Interval,
     },

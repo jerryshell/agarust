@@ -21,8 +21,9 @@ message Packet {
     UpdateSporeBatch update_spore_batch = 15;
     ConsumeSpore consume_spore = 16;
     ConsumePlayer consume_player = 17;
-    LeaderboardRequest leaderboard_request = 18;
-    LeaderboardResponse leaderboard_response = 19;
+    Rush rush = 18;
+    LeaderboardRequest leaderboard_request = 19;
+    LeaderboardResponse leaderboard_response = 20;
   }
 }
 
@@ -92,6 +93,8 @@ message ConsumePlayer {
   string connection_id = 1;
   string victim_connection_id = 2;
 }
+
+message Rush {}
 
 message LeaderboardRequest {}
 

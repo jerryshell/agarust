@@ -2,6 +2,7 @@ class_name Actor
 extends Area2D
 
 const ACTOR = preload("res://component/actor/actor.tscn")
+const zoom_speed := 0.1
 
 @onready var collision_shape: CollisionShape2D = %CollisionShape
 @onready var nameplate: Label = %Nameplate
@@ -21,6 +22,7 @@ var radius: float:
 	set(new_radius):
 		radius = new_radius
 		collision_shape.shape.set_radius(radius)
+		_update_zoom()
 		queue_redraw()
 
 var target_zoom := 2.0
@@ -57,7 +59,6 @@ func _process(_delta: float) -> void:
 		camera.zoom = lerp(camera.zoom, Vector2(1, 1) * target_zoom, 0.05)
 	if not is_equal_approx(radius, server_radius):
 		radius = lerp(radius, server_radius, 0.05)
-		_update_zoom()
 
 func _physics_process(delta) -> void:
 	position += direction * speed * delta
@@ -89,7 +90,8 @@ func _input(event):
 	if not is_player:
 		return
 
-	const zoom_speed := 0.1
+	if event.is_action_pressed("rush"):
+		_rush()
 
 	if event.is_action_pressed("zoom_in"):
 			target_zoom = min(4, target_zoom + zoom_speed)
@@ -117,3 +119,8 @@ func _update_zoom() -> void:
 
 func _update_nameplate_font_size():
 	nameplate.add_theme_font_size_override("font_size", max(16, radius / 2))
+
+func _rush():
+	var packet = Global.proto.Packet.new()
+	packet.new_rush()
+	WsClient.send(packet)

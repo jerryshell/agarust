@@ -282,6 +282,35 @@ impl Hub {
                     }
                 }
             }
+            command::Command::Rush { connectin_id } => {
+                if let Some(client) = self.client_map.get_mut(&connectin_id) {
+                    if let Some(player) = client.player.as_mut() {
+                        if player.radius < 20.0 {
+                            return;
+                        }
+                        if player.rush_instant.is_some() {
+                            return;
+                        }
+                        let drop_mass = util::radius_to_mass(player.radius * 0.2);
+                        if let Some(mass) = player.try_drop_mass(drop_mass) {
+                            player.rush();
+
+                            let mut spore = spore::Spore::random();
+                            spore.x = player.x;
+                            spore.y = player.y;
+                            spore.radius = util::mass_to_radius(mass);
+
+                            let packet = proto_util::update_spore_pack(&spore);
+
+                            self.spore_map.insert(spore.id.clone(), spore);
+
+                            let _ = self
+                                .command_sender
+                                .send(command::Command::BroadcastPacket { packet });
+                        }
+                    }
+                }
+            }
             command::Command::SpawnSpore { mut interval } => {
                 if self.spore_map.len() < MAX_SPORE_COUNT {
                     let spore = spore::Spore::random();
@@ -307,33 +336,31 @@ impl Hub {
     }
 
     fn tick_player(&mut self, delta: Duration) {
-        let delta_secs = delta.as_secs_f64();
-        self.client_map
+        for player in self
+            .client_map
             .values_mut()
             .flat_map(|client| client.player.as_mut())
-            .for_each(|player| {
-                let new_x = player.x + player.speed * player.direction_angle.cos() * delta_secs;
-                let new_y = player.y + player.speed * player.direction_angle.sin() * delta_secs;
+        {
+            player.tick(delta);
 
-                player.x = new_x;
-                player.y = new_y;
+            let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 2.0);
+            if rand::random::<f64>() < drop_mass_probability {
+                let drop_mass = util::radius_to_mass((5.0 + player.radius / 50.0).min(15.0));
+                if let Some(mass) = player.try_drop_mass(drop_mass) {
+                    let mut spore = spore::Spore::random();
+                    spore.x = player.x;
+                    spore.y = player.y;
+                    spore.radius = util::mass_to_radius(mass);
 
-                let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 2.0);
-                if rand::random::<f64>() < drop_mass_probability {
-                    if let Some(mass) = player.try_drop_mass() {
-                        let mut spore = spore::Spore::random();
-                        spore.x = player.x;
-                        spore.y = player.y;
-                        spore.radius = util::mass_to_radius(mass);
+                    let packet = proto_util::update_spore_pack(&spore);
 
-                        let packet = proto_util::update_spore_pack(&spore);
-                        let _ = self
-                            .command_sender
-                            .send(command::Command::BroadcastPacket { packet });
+                    self.spore_map.insert(spore.id.clone(), spore);
 
-                        self.spore_map.insert(spore.id.clone(), spore);
-                    }
+                    let _ = self
+                        .command_sender
+                        .send(command::Command::BroadcastPacket { packet });
                 }
-            });
+            }
+        }
     }
 }

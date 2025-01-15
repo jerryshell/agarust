@@ -3,7 +3,7 @@
 pub struct Packet {
     #[prost(
         oneof = "packet::Data",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20"
     )]
     pub data: ::core::option::Option<packet::Data>,
 }
@@ -46,8 +46,10 @@ pub mod packet {
         #[prost(message, tag = "17")]
         ConsumePlayer(super::ConsumePlayer),
         #[prost(message, tag = "18")]
-        LeaderboardRequest(super::LeaderboardRequest),
+        Rush(super::Rush),
         #[prost(message, tag = "19")]
+        LeaderboardRequest(super::LeaderboardRequest),
+        #[prost(message, tag = "20")]
         LeaderboardResponse(super::LeaderboardResponse),
     }
 }
@@ -161,6 +163,8 @@ pub struct ConsumePlayer {
     #[prost(string, tag = "2")]
     pub victim_connection_id: ::prost::alloc::string::String,
 }
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Rush {}
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct LeaderboardRequest {}
 #[derive(Clone, PartialEq, ::prost::Message)]

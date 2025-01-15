@@ -450,6 +450,13 @@ async fn handle_client_reader_packet(client_agent: Arc<ClientAgent>, packet: pro
                         victim_connection_id: consume_player.victim_connection_id.into(),
                     });
             }
+            proto::packet::Data::Rush(_) => {
+                let _ = client_agent
+                    .hub_command_sender
+                    .send(command::Command::Rush {
+                        connectin_id: client_agent.connection_id.clone(),
+                    });
+            }
             proto::packet::Data::Disconnect(_) => {
                 let _ = client_agent
                     .client_agent_command_sender
