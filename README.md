@@ -7,7 +7,7 @@ Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/aga
 ## Tech stack
 
 - Godot 4
-- Rust
+- Rust (Tokio asynchronous runtime)
 - Protocol Buffers
 - WebScoket
 - SQLite
