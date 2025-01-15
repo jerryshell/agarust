@@ -24,23 +24,23 @@ pub struct Hub {
     pub client_map: HashMap<Arc<str>, Client>,
     pub spore_map: HashMap<String, spore::Spore>,
     pub command_sender: UnboundedSender<command::Command>,
-    pub command_receiver: UnboundedReceiver<command::Command>,
     pub db_pool: sqlx::Pool<sqlx::Sqlite>,
 }
 
 impl Hub {
-    pub fn new(db_pool: sqlx::Pool<sqlx::Sqlite>) -> Self {
+    pub fn new(db_pool: sqlx::Pool<sqlx::Sqlite>) -> (Self, UnboundedReceiver<command::Command>) {
         let (command_sender, command_receiver) = unbounded_channel::<command::Command>();
-        Self {
+        let hub = Self {
             client_map: HashMap::new(),
             spore_map: HashMap::new(),
             command_sender,
-            command_receiver,
             db_pool,
-        }
+        };
+
+        (hub, command_receiver)
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self, mut command_receiver: UnboundedReceiver<command::Command>) {
         for _ in 0..MAX_SPORE_COUNT {
             self.spawn_spore();
         }
@@ -54,7 +54,7 @@ impl Hub {
             interval: interval(SPAWN_SPORE_DURATION),
         });
 
-        while let Some(command) = self.command_receiver.recv().await {
+        while let Some(command) = command_receiver.recv().await {
             self.handle_command(command).await;
         }
     }
