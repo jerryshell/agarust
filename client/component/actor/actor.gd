@@ -83,7 +83,7 @@ func _physics_process(delta) -> void:
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, color)
 	if Global.show_server_position:
-		draw_circle(server_position - position, radius, Color.WHEAT)
+		draw_circle(server_position - position, radius, Color.WHEAT, false, 2.0)
 
 func _input(event):
 	if not is_player:
