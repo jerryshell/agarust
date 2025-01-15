@@ -410,7 +410,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     .send(command::Command::Join {
                         connection_id: client_agent.connection_id,
                         player_db_id: db_player.id,
-                        nickname: db_player.nickname.clone().into(),
+                        nickname: db_player.nickname.clone(),
                         color: db_player.color,
                     });
             }
@@ -466,7 +466,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         .enumerate()
                         .map(|(index, player)| command::LeaderboardEntry {
                             rank: (index + 1) as u64,
-                            player_nickname: player.nickname.clone().into(),
+                            player_nickname: player.nickname.clone(),
                             score: player.best_score as u64,
                         })
                         .collect::<Vec<_>>(),
