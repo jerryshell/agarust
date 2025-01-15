@@ -20,8 +20,8 @@ pub struct Client {
 
 #[derive(Debug)]
 pub struct Hub {
-    pub client_map: HashMap<String, Client>,
-    pub player_map: HashMap<String, player::Player>,
+    pub client_map: HashMap<Arc<str>, Client>,
+    pub player_map: HashMap<Arc<str>, player::Player>,
     pub spore_map: HashMap<String, spore::Spore>,
     pub command_sender: UnboundedSender<command::Command>,
     pub command_receiver: UnboundedReceiver<command::Command>,
@@ -65,15 +65,17 @@ impl Hub {
             command::Command::RegisterClientAgent { client_agent } => {
                 info!("RegisterClientAgent: {:?}", client_agent);
 
-                let packet = proto_util::hello_packet(client_agent.connection_id.to_string());
-                let _ = client_agent
-                    .client_agent_command_sender
-                    .send(command::Command::SendPacket { packet });
+                let connection_id = client_agent.connection_id.clone();
+                let client_agent_command_sender = client_agent.client_agent_command_sender.clone();
 
-                self.client_map.insert(
-                    client_agent.connection_id.to_string(),
-                    Client { client_agent },
-                );
+                {
+                    let connection_id = connection_id.clone();
+                    self.client_map
+                        .insert(connection_id, Client { client_agent });
+                }
+
+                let packet = proto_util::hello_packet(connection_id);
+                let _ = client_agent_command_sender.send(command::Command::SendPacket { packet });
             }
             command::Command::UnregisterClientAgent { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);

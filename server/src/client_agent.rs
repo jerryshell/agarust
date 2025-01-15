@@ -20,7 +20,7 @@ use tracing::{error, warn};
 #[derive(Debug, Clone)]
 pub struct ClientAgent {
     pub socket_addr: SocketAddr,
-    pub connection_id: Arc<String>,
+    pub connection_id: Arc<str>,
     pub db_pool: sqlx::Pool<sqlx::Sqlite>,
     pub hub_command_sender: UnboundedSender<command::Command>,
     pub client_agent_command_sender: UnboundedSender<command::Command>,
@@ -30,7 +30,7 @@ pub struct ClientAgent {
 impl ClientAgent {
     pub fn new(
         socket_addr: SocketAddr,
-        connection_id: Arc<String>,
+        connection_id: Arc<str>,
         db_pool: sqlx::Pool<sqlx::Sqlite>,
         hub_command_sender: UnboundedSender<command::Command>,
     ) -> (Self, UnboundedReceiver<command::Command>) {
@@ -73,15 +73,6 @@ pub async fn run(
             client_reader_pump(client_agent, client_reader).await
         })
     };
-
-    let client_agent_register_rsult = client_agent
-        .hub_command_sender
-        .clone()
-        .send(command::Command::RegisterClientAgent { client_agent });
-    if let Err(error) = client_agent_register_rsult {
-        error!("client_agent_register_rsult error: {:?}", error);
-        return;
-    }
 
     tokio::select! {
         _ = (&mut client_reader_task) => client_writer_task.abort(),
@@ -424,7 +415,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::Join {
-                        connection_id: client_agent.connection_id.to_string(),
+                        connection_id: client_agent.connection_id,
                         player_db_id: db_player.id,
                         nickname: db_player.nickname.clone(),
                         color: db_player.color,
@@ -434,14 +425,14 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::Chat {
-                        connection_id: client_agent.connection_id.to_string(),
+                        connection_id: client_agent.connection_id,
                         msg: chat.msg,
                     });
             }
             proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
                 let _ = client_agent.hub_command_sender.send(
                     command::Command::UpdatePlayerDirectionAngle {
-                        connection_id: client_agent.connection_id.to_string(),
+                        connection_id: client_agent.connection_id,
                         direction_angle: update_player_direction_angle.direction_angle,
                     },
                 );
@@ -450,7 +441,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::ConsumeSpore {
-                        connection_id: client_agent.connection_id.to_string(),
+                        connection_id: client_agent.connection_id,
                         spore_id: consume_spore.spore_id,
                     });
             }
@@ -458,8 +449,8 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::ConsumePlayer {
-                        connection_id: client_agent.connection_id.to_string(),
-                        victim_connection_id: consume_player.victim_connection_id,
+                        connection_id: client_agent.connection_id,
+                        victim_connection_id: consume_player.victim_connection_id.into(),
                     });
             }
             proto::packet::Data::Disconnect(_) => {

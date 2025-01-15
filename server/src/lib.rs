@@ -9,35 +9,51 @@ pub mod spore;
 pub mod util;
 
 use nanoid::nanoid;
-use std::{error::Error, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::mpsc::UnboundedSender};
-use tracing::info;
+use tracing::{error, info};
 
 pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,
     socket_addr: SocketAddr,
     db_pool: sqlx::Pool<sqlx::Sqlite>,
     hub_command_sender: UnboundedSender<command::Command>,
-) -> Result<(), Box<dyn Error>> {
-    let ws_stream = tokio_tungstenite::accept_async(tcp_stream).await?;
+) {
+    let ws_stream = match tokio_tungstenite::accept_async(tcp_stream).await {
+        Ok(ws_stream) => ws_stream,
+        Err(e) => {
+            error!("tokio_tungstenite accept_async error {:?}", e);
+            return;
+        }
+    };
     info!("Accept WebSocket stream: {:?}", ws_stream);
 
-    let connection_id = nanoid!();
+    let connection_id: Arc<str> = Arc::from(nanoid!().as_str());
+
+    let (client_agent, client_agent_command_receiver) = client_agent::ClientAgent::new(
+        socket_addr,
+        connection_id.clone(),
+        db_pool,
+        hub_command_sender.clone(),
+    );
 
     let client_agent_task = {
-        let connection_id = Arc::new(connection_id.clone());
-        let hub_command_sender = hub_command_sender.clone();
-        let (client_agent, client_agent_command_receiver) =
-            client_agent::ClientAgent::new(socket_addr, connection_id, db_pool, hub_command_sender);
+        let client_agent = client_agent.clone();
         tokio::spawn(async move {
             client_agent::run(client_agent, client_agent_command_receiver, ws_stream).await
         })
     };
 
+    let client_agent_register_rsult = hub_command_sender
+        .clone()
+        .send(command::Command::RegisterClientAgent { client_agent });
+    if let Err(error) = client_agent_register_rsult {
+        error!("client_agent_register_rsult error: {:?}", error);
+        return;
+    }
+
     let _ = client_agent_task.await;
 
     let unregister_command = command::Command::UnregisterClientAgent { connection_id };
     let _ = hub_command_sender.send(unregister_command);
-
-    Ok(())
 }

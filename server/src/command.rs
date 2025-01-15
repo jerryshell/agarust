@@ -9,7 +9,7 @@ pub enum Command {
         client_agent: ClientAgent,
     },
     UnregisterClientAgent {
-        connection_id: String,
+        connection_id: Arc<str>,
     },
     Login {
         username: String,
@@ -21,7 +21,7 @@ pub enum Command {
         color: i64,
     },
     Join {
-        connection_id: String,
+        connection_id: Arc<str>,
         player_db_id: i64,
         nickname: String,
         color: i64,
@@ -48,23 +48,23 @@ pub enum Command {
         current_score: i64,
     },
     Chat {
-        connection_id: String,
+        connection_id: Arc<str>,
         msg: String,
     },
     UpdatePlayerDirectionAngle {
-        connection_id: String,
+        connection_id: Arc<str>,
         direction_angle: f64,
     },
     UpdateSporeBatch {
         spore_batch: Vec<spore::Spore>,
     },
     ConsumeSpore {
-        connection_id: String,
+        connection_id: Arc<str>,
         spore_id: String,
     },
     ConsumePlayer {
-        connection_id: String,
-        victim_connection_id: String,
+        connection_id: Arc<str>,
+        victim_connection_id: Arc<str>,
     },
     SpawnSpore {
         interval: Interval,

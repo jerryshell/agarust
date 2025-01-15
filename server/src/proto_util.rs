@@ -2,9 +2,11 @@ use crate::*;
 
 use hashbrown::HashMap;
 
-pub fn hello_packet(connection_id: String) -> proto::Packet {
+pub fn hello_packet(connection_id: Arc<str>) -> proto::Packet {
     proto::Packet {
-        data: Some(proto::packet::Data::Hello(proto::Hello { connection_id })),
+        data: Some(proto::packet::Data::Hello(proto::Hello {
+            connection_id: connection_id.to_string(),
+        })),
     }
 }
 
@@ -34,10 +36,10 @@ pub fn register_err_packet(reason: String) -> proto::Packet {
     }
 }
 
-pub fn chat_packet(connection_id: String, msg: String) -> proto::Packet {
+pub fn chat_packet(connection_id: Arc<str>, msg: String) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::Chat(proto::Chat {
-            connection_id,
+            connection_id: connection_id.to_string(),
             msg,
         })),
     }
@@ -45,7 +47,7 @@ pub fn chat_packet(connection_id: String, msg: String) -> proto::Packet {
 
 pub fn update_player(player: &player::Player) -> proto::UpdatePlayer {
     proto::UpdatePlayer {
-        connection_id: player.connection_id.clone(),
+        connection_id: player.connection_id.to_string(),
         nickname: player.nickname.clone(),
         x: player.x,
         y: player.y,
@@ -62,7 +64,7 @@ pub fn update_player_packet(player: &player::Player) -> proto::Packet {
     }
 }
 
-pub fn update_player_batch_packet(player_map: &HashMap<String, player::Player>) -> proto::Packet {
+pub fn update_player_batch_packet(player_map: &HashMap<Arc<str>, player::Player>) -> proto::Packet {
     let update_player_batch = player_map
         .values()
         .map(update_player)
@@ -103,19 +105,19 @@ pub fn update_spore_batch_packet(spore_list: &[spore::Spore]) -> proto::Packet {
     }
 }
 
-pub fn consume_spore_packet(connection_id: String, spore_id: String) -> proto::Packet {
+pub fn consume_spore_packet(connection_id: Arc<str>, spore_id: String) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::ConsumeSpore(proto::ConsumeSpore {
-            connection_id,
+            connection_id: connection_id.to_string(),
             spore_id,
         })),
     }
 }
 
-pub fn disconnect_packet(connection_id: String, reason: String) -> proto::Packet {
+pub fn disconnect_packet(connection_id: Arc<str>, reason: String) -> proto::Packet {
     proto::Packet {
         data: Some(proto::packet::Data::Disconnect(proto::Disconnect {
-            connection_id,
+            connection_id: connection_id.to_string(),
             reason,
         })),
     }

@@ -44,16 +44,8 @@ async fn main() {
         let db_pool = db_pool.clone();
         let hub_command_sender = hub_command_sender.clone();
         tokio::spawn(async move {
-            let tcp_stream_result = agarust_server::handle_tcp_stream(
-                tcp_stream,
-                socket_addr,
-                db_pool,
-                hub_command_sender,
-            )
-            .await;
-            if let Err(error) = tcp_stream_result {
-                tracing::error!("handle_tcp_stream error: {:?}", error);
-            }
+            agarust_server::handle_tcp_stream(tcp_stream, socket_addr, db_pool, hub_command_sender)
+                .await;
         });
     }
 

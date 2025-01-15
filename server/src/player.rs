@@ -8,7 +8,7 @@ const INIT_SPEED: f64 = 150.0;
 #[derive(Debug, Clone)]
 pub struct Player {
     pub db_id: i64,
-    pub connection_id: String,
+    pub connection_id: Arc<str>,
     pub nickname: String,
     pub x: f64,
     pub y: f64,
@@ -19,7 +19,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn random(db_id: i64, connection_id: String, nickname: String, color: i64) -> Self {
+    pub fn random(db_id: i64, connection_id: Arc<str>, nickname: String, color: i64) -> Self {
         Self {
             db_id,
             connection_id,
