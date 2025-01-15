@@ -24,7 +24,6 @@ pub struct ClientAgent {
     pub db_pool: sqlx::Pool<sqlx::Sqlite>,
     pub hub_command_sender: UnboundedSender<command::Command>,
     pub client_command_sender: UnboundedSender<command::Command>,
-    pub client_command_receiver: Arc<Mutex<UnboundedReceiver<command::Command>>>,
     pub db_player: Arc<RwLock<Option<db::Player>>>,
 }
 
@@ -34,29 +33,37 @@ impl ClientAgent {
         connection_id: Arc<String>,
         db_pool: sqlx::Pool<sqlx::Sqlite>,
         hub_command_sender: UnboundedSender<command::Command>,
-    ) -> Self {
+    ) -> (Self, UnboundedReceiver<command::Command>) {
         let (client_command_sender, client_command_receiver) =
             unbounded_channel::<command::Command>();
-        let client_command_receiver = Arc::new(Mutex::new(client_command_receiver));
+
         let db_player = Arc::new(RwLock::new(None));
-        Self {
+
+        let client_agent = Self {
             socket_addr,
             connection_id,
             db_pool,
             hub_command_sender,
             client_command_sender,
-            client_command_receiver,
             db_player,
-        }
+        };
+
+        (client_agent, client_command_receiver)
     }
 }
 
-pub async fn run(client_agent: Arc<ClientAgent>, ws_stream: WebSocketStream<TcpStream>) {
+pub async fn run(
+    client_agent: ClientAgent,
+    client_command_receiver: UnboundedReceiver<command::Command>,
+    ws_stream: WebSocketStream<TcpStream>,
+) {
     let (client_writer, client_reader) = ws_stream.split();
 
     let mut client_writer_task = {
         let client_agent = client_agent.clone();
-        tokio::spawn(async move { client_writer_pump(client_agent, client_writer).await })
+        tokio::spawn(async move {
+            client_writer_pump(client_agent, client_command_receiver, client_writer).await
+        })
     };
 
     let mut client_reader_task = {
@@ -87,7 +94,7 @@ pub async fn run(client_agent: Arc<ClientAgent>, ws_stream: WebSocketStream<TcpS
 }
 
 async fn client_reader_pump(
-    client_agent: Arc<ClientAgent>,
+    client_agent: ClientAgent,
     mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
 ) {
     while let Some(read_result) = client_reader.next().await {
@@ -122,10 +129,10 @@ async fn client_reader_pump(
 }
 
 async fn client_writer_pump(
-    client_agent: Arc<ClientAgent>,
+    client_agent: ClientAgent,
+    mut client_command_receiver: UnboundedReceiver<command::Command>,
     client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
 ) {
-    let mut client_command_receiver = client_agent.client_command_receiver.lock().await;
     let client_writer = Arc::new(Mutex::new(client_writer));
     while let Some(command) = client_command_receiver.recv().await {
         let client_writer = client_writer.clone();
@@ -195,7 +202,7 @@ async fn client_writer_pump(
     warn!("exit client_writer_pump");
 }
 
-async fn handle_client_reader_packet(client_agent: Arc<ClientAgent>, packet: proto::Packet) {
+async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::Packet) {
     if let Some(data) = packet.clone().data {
         match data {
             proto::packet::Data::Login(login) => {
