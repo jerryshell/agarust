@@ -13,9 +13,9 @@ const TICK_DURATION: Duration = Duration::from_millis(50);
 const SPAWN_SPORE_DURATION: Duration = Duration::from_millis(2000);
 const MAX_SPORE_COUNT: usize = 1000;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Client {
-    pub client_agent: client_agent::ClientAgent,
+    pub client_agent: Arc<client_agent::ClientAgent>,
     pub player: Option<player::Player>,
 }
 

@@ -6,7 +6,7 @@ use tokio::time::{Instant, Interval};
 #[derive(Debug)]
 pub enum Command {
     RegisterClientAgent {
-        client_agent: ClientAgent,
+        client_agent: Arc<ClientAgent>,
     },
     UnregisterClientAgent {
         connection_id: Arc<str>,

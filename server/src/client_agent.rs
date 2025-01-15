@@ -17,7 +17,7 @@ use tokio::{
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use tracing::{error, warn};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ClientAgent {
     pub socket_addr: SocketAddr,
     pub connection_id: Arc<str>,
@@ -53,7 +53,7 @@ impl ClientAgent {
 }
 
 pub async fn run(
-    client_agent: ClientAgent,
+    client_agent: Arc<ClientAgent>,
     client_agent_command_receiver: UnboundedReceiver<command::Command>,
     ws_stream: WebSocketStream<TcpStream>,
 ) {
@@ -81,7 +81,7 @@ pub async fn run(
 }
 
 async fn client_reader_pump(
-    client_agent: ClientAgent,
+    client_agent: Arc<ClientAgent>,
     mut client_reader: SplitStream<WebSocketStream<TcpStream>>,
 ) {
     while let Some(read_result) = client_reader.next().await {
@@ -116,7 +116,7 @@ async fn client_reader_pump(
 }
 
 async fn client_writer_pump(
-    client_agent: ClientAgent,
+    client_agent: Arc<ClientAgent>,
     mut client_agent_command_receiver: UnboundedReceiver<command::Command>,
     client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
 ) {
@@ -147,25 +147,29 @@ async fn client_writer_pump(
                 });
             }
             command::Command::SyncPlayerBestScore { current_score } => {
-                let mut db_player = client_agent.db_player.write().await;
-                let db_player = match &mut *db_player {
-                    Some(db_player) => db_player,
-                    None => {
-                        warn!("sync player best score without login");
+                let db_player_id = {
+                    let mut db_player = client_agent.db_player.write().await;
+                    let db_player = match &mut *db_player {
+                        Some(db_player) => db_player,
+                        None => {
+                            warn!("sync player best score without login");
+                            continue;
+                        }
+                    };
+                    if db_player.best_score > current_score {
                         continue;
                     }
-                };
-                if db_player.best_score > current_score {
-                    continue;
-                }
 
-                db_player.best_score = current_score;
+                    db_player.best_score = current_score;
+
+                    db_player.id
+                };
 
                 let query_result = query_as!(
                     db::Player,
                     r#"UPDATE player SET best_score = ? WHERE id = ?"#,
                     current_score,
-                    db_player.id,
+                    db_player_id,
                 )
                 .execute(&client_agent.db_pool)
                 .await;
@@ -189,8 +193,8 @@ async fn client_writer_pump(
     warn!("exit client_writer_pump");
 }
 
-async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::Packet) {
-    if let Some(data) = packet.clone().data {
+async fn handle_client_reader_packet(client_agent: Arc<ClientAgent>, packet: proto::Packet) {
+    if let Some(data) = packet.data {
         match data {
             proto::packet::Data::Login(login) => {
                 let username = login.username;
@@ -408,7 +412,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::Join {
-                        connection_id: client_agent.connection_id,
+                        connection_id: client_agent.connection_id.clone(),
                         player_db_id: db_player.id,
                         nickname: db_player.nickname.clone(),
                         color: db_player.color,
@@ -418,14 +422,14 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::Chat {
-                        connection_id: client_agent.connection_id,
+                        connection_id: client_agent.connection_id.clone(),
                         msg: chat.msg.into(),
                     });
             }
             proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
                 let _ = client_agent.hub_command_sender.send(
                     command::Command::UpdatePlayerDirectionAngle {
-                        connection_id: client_agent.connection_id,
+                        connection_id: client_agent.connection_id.clone(),
                         direction_angle: update_player_direction_angle.direction_angle,
                     },
                 );
@@ -434,7 +438,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::ConsumeSpore {
-                        connection_id: client_agent.connection_id,
+                        connection_id: client_agent.connection_id.clone(),
                         spore_id: consume_spore.spore_id.into(),
                     });
             }
@@ -442,7 +446,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                 let _ = client_agent
                     .hub_command_sender
                     .send(command::Command::ConsumePlayer {
-                        connection_id: client_agent.connection_id,
+                        connection_id: client_agent.connection_id.clone(),
                         victim_connection_id: consume_player.victim_connection_id.into(),
                     });
             }
@@ -482,7 +486,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     .send(command::Command::SendPacket { packet });
             }
             _ => {
-                warn!("unknown packet: {:?}", packet);
+                warn!("unknown packet data: {:?}", data);
             }
         }
     }

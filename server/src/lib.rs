@@ -37,6 +37,8 @@ pub async fn handle_tcp_stream(
         hub_command_sender.clone(),
     );
 
+    let client_agent = Arc::new(client_agent);
+
     let client_agent_task = {
         let client_agent = client_agent.clone();
         tokio::spawn(async move {

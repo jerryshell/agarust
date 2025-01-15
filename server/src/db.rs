@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Auth {
     pub id: i64,
     pub username: Arc<str>,
     pub password: Arc<str>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Player {
     pub id: i64,
     pub auth_id: i64,
