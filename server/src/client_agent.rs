@@ -23,7 +23,7 @@ pub struct ClientAgent {
     pub connection_id: Arc<String>,
     pub db_pool: sqlx::Pool<sqlx::Sqlite>,
     pub hub_command_sender: UnboundedSender<command::Command>,
-    pub client_command_sender: UnboundedSender<command::Command>,
+    pub client_agent_command_sender: UnboundedSender<command::Command>,
     pub db_player: Arc<RwLock<Option<db::Player>>>,
 }
 
@@ -34,7 +34,7 @@ impl ClientAgent {
         db_pool: sqlx::Pool<sqlx::Sqlite>,
         hub_command_sender: UnboundedSender<command::Command>,
     ) -> (Self, UnboundedReceiver<command::Command>) {
-        let (client_command_sender, client_command_receiver) =
+        let (client_agent_command_sender, client_agent_command_receiver) =
             unbounded_channel::<command::Command>();
 
         let db_player = Arc::new(RwLock::new(None));
@@ -44,17 +44,17 @@ impl ClientAgent {
             connection_id,
             db_pool,
             hub_command_sender,
-            client_command_sender,
+            client_agent_command_sender,
             db_player,
         };
 
-        (client_agent, client_command_receiver)
+        (client_agent, client_agent_command_receiver)
     }
 }
 
 pub async fn run(
     client_agent: ClientAgent,
-    client_command_receiver: UnboundedReceiver<command::Command>,
+    client_agent_command_receiver: UnboundedReceiver<command::Command>,
     ws_stream: WebSocketStream<TcpStream>,
 ) {
     let (client_writer, client_reader) = ws_stream.split();
@@ -62,7 +62,7 @@ pub async fn run(
     let mut client_writer_task = {
         let client_agent = client_agent.clone();
         tokio::spawn(async move {
-            client_writer_pump(client_agent, client_command_receiver, client_writer).await
+            client_writer_pump(client_agent, client_agent_command_receiver, client_writer).await
         })
     };
 
@@ -80,7 +80,7 @@ pub async fn run(
             .send(command::Command::RegisterClient {
                 socket_addr: client_agent.socket_addr,
                 connection_id: client_agent.connection_id.to_string(),
-                command_sender: client_agent.client_command_sender.clone(),
+                command_sender: client_agent.client_agent_command_sender.clone(),
             });
     if let Err(error) = client_agent_register_rsult {
         error!("client_agent_register_rsult error: {:?}", error);
@@ -130,11 +130,11 @@ async fn client_reader_pump(
 
 async fn client_writer_pump(
     client_agent: ClientAgent,
-    mut client_command_receiver: UnboundedReceiver<command::Command>,
+    mut client_agent_command_receiver: UnboundedReceiver<command::Command>,
     client_writer: SplitSink<WebSocketStream<TcpStream>, Message>,
 ) {
     let client_writer = Arc::new(Mutex::new(client_writer));
-    while let Some(command) = client_command_receiver.recv().await {
+    while let Some(command) = client_agent_command_receiver.recv().await {
         let client_writer = client_writer.clone();
         match command {
             command::Command::SendPacket { packet } => {
@@ -225,7 +225,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                             "incorrect username or password".to_string(),
                         );
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -239,7 +239,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                                 "incorrect username or password".to_string(),
                             );
                             let _ = client_agent
-                                .client_command_sender
+                                .client_agent_command_sender
                                 .send(command::Command::SendPacket { packet });
                             return;
                         }
@@ -250,7 +250,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                             "incorrect username or password".to_string(),
                         );
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -272,7 +272,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                             "incorrect username or password".to_string(),
                         );
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -285,7 +285,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 let packet = proto_util::login_ok_packet();
                 let _ = client_agent
-                    .client_command_sender
+                    .client_agent_command_sender
                     .send(command::Command::SendPacket { packet });
             }
             proto::packet::Data::Register(register) => {
@@ -300,7 +300,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         let packet =
                             proto_util::register_err_packet("transaction begin error".to_string());
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -310,7 +310,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     warn!("username is empty: {:?}", username);
                     let packet = proto_util::register_err_packet("username is empty".to_string());
                     let _ = client_agent
-                        .client_command_sender
+                        .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
                     return;
                 }
@@ -319,7 +319,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     warn!("username too long: {:?}", username);
                     let packet = proto_util::register_err_packet("username too long".to_string());
                     let _ = client_agent
-                        .client_command_sender
+                        .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
                     return;
                 }
@@ -337,7 +337,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     let packet =
                         proto_util::register_err_packet("username already exists".to_string());
                     let _ = client_agent
-                        .client_command_sender
+                        .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
                     return;
                 }
@@ -349,7 +349,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         let packet =
                             proto_util::register_err_packet("password hash error".to_string());
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -371,7 +371,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         let packet =
                             proto_util::register_err_packet("auth insert error".to_string());
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -391,7 +391,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     warn!("player insert error: {:?}", error);
                     let packet = proto_util::register_err_packet("player insert error".to_string());
                     let _ = client_agent
-                        .client_command_sender
+                        .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
                     return;
                 }
@@ -401,14 +401,14 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     let packet =
                         proto_util::register_err_packet("transaction commit error".to_string());
                     let _ = client_agent
-                        .client_command_sender
+                        .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
                     return;
                 }
 
                 let packet = proto_util::register_ok_packet();
                 let _ = client_agent
-                    .client_command_sender
+                    .client_agent_command_sender
                     .send(command::Command::SendPacket { packet });
             }
             proto::packet::Data::Join(_) => {
@@ -420,7 +420,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         let packet =
                             proto_util::register_err_packet("transaction commit error".to_string());
                         let _ = client_agent
-                            .client_command_sender
+                            .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
                         return;
                     }
@@ -468,7 +468,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
             }
             proto::packet::Data::Disconnect(_) => {
                 let _ = client_agent
-                    .client_command_sender
+                    .client_agent_command_sender
                     .send(command::Command::DisconnectClinet);
             }
             proto::packet::Data::LeaderboardRequest(_) => {
@@ -498,7 +498,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 let packet = proto_util::leaderboard_response(&leaderboard_entry_list);
                 let _ = client_agent
-                    .client_command_sender
+                    .client_agent_command_sender
                     .send(command::Command::SendPacket { packet });
             }
             _ => {

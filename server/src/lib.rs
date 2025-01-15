@@ -27,10 +27,10 @@ pub async fn handle_tcp_stream(
     let client_agent_task = {
         let connection_id = Arc::new(connection_id.clone());
         let hub_command_sender = hub_command_sender.clone();
-        let (client_agent, client_command_receiver) =
+        let (client_agent, client_agent_command_receiver) =
             client_agent::ClientAgent::new(socket_addr, connection_id, db_pool, hub_command_sender);
         tokio::spawn(async move {
-            client_agent::run(client_agent, client_command_receiver, ws_stream).await
+            client_agent::run(client_agent, client_agent_command_receiver, ws_stream).await
         })
     };
 

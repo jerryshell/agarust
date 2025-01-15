@@ -74,10 +74,10 @@ impl Hub {
                     socket_addr, connection_id, command_sender
                 );
 
-                let client_command_sender = command_sender.clone();
+                let client_agent_command_sender = command_sender.clone();
 
                 let packet = proto_util::hello_packet(connection_id.clone());
-                let _ = client_command_sender.send(command::Command::SendPacket { packet });
+                let _ = client_agent_command_sender.send(command::Command::SendPacket { packet });
 
                 self.client_map.insert(
                     connection_id.clone(),
