@@ -36,7 +36,7 @@ pub async fn handle_tcp_stream(
 
     let _ = client_agent_task.await;
 
-    let unregister_command = command::Command::UnregisterClient { connection_id };
+    let unregister_command = command::Command::UnregisterClientAgent { connection_id };
     let _ = hub_command_sender.send(unregister_command);
 
     Ok(())

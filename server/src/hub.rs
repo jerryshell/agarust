@@ -15,9 +15,7 @@ const MAX_SPORE_COUNT: usize = 1000;
 
 #[derive(Debug, Clone)]
 pub struct Client {
-    pub socket_addr: SocketAddr,
-    pub connection_id: String,
-    pub command_sender: UnboundedSender<command::Command>,
+    pub client_agent: client_agent::ClientAgent,
 }
 
 #[derive(Debug)]
@@ -64,31 +62,20 @@ impl Hub {
 
     async fn handle_command(&mut self, command: command::Command) {
         match command {
-            command::Command::RegisterClient {
-                socket_addr,
-                connection_id,
-                command_sender,
-            } => {
-                info!(
-                    "RegisterClient: {:?} {:?} {:?}",
-                    socket_addr, connection_id, command_sender
-                );
+            command::Command::RegisterClientAgent { client_agent } => {
+                info!("RegisterClientAgent: {:?}", client_agent);
 
-                let client_agent_command_sender = command_sender.clone();
-
-                let packet = proto_util::hello_packet(connection_id.clone());
-                let _ = client_agent_command_sender.send(command::Command::SendPacket { packet });
+                let packet = proto_util::hello_packet(client_agent.connection_id.to_string());
+                let _ = client_agent
+                    .client_agent_command_sender
+                    .send(command::Command::SendPacket { packet });
 
                 self.client_map.insert(
-                    connection_id.clone(),
-                    Client {
-                        socket_addr,
-                        connection_id,
-                        command_sender,
-                    },
+                    client_agent.connection_id.to_string(),
+                    Client { client_agent },
                 );
             }
-            command::Command::UnregisterClient { connection_id } => {
+            command::Command::UnregisterClientAgent { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);
 
                 self.client_map.remove(&connection_id);
@@ -115,7 +102,8 @@ impl Hub {
                         if let Some(client) = self.client_map.get_mut(&online_player.connection_id)
                         {
                             let _ = client
-                                .command_sender
+                                .client_agent
+                                .client_agent_command_sender
                                 .send(command::Command::DisconnectClinet);
                         }
                     }
@@ -134,7 +122,8 @@ impl Hub {
 
                 let packet = proto_util::update_player_packet(&player);
                 let _ = client
-                    .command_sender
+                    .client_agent
+                    .client_agent_command_sender
                     .send(command::Command::SendPacket { packet });
 
                 let mut spore_batch = self.spore_map.values().cloned().collect::<Vec<_>>();
@@ -143,7 +132,8 @@ impl Hub {
                 });
 
                 let _ = client
-                    .command_sender
+                    .client_agent
+                    .client_agent_command_sender
                     .send(command::Command::UpdateSporeBatch { spore_batch });
 
                 self.player_map.insert(connection_id, player);
@@ -161,7 +151,8 @@ impl Hub {
                     }
                     let raw_data = raw_data.clone();
                     let _ = client
-                        .command_sender
+                        .client_agent
+                        .client_agent_command_sender
                         .send(command::Command::SendRawData { raw_data });
                 });
             }
@@ -242,7 +233,8 @@ impl Hub {
 
                     let current_score = util::radius_to_mass(player.radius) as i64;
                     let _ = client
-                        .command_sender
+                        .client_agent
+                        .client_agent_command_sender
                         .send(command::Command::SyncPlayerBestScore { current_score });
                 }
             }

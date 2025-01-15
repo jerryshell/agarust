@@ -1,19 +1,14 @@
 use crate::*;
 
-use std::net::SocketAddr;
-use tokio::{
-    sync::mpsc::UnboundedSender,
-    time::{Instant, Interval},
-};
+use client_agent::ClientAgent;
+use tokio::time::{Instant, Interval};
 
 #[derive(Debug)]
 pub enum Command {
-    RegisterClient {
-        socket_addr: SocketAddr,
-        connection_id: String,
-        command_sender: UnboundedSender<Command>,
+    RegisterClientAgent {
+        client_agent: ClientAgent,
     },
-    UnregisterClient {
+    UnregisterClientAgent {
         connection_id: String,
     },
     Login {

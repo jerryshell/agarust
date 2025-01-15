@@ -74,14 +74,10 @@ pub async fn run(
         })
     };
 
-    let client_agent_register_rsult =
-        client_agent
-            .hub_command_sender
-            .send(command::Command::RegisterClient {
-                socket_addr: client_agent.socket_addr,
-                connection_id: client_agent.connection_id.to_string(),
-                command_sender: client_agent.client_agent_command_sender.clone(),
-            });
+    let client_agent_register_rsult = client_agent
+        .hub_command_sender
+        .clone()
+        .send(command::Command::RegisterClientAgent { client_agent });
     if let Err(error) = client_agent_register_rsult {
         error!("client_agent_register_rsult error: {:?}", error);
         return;
