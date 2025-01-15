@@ -22,7 +22,7 @@ pub struct Client {
 #[derive(Debug)]
 pub struct Hub {
     pub client_map: HashMap<Arc<str>, Client>,
-    pub spore_map: HashMap<String, spore::Spore>,
+    pub spore_map: HashMap<Arc<str>, spore::Spore>,
     pub command_sender: UnboundedSender<command::Command>,
     pub db_pool: sqlx::Pool<sqlx::Sqlite>,
 }
@@ -84,7 +84,7 @@ impl Hub {
 
                 self.client_map.remove(&connection_id);
 
-                let packet = proto_util::disconnect_packet(connection_id, "unregister".to_string());
+                let packet = proto_util::disconnect_packet(connection_id, "unregister".into());
                 let _ = self
                     .command_sender
                     .send(command::Command::BroadcastPacket { packet });
@@ -124,8 +124,7 @@ impl Hub {
                     }
                 };
 
-                let player =
-                    player::Player::random(player_db_id, connection_id.clone(), nickname, color);
+                let player = player::Player::random(player_db_id, connection_id, nickname, color);
 
                 let player_x = player.x;
                 let player_y = player.y;
@@ -286,7 +285,8 @@ impl Hub {
             command::Command::SpawnSpore { mut interval } => {
                 if self.spore_map.len() < MAX_SPORE_COUNT {
                     let spore = spore::Spore::random();
-                    self.spore_map.insert(spore.id.clone(), spore);
+                    let spore_id = spore.id.clone();
+                    self.spore_map.insert(spore_id, spore);
                 }
 
                 let hub_command_sender = self.command_sender.clone();

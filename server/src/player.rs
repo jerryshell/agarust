@@ -13,7 +13,7 @@ fn random_xy() -> f64 {
 pub struct Player {
     pub db_id: i64,
     pub connection_id: Arc<str>,
-    pub nickname: String,
+    pub nickname: Arc<str>,
     pub x: f64,
     pub y: f64,
     pub radius: f64,
@@ -23,7 +23,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn random(db_id: i64, connection_id: Arc<str>, nickname: String, color: i64) -> Self {
+    pub fn random(db_id: i64, connection_id: Arc<str>, nickname: Arc<str>, color: i64) -> Self {
         Self {
             db_id,
             connection_id,

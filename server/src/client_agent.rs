@@ -208,9 +208,8 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     Ok(auth) => auth,
                     Err(error) => {
                         warn!("auth query error: {:?}", error);
-                        let packet = proto_util::login_err_packet(
-                            "incorrect username or password".to_string(),
-                        );
+                        let packet =
+                            proto_util::login_err_packet("incorrect username or password".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -223,7 +222,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         if !valid {
                             warn!("bcrypt valid false");
                             let packet = proto_util::login_err_packet(
-                                "incorrect username or password".to_string(),
+                                "incorrect username or password".into(),
                             );
                             let _ = client_agent
                                 .client_agent_command_sender
@@ -233,9 +232,8 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     }
                     Err(error) => {
                         warn!("bcrypt verify error: {:?}", error);
-                        let packet = proto_util::login_err_packet(
-                            "incorrect username or password".to_string(),
-                        );
+                        let packet =
+                            proto_util::login_err_packet("incorrect username or password".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -255,9 +253,8 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     Ok(player) => player,
                     Err(error) => {
                         warn!("player query error: {:?}", error);
-                        let packet = proto_util::login_err_packet(
-                            "incorrect username or password".to_string(),
-                        );
+                        let packet =
+                            proto_util::login_err_packet("incorrect username or password".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -285,7 +282,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     Err(error) => {
                         warn!("transaction begin error: {:?}", error);
                         let packet =
-                            proto_util::register_err_packet("transaction begin error".to_string());
+                            proto_util::register_err_packet("transaction begin error".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -295,7 +292,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 if username.is_empty() {
                     warn!("username is empty: {:?}", username);
-                    let packet = proto_util::register_err_packet("username is empty".to_string());
+                    let packet = proto_util::register_err_packet("username is empty".into());
                     let _ = client_agent
                         .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
@@ -304,7 +301,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 if username.len() > 16 {
                     warn!("username too long: {:?}", username);
-                    let packet = proto_util::register_err_packet("username too long".to_string());
+                    let packet = proto_util::register_err_packet("username too long".into());
                     let _ = client_agent
                         .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
@@ -321,8 +318,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 if query_result.is_ok() {
                     warn!("auth already exists: {:?}", username);
-                    let packet =
-                        proto_util::register_err_packet("username already exists".to_string());
+                    let packet = proto_util::register_err_packet("username already exists".into());
                     let _ = client_agent
                         .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
@@ -333,8 +329,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     Ok(password) => password,
                     Err(error) => {
                         warn!("password hash error: {:?}", error);
-                        let packet =
-                            proto_util::register_err_packet("password hash error".to_string());
+                        let packet = proto_util::register_err_packet("password hash error".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -355,8 +350,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     Ok(query_result) => query_result.last_insert_rowid(),
                     Err(error) => {
                         warn!("auth insert error: {:?}", error);
-                        let packet =
-                            proto_util::register_err_packet("auth insert error".to_string());
+                        let packet = proto_util::register_err_packet("auth insert error".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -376,7 +370,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 if let Err(error) = query_result {
                     warn!("player insert error: {:?}", error);
-                    let packet = proto_util::register_err_packet("player insert error".to_string());
+                    let packet = proto_util::register_err_packet("player insert error".into());
                     let _ = client_agent
                         .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
@@ -385,8 +379,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
 
                 if let Err(error) = transaction.commit().await {
                     warn!("transaction commit error: {:?}", error);
-                    let packet =
-                        proto_util::register_err_packet("transaction commit error".to_string());
+                    let packet = proto_util::register_err_packet("transaction commit error".into());
                     let _ = client_agent
                         .client_agent_command_sender
                         .send(command::Command::SendPacket { packet });
@@ -405,7 +398,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     None => {
                         warn!("join without login");
                         let packet =
-                            proto_util::register_err_packet("transaction commit error".to_string());
+                            proto_util::register_err_packet("transaction commit error".into());
                         let _ = client_agent
                             .client_agent_command_sender
                             .send(command::Command::SendPacket { packet });
@@ -417,7 +410,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     .send(command::Command::Join {
                         connection_id: client_agent.connection_id,
                         player_db_id: db_player.id,
-                        nickname: db_player.nickname.clone(),
+                        nickname: db_player.nickname.clone().into(),
                         color: db_player.color,
                     });
             }
@@ -426,7 +419,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     .hub_command_sender
                     .send(command::Command::Chat {
                         connection_id: client_agent.connection_id,
-                        msg: chat.msg,
+                        msg: chat.msg.into(),
                     });
             }
             proto::packet::Data::UpdatePlayerDirectionAngle(update_player_direction_angle) => {
@@ -442,7 +435,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                     .hub_command_sender
                     .send(command::Command::ConsumeSpore {
                         connection_id: client_agent.connection_id,
-                        spore_id: consume_spore.spore_id,
+                        spore_id: consume_spore.spore_id.into(),
                     });
             }
             proto::packet::Data::ConsumePlayer(consume_player) => {
@@ -473,7 +466,7 @@ async fn handle_client_reader_packet(client_agent: ClientAgent, packet: proto::P
                         .enumerate()
                         .map(|(index, player)| command::LeaderboardEntry {
                             rank: (index + 1) as u64,
-                            player_nickname: player.nickname.clone(),
+                            player_nickname: player.nickname.clone().into(),
                             score: player.best_score as u64,
                         })
                         .collect::<Vec<_>>(),

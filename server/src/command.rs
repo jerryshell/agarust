@@ -12,18 +12,18 @@ pub enum Command {
         connection_id: Arc<str>,
     },
     Login {
-        username: String,
-        password: String,
+        username: Arc<str>,
+        password: Arc<str>,
     },
     Register {
-        username: String,
-        password: String,
+        username: Arc<str>,
+        password: Arc<str>,
         color: i64,
     },
     Join {
         connection_id: Arc<str>,
         player_db_id: i64,
-        nickname: String,
+        nickname: Arc<str>,
         color: i64,
     },
     DisconnectClinet,
@@ -49,7 +49,7 @@ pub enum Command {
     },
     Chat {
         connection_id: Arc<str>,
-        msg: String,
+        msg: Arc<str>,
     },
     UpdatePlayerDirectionAngle {
         connection_id: Arc<str>,
@@ -60,7 +60,7 @@ pub enum Command {
     },
     ConsumeSpore {
         connection_id: Arc<str>,
-        spore_id: String,
+        spore_id: Arc<str>,
     },
     ConsumePlayer {
         connection_id: Arc<str>,
@@ -78,6 +78,6 @@ pub enum Command {
 #[derive(Debug, Clone)]
 pub struct LeaderboardEntry {
     pub rank: u64,
-    pub player_nickname: String,
+    pub player_nickname: Arc<str>,
     pub score: u64,
 }
