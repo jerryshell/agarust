@@ -2422,6 +2422,11 @@ class UpdatePlayer:
 		service.field = __color
 		data[__color.tag] = service
 
+		__is_rushing = PBField.new("is_rushing", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = __is_rushing
+		data[__is_rushing.tag] = service
+
 	var data = {}
 
 	var __connection_id: PBField
@@ -2527,6 +2532,19 @@ class UpdatePlayer:
 		__color.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT64]
 	func set_color(value: int) -> void:
 		__color.value = value
+
+	var __is_rushing: PBField
+	func has_is_rushing() -> bool:
+		if __is_rushing.value != null:
+			return true
+		return false
+	func get_is_rushing() -> bool:
+		return __is_rushing.value
+	func clear_is_rushing() -> void:
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__is_rushing.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_is_rushing(value: bool) -> void:
+		__is_rushing.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

@@ -81,15 +81,16 @@ func _handle_update_player_msg(update_player_msg: Global.proto.UpdatePlayer) -> 
 	var radius := update_player_msg.get_radius()
 	var speed := update_player_msg.get_speed()
 	var color_hex := update_player_msg.get_color()
+	var is_rushing := update_player_msg.get_is_rushing()
 
 	var color := Color.hex64(color_hex)
 	var is_player := actor_connection_id == Global.connection_id
 
 	if actor_connection_id not in player_map:
-		_add_actor(actor_connection_id, actor_nickname, x, y, radius, speed, color, is_player)
+		_add_actor(actor_connection_id, actor_nickname, x, y, radius, speed, color, is_rushing, is_player)
 	else:
 		var direction := update_player_msg.get_direction_angle()
-		_update_actor(actor_connection_id, x, y, direction, speed, radius, is_player)
+		_update_actor(actor_connection_id, x, y, direction, speed, radius, is_rushing, is_player)
 
 func _handle_update_spore_batch_msg(update_spore_batch_msg: Global.proto.UpdateSporeBatch) -> void:
 	for update_spore_msg: Global.proto.UpdateSpore in update_spore_batch_msg.get_update_spore_batch():
@@ -134,8 +135,8 @@ func _handle_disconnect_msg(disconnect_msg: Global.proto.Disconnect) -> void:
 		logger.info("%s disconnected because %s" % [player.actor_nickname, reason])
 		_remove_actor(player)
 
-func _add_actor(connection_id: String, actor_nickname: String, x: float, y: float, radius: float, speed: float, color: Color, is_player: bool) -> void:
-	var actor := Actor.instantiate(connection_id, actor_nickname, x, y, radius, speed, color, is_player)
+func _add_actor(connection_id: String, actor_nickname: String, x: float, y: float, radius: float, speed: float, color: Color, is_rushing: bool, is_player: bool) -> void:
+	var actor := Actor.instantiate(connection_id, actor_nickname, x, y, radius, speed, color, is_rushing, is_player)
 	actor.z_index = 1
 	world.add_child(actor)
 	var mass := _radius_to_mass(radius)
@@ -202,13 +203,14 @@ func _remove_actor(actor: Actor) -> void:
 	actor.queue_free()
 	leaderboard.remove(actor.actor_nickname)
 
-func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_player: bool) -> void:
+func _update_actor(connection_id: String, x: float, y: float, direction: float, speed: float, radius: float, is_rushing: bool, is_player: bool) -> void:
 	var actor: Actor = player_map[connection_id]
 
 	_set_actor_mass(actor, _radius_to_mass(radius))
 	actor.server_radius = radius
 
 	actor.speed = speed
+	actor.is_rushing = is_rushing
 	actor.is_player = is_player
 
 	var server_position := Vector2(x, y)

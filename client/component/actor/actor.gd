@@ -7,6 +7,7 @@ const zoom_speed := 0.1
 @onready var collision_shape: CollisionShape2D = %CollisionShape
 @onready var nameplate: Label = %Nameplate
 @onready var camera: Camera2D = %Camera
+@onready var rush_particles: GPUParticles2D = %RushParticles
 
 var connection_id: String
 var actor_nickname: String
@@ -15,6 +16,7 @@ var start_y: float
 var start_radius: float
 var speed: float
 var color: Color
+var is_rushing: bool
 var is_player: bool
 
 var direction: Vector2
@@ -22,6 +24,8 @@ var radius: float:
 	set(new_radius):
 		radius = new_radius
 		collision_shape.shape.set_radius(radius)
+		rush_particles.process_material.emission_ring_radius = radius
+		rush_particles.process_material.emission_ring_inner_radius = radius
 		_update_zoom()
 		queue_redraw()
 
@@ -31,7 +35,7 @@ var furthest_zoom_allowed := target_zoom
 var server_position: Vector2
 var server_radius: float
 
-static func instantiate(p_connection_id: String, p_actor_nickname: String, p_start_x: float, p_start_y: float, p_start_radius: float, p_speed: float, p_color: Color, p_is_player: bool) -> Actor:
+static func instantiate(p_connection_id: String, p_actor_nickname: String, p_start_x: float, p_start_y: float, p_start_radius: float, p_speed: float, p_color: Color, p_is_rushing: bool, p_is_player: bool) -> Actor:
 	var actor := ACTOR.instantiate()
 	actor.connection_id = p_connection_id
 	actor.actor_nickname = p_actor_nickname
@@ -40,6 +44,7 @@ static func instantiate(p_connection_id: String, p_actor_nickname: String, p_sta
 	actor.start_radius = p_start_radius
 	actor.speed = p_speed
 	actor.color = p_color
+	actor.is_rushing = p_is_rushing
 	actor.is_player = p_is_player
 	return actor
 
@@ -55,10 +60,13 @@ func _ready():
 	camera.enabled = is_player
 
 func _process(_delta: float) -> void:
+	rush_particles.emitting = is_rushing
 	if not is_equal_approx(camera.zoom.x, target_zoom):
 		camera.zoom = lerp(camera.zoom, Vector2(1, 1) * target_zoom, 0.05)
 	if not is_equal_approx(radius, server_radius):
 		radius = lerp(radius, server_radius, 0.05)
+	if is_player and Input.is_action_pressed("rush") and not is_rushing:
+		_rush()
 
 func _physics_process(delta) -> void:
 	position += direction * speed * delta
@@ -89,9 +97,6 @@ func _draw() -> void:
 func _input(event):
 	if not is_player:
 		return
-
-	if event.is_action_pressed("rush"):
-		_rush()
 
 	if event.is_action_pressed("zoom_in"):
 			target_zoom = min(4, target_zoom + zoom_speed)
