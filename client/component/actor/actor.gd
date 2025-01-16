@@ -60,7 +60,8 @@ func _ready():
 	camera.enabled = is_player
 
 func _process(_delta: float) -> void:
-	rush_particles.emitting = is_rushing
+	# TODO: Particle system does not work in Godot 4.3 web export, temporarily disabled
+	#rush_particles.emitting = is_rushing
 	if not is_equal_approx(camera.zoom.x, target_zoom):
 		camera.zoom = lerp(camera.zoom, Vector2(1, 1) * target_zoom, 0.05)
 	if not is_equal_approx(radius, server_radius):
