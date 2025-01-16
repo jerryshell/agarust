@@ -344,7 +344,7 @@ impl Hub {
         {
             player.tick(delta);
 
-            let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 2.0);
+            let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 4.0);
             if rand::random::<f64>() < drop_mass_probability {
                 let drop_mass = util::radius_to_mass((5.0 + player.radius / 50.0).min(15.0));
                 if let Some(mass) = player.try_drop_mass(drop_mass) {
