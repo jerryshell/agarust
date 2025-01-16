@@ -76,7 +76,9 @@ func _process(_delta: float) -> void:
 	if not is_equal_approx(radius, server_radius):
 		radius = lerp(radius, server_radius, 0.05)
 	if is_player and Input.is_action_pressed("rush") and not is_rushing:
-		_rush()
+		var mouse_screen_position = get_viewport().get_mouse_position()
+		if mouse_screen_position.y > 128:
+			_rush()
 
 func _physics_process(delta) -> void:
 	position += direction * speed * delta
