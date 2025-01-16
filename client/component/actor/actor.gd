@@ -4,6 +4,9 @@ extends Area2D
 const ACTOR = preload("res://component/actor/actor.tscn")
 const zoom_speed := 0.1
 
+@export
+var rush_shader: Shader
+
 @onready var collision_shape: CollisionShape2D = %CollisionShape
 @onready var nameplate: Label = %Nameplate
 @onready var camera: Camera2D = %Camera
@@ -16,7 +19,13 @@ var start_y: float
 var start_radius: float
 var speed: float
 var color: Color
-var is_rushing: bool
+var is_rushing: bool:
+	set(new_value):
+		is_rushing = new_value
+		if is_rushing:
+			material.shader = rush_shader
+		else:
+			material.shader = null
 var is_player: bool
 
 var direction: Vector2

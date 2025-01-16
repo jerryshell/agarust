@@ -1,7 +1,10 @@
-[gd_scene load_steps=11 format=3 uid="uid://b7p42ft05kib6"]
+[gd_scene load_steps=13 format=3 uid="uid://b7p42ft05kib6"]
 
+[ext_resource type="Shader" path="res://assets/rainbow.gdshader" id="1_j04ga"]
 [ext_resource type="Script" path="res://component/actor/actor.gd" id="1_wnuxu"]
 [ext_resource type="Texture2D" uid="uid://drda0yvn27i6h" path="res://assets/blob.png" id="2_43lcj"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mxwvi"]
 
 [sub_resource type="Curve" id="Curve_nu47k"]
 _data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.25, 1), 0.0, 0.0, 0, 0]
@@ -46,7 +49,9 @@ turbulence_enabled = true
 resource_local_to_scene = true
 
 [node name="Actor" type="Area2D"]
+material = SubResource("ShaderMaterial_mxwvi")
 script = ExtResource("1_wnuxu")
+rush_shader = ExtResource("1_j04ga")
 
 [node name="RushParticles" type="GPUParticles2D" parent="."]
 unique_name_in_owner = true

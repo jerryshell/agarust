@@ -163,11 +163,6 @@ func _consume_spore(spore: Spore) -> void:
 	if spore.underneath_player:
 		return
 
-	var player = player_map[Global.connection_id]
-	var player_mass := _radius_to_mass(player.radius)
-	var spore_mass := _radius_to_mass(spore.radius)
-	_set_actor_mass(player, player_mass + spore_mass)
-
 	var packet := Global.proto.Packet.new()
 	var consume_spore_msg := packet.new_consume_spore()
 	consume_spore_msg.set_spore_id(spore.spore_id)
@@ -187,11 +182,6 @@ func _collide_actor(actor: Actor) -> void:
 		_consume_actor(actor)
 
 func _consume_actor(actor: Actor) -> void:
-	var player = player_map[Global.connection_id]
-	var player_mass := _radius_to_mass(player.radius)
-	var actor_mass := _radius_to_mass(actor.radius)
-	_set_actor_mass(player, player_mass + actor_mass)
-
 	var packet := Global.proto.Packet.new()
 	var consume_player_msg := packet.new_consume_player()
 	consume_player_msg.set_victim_connection_id(actor.connection_id)
