@@ -28,7 +28,7 @@ pub async fn handle_tcp_stream(
     };
     info!("Accept WebSocket stream: {:?}", ws_stream);
 
-    let connection_id: Arc<str> = Arc::from(nanoid!().as_str());
+    let connection_id: Arc<str> = nanoid!().into();
 
     let (client_agent, client_agent_command_receiver) = client_agent::ClientAgent::new(
         socket_addr,
@@ -46,9 +46,8 @@ pub async fn handle_tcp_stream(
         })
     };
 
-    let client_agent_register_rsult = hub_command_sender
-        .clone()
-        .send(command::Command::RegisterClientAgent { client_agent });
+    let client_agent_register_rsult =
+        hub_command_sender.send(command::Command::RegisterClientAgent { client_agent });
     if let Err(error) = client_agent_register_rsult {
         error!("client_agent_register_rsult error: {:?}", error);
         return;
