@@ -5,7 +5,12 @@ const DEFAULT_DATABASE_URL: &str = "sqlite:agarust_db.sqlite";
 async fn main() {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::fmt::init();
+    let file_appender = tracing_appender::rolling::hourly("./", "agarust_server.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+    tracing_subscriber::fmt()
+        .with_writer(non_blocking)
+        .with_ansi(false)
+        .init();
 
     let bind_addr = match std::env::var("BIND_ADDR") {
         Ok(bind_addr) => bind_addr,

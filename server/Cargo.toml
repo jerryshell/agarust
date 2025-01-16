@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 tracing = "*"
+tracing-appender = "*"
 tracing-subscriber = "*"
 prost = "*"
 tokio = { version = "*", features = ["full"] }
