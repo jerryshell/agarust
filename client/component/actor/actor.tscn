@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://drda0yvn27i6h" path="res://assets/blob.png" id="2_43lcj"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mxwvi"]
+resource_local_to_scene = true
 
 [sub_resource type="Curve" id="Curve_nu47k"]
 _data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.25, 1), 0.0, 0.0, 0, 0]
