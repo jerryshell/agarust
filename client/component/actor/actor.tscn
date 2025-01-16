@@ -51,6 +51,7 @@ script = ExtResource("1_wnuxu")
 [node name="RushParticles" type="GPUParticles2D" parent="."]
 unique_name_in_owner = true
 z_index = -1
+emitting = false
 amount = 128
 process_material = SubResource("ParticleProcessMaterial_dbtlh")
 texture = ExtResource("2_43lcj")
