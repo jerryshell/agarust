@@ -39,21 +39,16 @@ pub async fn handle_tcp_stream(
 
     let client_agent = Arc::new(client_agent);
 
-    let client_agent_task = {
-        let client_agent = client_agent.clone();
-        tokio::spawn(async move {
-            client_agent::run(client_agent, client_agent_command_receiver, ws_stream).await
-        })
-    };
-
     let client_agent_register_rsult =
-        hub_command_sender.send(command::Command::RegisterClientAgent { client_agent });
+        hub_command_sender.send(command::Command::RegisterClientAgent {
+            client_agent: client_agent.clone(),
+        });
     if let Err(error) = client_agent_register_rsult {
         error!("client_agent_register_rsult error: {:?}", error);
         return;
     }
 
-    let _ = client_agent_task.await;
+    client_agent::run(client_agent, client_agent_command_receiver, ws_stream).await;
 
     let unregister_command = command::Command::UnregisterClientAgent { connection_id };
     let _ = hub_command_sender.send(unregister_command);
