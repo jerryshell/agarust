@@ -25,12 +25,6 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	elif packet.has_login_err():
 		message_panel.hide()
 		logger.error(packet.get_login_err().get_reason())
-	elif packet.has_register_ok():
-		message_panel.hide()
-		logger.success("register success")
-	elif packet.has_register_err():
-		message_panel.hide()
-		logger.error(packet.get_register_err().get_reason())
 	else:
 		print_debug("unknown packet: ", packet)
 
