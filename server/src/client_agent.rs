@@ -51,21 +51,28 @@ impl ClientAgent {
         let client_writer = Arc::new(Mutex::new(client_writer));
         loop {
             tokio::select! {
-                Some(client_reader_next_result) = client_reader.next() => {
-                    match client_reader_next_result {
-                        Ok(client_reader_message) => {
-                            self.handle_client_reader_message(client_reader_message).await;
-                        },
-                        Err(e) => {
-                            warn!("client_reader error {:?}: {:?}", self.socket_addr, e);
-                            break;
-                        },
+                client_reader_next = client_reader.next() => {
+                    if let Some(client_reader_next_result) = client_reader_next {
+                        match client_reader_next_result {
+                            Ok(client_reader_message) => {
+                                self.handle_client_reader_message(client_reader_message).await;
+                            },
+                            Err(e) => {
+                                warn!("client_reader error {:?}: {:?}", self.socket_addr, e);
+                                let mut client_writer = client_writer.lock().await;
+                                let _ = client_writer.close().await;
+                                break;
+                            },
+                        }
+                    } else {
+                        warn!("client_reader read None, disconnect {:?}", self.socket_addr);
+                        break;
                     }
                 },
                 Some(command) = self.client_agent_command_receiver.recv() => {
                     let client_writer = client_writer.clone();
                     self.handle_command(command, client_writer).await;
-                }
+                },
             };
         }
     }
@@ -80,6 +87,9 @@ impl ClientAgent {
                     warn!("proto decode error {:?}: {:?}", self, error);
                 }
             }
+        } else {
+            warn!("unkonwn message: {:?}", client_reader_message);
+            // TODO handle Message::Close
         }
     }
 
