@@ -4,6 +4,7 @@ use hashbrown::HashMap;
 use prost::Message;
 use std::time::Duration;
 use tokio::{
+    select,
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
     time::{interval, Instant},
 };
@@ -45,17 +46,28 @@ impl Hub {
             self.spawn_spore();
         }
 
-        let _ = self.command_sender.send(command::Command::Tick {
-            last_tick: Instant::now(),
-            interval: interval(TICK_DURATION),
-        });
+        let mut tick_interval = interval(TICK_DURATION);
+        let mut last_tick = Instant::now();
 
-        let _ = self.command_sender.send(command::Command::SpawnSpore {
-            interval: interval(SPAWN_SPORE_DURATION),
-        });
+        let mut spawn_spore_interval = interval(SPAWN_SPORE_DURATION);
 
-        while let Some(command) = command_receiver.recv().await {
-            self.handle_command(command).await;
+        loop {
+            select! {
+                _ = tick_interval.tick() => {
+                    let delta = last_tick.elapsed();
+                    self.tick_player(delta);
+                    last_tick = Instant::now();
+                    self.sync_player();
+                }
+                _ = spawn_spore_interval.tick() => {
+                    if self.spore_map.len() < MAX_SPORE_COUNT {
+                        self.spawn_spore();
+                    }
+                }
+                Some(command) = command_receiver.recv() => {
+                    self.handle_command(command).await;
+                }
+            }
         }
     }
 
@@ -85,9 +97,7 @@ impl Hub {
                 self.client_map.remove(&connection_id);
 
                 let packet = proto_util::disconnect_packet(connection_id, "unregister".into());
-                let _ = self
-                    .command_sender
-                    .send(command::Command::BroadcastPacket { packet });
+                self.broadcast_packet(packet);
             }
             command::Command::Join {
                 connection_id,
@@ -141,63 +151,9 @@ impl Hub {
                     .client_agent_command_sender
                     .send(command::Command::UpdateSporeBatch { spore_batch });
             }
-            command::Command::BroadcastPacket { packet } => {
-                let raw_data = packet.encode_to_vec();
-                let _ = self
-                    .command_sender
-                    .send(command::Command::BroadcastRawData { raw_data });
-            }
-            command::Command::BroadcastRawData { raw_data } => {
-                self.client_map
-                    .values()
-                    .filter(|client| client.player.is_some())
-                    .for_each(|client| {
-                        let raw_data = raw_data.clone();
-                        let _ = client
-                            .client_agent
-                            .client_agent_command_sender
-                            .send(command::Command::SendRawData { raw_data });
-                    });
-            }
-            command::Command::Tick {
-                mut last_tick,
-                mut interval,
-            } => {
-                let delta = last_tick.elapsed();
-
-                self.tick_player(delta);
-                last_tick = Instant::now();
-
-                let _ = self.command_sender.send(command::Command::SyncPlayer);
-
-                let hub_command_sender = self.command_sender.clone();
-                tokio::spawn(async move {
-                    interval.tick().await;
-                    if let Err(error) = hub_command_sender.send(command::Command::Tick {
-                        last_tick,
-                        interval,
-                    }) {
-                        error!("send command::Command::Tick error: {:?}", error);
-                    }
-                });
-            }
-            command::Command::SyncPlayer => {
-                let player_list = self
-                    .client_map
-                    .values()
-                    .filter_map(|client| client.player.as_ref())
-                    .collect::<Vec<_>>();
-
-                let packet = proto_util::update_player_batch_packet(&player_list);
-                let _ = self
-                    .command_sender
-                    .send(command::Command::BroadcastPacket { packet });
-            }
             command::Command::Chat { connection_id, msg } => {
                 let packet = proto_util::chat_packet(connection_id, msg);
-                let _ = self
-                    .command_sender
-                    .send(command::Command::BroadcastPacket { packet });
+                self.broadcast_packet(packet);
             }
             command::Command::UpdatePlayerDirectionAngle {
                 connection_id,
@@ -237,15 +193,14 @@ impl Hub {
 
                         self.spore_map.remove(&spore_id);
 
-                        let packet = proto_util::consume_spore_packet(connection_id, spore_id);
-                        let _ = self
-                            .command_sender
-                            .send(command::Command::BroadcastPacket { packet });
+                        let packet =
+                            proto_util::consume_spore_packet(connection_id.clone(), spore_id);
 
                         let current_score = util::radius_to_mass(player.radius) as i64;
-                        let _ = client
-                            .client_agent
-                            .client_agent_command_sender
+                        let client_sender = client.client_agent.client_agent_command_sender.clone();
+
+                        self.broadcast_packet(packet);
+                        let _ = client_sender
                             .send(command::Command::SyncPlayerBestScore { current_score });
                     }
                 }
@@ -305,30 +260,33 @@ impl Hub {
 
                             self.spore_map.insert(spore.id.clone(), spore);
 
-                            let _ = self
-                                .command_sender
-                                .send(command::Command::BroadcastPacket { packet });
+                            self.broadcast_packet(packet);
                         }
                     }
                 }
-            }
-            command::Command::SpawnSpore { mut interval } => {
-                if self.spore_map.len() < MAX_SPORE_COUNT {
-                    let spore = spore::Spore::random();
-                    let spore_id = spore.id.clone();
-                    self.spore_map.insert(spore_id, spore);
-                }
-
-                let hub_command_sender = self.command_sender.clone();
-                tokio::spawn(async move {
-                    interval.tick().await;
-                    let _ = hub_command_sender.send(command::Command::SpawnSpore { interval });
-                });
             }
             _ => {
                 warn!("unknown command: {:?}", command);
             }
         }
+    }
+
+    fn broadcast_packet(&self, packet: proto::Packet) {
+        let raw_data = packet.encode_to_vec();
+        self.broadcast_raw_data(raw_data);
+    }
+
+    fn broadcast_raw_data(&self, raw_data: Vec<u8>) {
+        self.client_map
+            .values()
+            .filter(|client| client.player.is_some())
+            .for_each(|client| {
+                let raw_data = raw_data.clone();
+                let _ = client
+                    .client_agent
+                    .client_agent_command_sender
+                    .send(command::Command::SendRawData { raw_data });
+            });
     }
 
     fn spawn_spore(&mut self) {
@@ -337,6 +295,9 @@ impl Hub {
     }
 
     fn tick_player(&mut self, delta: Duration) {
+        info!("delta: {:?}", delta);
+        let mut packet_to_broadcast = vec![];
+
         for player in self
             .client_map
             .values_mut()
@@ -354,14 +315,26 @@ impl Hub {
                     spore.radius = util::mass_to_radius(mass);
 
                     let packet = proto_util::update_spore_pack(&spore);
+                    packet_to_broadcast.push(packet);
 
                     self.spore_map.insert(spore.id.clone(), spore);
-
-                    let _ = self
-                        .command_sender
-                        .send(command::Command::BroadcastPacket { packet });
                 }
             }
         }
+
+        for packet in packet_to_broadcast {
+            self.broadcast_packet(packet);
+        }
+    }
+
+    fn sync_player(&self) {
+        let player_list = self
+            .client_map
+            .values()
+            .filter_map(|client| client.player.as_ref())
+            .collect::<Vec<_>>();
+
+        let packet = proto_util::update_player_batch_packet(&player_list);
+        self.broadcast_packet(packet);
     }
 }

@@ -1,12 +1,9 @@
 use crate::*;
 
-use client_agent::ClientAgent;
-use tokio::time::{Instant, Interval};
-
 #[derive(Debug)]
 pub enum Command {
     RegisterClientAgent {
-        client_agent: Arc<ClientAgent>,
+        client_agent: Arc<client_agent::ClientAgent>,
     },
     UnregisterClientAgent {
         connection_id: Arc<str>,
@@ -27,23 +24,12 @@ pub enum Command {
         color: i64,
     },
     DisconnectClinet,
-    BroadcastPacket {
-        packet: proto::Packet,
-    },
-    BroadcastRawData {
-        raw_data: Vec<u8>,
-    },
     SendPacket {
         packet: proto::Packet,
     },
     SendRawData {
         raw_data: Vec<u8>,
     },
-    Tick {
-        last_tick: Instant,
-        interval: Interval,
-    },
-    SyncPlayer,
     SyncPlayerBestScore {
         current_score: i64,
     },
@@ -68,9 +54,6 @@ pub enum Command {
     },
     Rush {
         connectin_id: Arc<str>,
-    },
-    SpawnSpore {
-        interval: Interval,
     },
     LeaderboardRequest,
     LeaderboardResponse {
