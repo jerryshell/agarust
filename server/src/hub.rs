@@ -16,7 +16,9 @@ const MAX_SPORE_COUNT: usize = 1000;
 
 #[derive(Debug)]
 pub struct Client {
-    pub client_agent: Arc<client_agent::ClientAgent>,
+    pub socket_addr: SocketAddr,
+    pub connection_id: Arc<str>,
+    pub client_agent_command_sender: UnboundedSender<command::Command>,
     pub player: Option<player::Player>,
 }
 
@@ -72,20 +74,20 @@ impl Hub {
 
     async fn handle_command(&mut self, command: command::Command) {
         match command {
-            command::Command::RegisterClientAgent { client_agent } => {
-                info!("RegisterClientAgent: {:?}", client_agent);
+            command::Command::RegisterClientAgent {
+                socket_addr,
+                connection_id,
+                client_agent_command_sender,
+            } => {
+                info!("RegisterClientAgent: {:?} {:?}", socket_addr, connection_id);
 
-                let connection_id = client_agent.connection_id.clone();
-                let client_agent_command_sender = client_agent.client_agent_command_sender.clone();
-
-                {
-                    let connection_id = connection_id.clone();
-                    let client = Client {
-                        client_agent,
-                        player: None,
-                    };
-                    self.client_map.insert(connection_id, client);
-                }
+                let client = Client {
+                    socket_addr,
+                    connection_id: connection_id.clone(),
+                    client_agent_command_sender: client_agent_command_sender.clone(),
+                    player: None,
+                };
+                self.client_map.insert(connection_id.clone(), client);
 
                 let packet = proto_util::hello_packet(connection_id);
                 let _ = client_agent_command_sender.send(command::Command::SendPacket { packet });
@@ -118,7 +120,6 @@ impl Hub {
                                 self.client_map.get(&online_player.connection_id)
                             {
                                 let _ = online_client
-                                    .client_agent
                                     .client_agent_command_sender
                                     .send(command::Command::DisconnectClinet);
                             }
@@ -146,7 +147,6 @@ impl Hub {
                 });
 
                 let _ = client
-                    .client_agent
                     .client_agent_command_sender
                     .send(command::Command::UpdateSporeBatch { spore_batch });
             }
@@ -196,7 +196,7 @@ impl Hub {
                             proto_util::consume_spore_packet(connection_id.clone(), spore_id);
 
                         let current_score = util::radius_to_mass(player.radius) as i64;
-                        let client_sender = client.client_agent.client_agent_command_sender.clone();
+                        let client_sender = client.client_agent_command_sender.clone();
 
                         self.broadcast_packet(packet);
                         let _ = client_sender
@@ -282,7 +282,6 @@ impl Hub {
             .for_each(|client| {
                 let raw_data = raw_data.clone();
                 let _ = client
-                    .client_agent
                     .client_agent_command_sender
                     .send(command::Command::SendRawData { raw_data });
             });

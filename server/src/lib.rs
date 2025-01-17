@@ -30,25 +30,25 @@ pub async fn handle_tcp_stream(
 
     let connection_id: Arc<str> = nanoid!().into();
 
-    let (client_agent, client_agent_command_receiver) = client_agent::ClientAgent::new(
+    let client_agent = client_agent::ClientAgent::new(
         socket_addr,
         connection_id.clone(),
         db_pool,
         hub_command_sender.clone(),
     );
 
-    let client_agent = Arc::new(client_agent);
-
     let client_agent_register_rsult =
         hub_command_sender.send(command::Command::RegisterClientAgent {
-            client_agent: client_agent.clone(),
+            socket_addr,
+            connection_id: connection_id.clone(),
+            client_agent_command_sender: client_agent.client_agent_command_sender.clone(),
         });
     if let Err(error) = client_agent_register_rsult {
         error!("client_agent_register_rsult error: {:?}", error);
         return;
     }
 
-    client_agent::run(client_agent, client_agent_command_receiver, ws_stream).await;
+    client_agent.run(ws_stream).await;
 
     let unregister_command = command::Command::UnregisterClientAgent { connection_id };
     let _ = hub_command_sender.send(unregister_command);

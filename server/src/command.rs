@@ -3,7 +3,9 @@ use crate::*;
 #[derive(Debug)]
 pub enum Command {
     RegisterClientAgent {
-        client_agent: Arc<client_agent::ClientAgent>,
+        socket_addr: SocketAddr,
+        connection_id: Arc<str>,
+        client_agent_command_sender: UnboundedSender<command::Command>,
     },
     UnregisterClientAgent {
         connection_id: Arc<str>,
