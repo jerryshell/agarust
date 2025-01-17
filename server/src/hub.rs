@@ -57,7 +57,6 @@ impl Hub {
                     let delta = last_tick.elapsed();
                     self.tick_player(delta);
                     last_tick = Instant::now();
-                    self.sync_player();
                 }
                 _ = spawn_spore_interval.tick() => {
                     if self.spore_map.len() < MAX_SPORE_COUNT {
@@ -106,7 +105,7 @@ impl Hub {
                 color,
             } => {
                 info!(
-                    "PlayerJoin: {:?} {:?} {:?} {:?}",
+                    "PlayerJoin: {:?} {:?} {:?} {:#x?}",
                     connection_id, player_db_id, nickname, color
                 );
 
@@ -291,18 +290,23 @@ impl Hub {
 
     fn spawn_spore(&mut self) {
         let spore = spore::Spore::random();
+
+        let packet = proto_util::update_spore_pack(&spore);
+
         self.spore_map.insert(spore.id.clone(), spore);
+
+        self.broadcast_packet(packet);
     }
 
     fn tick_player(&mut self, delta: Duration) {
-        info!("delta: {:?}", delta);
-        let mut packet_to_broadcast = vec![];
+        let mut spore_packet_list = vec![];
 
-        for player in self
+        let player_list = self
             .client_map
             .values_mut()
-            .flat_map(|client| client.player.as_mut())
-        {
+            .flat_map(|client| client.player.as_mut());
+
+        for player in player_list {
             player.tick(delta);
 
             let drop_mass_probability = player.radius / (MAX_SPORE_COUNT as f64 * 4.0);
@@ -315,15 +319,17 @@ impl Hub {
                     spore.radius = util::mass_to_radius(mass);
 
                     let packet = proto_util::update_spore_pack(&spore);
-                    packet_to_broadcast.push(packet);
+                    spore_packet_list.push(packet);
 
                     self.spore_map.insert(spore.id.clone(), spore);
                 }
             }
         }
 
-        for packet in packet_to_broadcast {
-            self.broadcast_packet(packet);
+        self.sync_player();
+
+        for spore_packet in spore_packet_list {
+            self.broadcast_packet(spore_packet);
         }
     }
 
