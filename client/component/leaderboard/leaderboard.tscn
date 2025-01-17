@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dis1cx3bi13xh"]
 
-[ext_resource type="Script" uid="uid://bkckt0r8xh1kl" path="res://component/leaderboard/leaderboard.gd" id="1_10xqa"]
+[ext_resource type="Script" path="res://component/leaderboard/leaderboard.gd" id="1_10xqa"]
 
 [node name="Leaderboard" type="ScrollContainer"]
 anchors_preset = 15
