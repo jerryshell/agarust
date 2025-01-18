@@ -52,26 +52,35 @@ impl ClientAgent {
         loop {
             tokio::select! {
                 client_reader_next = client_reader.next() => {
-                    if let Some(client_reader_next_result) = client_reader_next {
-                        match client_reader_next_result {
-                            Ok(client_reader_message) => {
-                                self.handle_client_reader_message(client_reader_message).await;
-                            },
-                            Err(e) => {
-                                warn!("client_reader error {:?}: {:?}", self.socket_addr, e);
-                                let mut client_writer = client_writer.lock().await;
-                                let _ = client_writer.close().await;
-                                break;
-                            },
-                        }
-                    } else {
-                        warn!("client_reader read None, disconnect {:?}", self.socket_addr);
-                        break;
+                    match client_reader_next {
+                        Some(client_reader_next) => {
+                            match client_reader_next {
+                                Ok(client_reader_message) => {
+                                    self.handle_client_reader_message(client_reader_message).await;
+                                },
+                                Err(e) => {
+                                    warn!("client_reader error, disconnect {:?}: {:?}", self.socket_addr, e);
+                                    break;
+                                },
+                            }
+                        },
+                        None => {
+                            warn!("client_reader next None, disconnect {:?}", self.socket_addr);
+                            break;
+                        },
                     }
                 },
-                Some(command) = self.client_agent_command_receiver.recv() => {
-                    let client_writer = client_writer.clone();
-                    self.handle_command(command, client_writer).await;
+                command_recv = self.client_agent_command_receiver.recv() => {
+                    match command_recv {
+                        Some(command) => {
+                            let client_writer = client_writer.clone();
+                            self.handle_command(command, client_writer).await;
+                        },
+                        None => {
+                            warn!("client_agent_command_receiver recv None, disconnect {:?}", self.socket_addr);
+                            break;
+                        },
+                    }
                 },
             };
         }
