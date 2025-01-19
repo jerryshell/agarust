@@ -56,7 +56,8 @@ impl ClientAgent {
                         Some(client_reader_next) => {
                             match client_reader_next {
                                 Ok(client_reader_message) => {
-                                    self.handle_client_reader_message(client_reader_message).await;
+                                    let client_writer = client_writer.clone();
+                                    self.handle_client_reader_message(client_reader_message, client_writer).await;
                                 },
                                 Err(e) => {
                                     warn!("client_reader error, disconnect {:?}: {:?}", self.socket_addr, e);
@@ -86,19 +87,27 @@ impl ClientAgent {
         }
     }
 
-    async fn handle_client_reader_message(&mut self, client_reader_message: Message) {
-        if let Message::Binary(bytes) = client_reader_message {
-            match proto::Packet::decode(Cursor::new(bytes)) {
+    async fn handle_client_reader_message(
+        &mut self,
+        client_reader_message: Message,
+        client_writer: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
+    ) {
+        match client_reader_message {
+            Message::Binary(bytes) => match proto::Packet::decode(Cursor::new(bytes)) {
                 Ok(packet) => {
                     self.handle_client_reader_packet(packet).await;
                 }
                 Err(e) => {
                     warn!("proto decode error {:?}: {:?}", self, e);
                 }
+            },
+            Message::Close(close_frame) => {
+                info!("client close_frame: {:?}", close_frame);
+                let _ = client_writer.lock().await.close().await;
             }
-        } else {
-            warn!("unkonwn message: {:?}", client_reader_message);
-            // TODO handle Message::Close
+            _ => {
+                warn!("unkonwn message: {:?}", client_reader_message);
+            }
         }
     }
 
