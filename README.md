@@ -15,7 +15,7 @@ Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/aga
 ## Tech stack
 
 - Godot 4
-- Rust (Tokio asynchronous runtime)
+- Rust - Tokio asynchronous runtime
 - Protocol Buffers
 - WebScoket
 - SQLite
@@ -49,3 +49,7 @@ Import the `client` folder using [Godot 4](https://godotengine.org)
 ### Change server url
 
 Change `debug_server_url` and `release_server_url` in [client/global/global.gd](client/global/global.gd)
+
+## Credits
+
+- [Godot 4 + Golang MMO Tutorial Series by Tristan Batchler](https://www.tbat.me/projects/godot-golang-mmo-tutorial-series)
