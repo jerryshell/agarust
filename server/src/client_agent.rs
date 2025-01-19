@@ -53,8 +53,8 @@ impl ClientAgent {
             tokio::select! {
                 client_reader_next = client_reader.next() => {
                     match client_reader_next {
-                        Some(client_reader_next) => {
-                            match client_reader_next {
+                        Some(read_message_result) => {
+                            match read_message_result {
                                 Ok(client_reader_message) => {
                                     let client_writer = client_writer.clone();
                                     self.handle_client_reader_message(client_reader_message, client_writer).await;
