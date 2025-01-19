@@ -236,8 +236,8 @@ impl Hub {
                     }
                 }
             }
-            command::Command::Rush { connectin_id } => {
-                if let Some(client) = self.client_map.get_mut(&connectin_id) {
+            command::Command::Rush { connection_id } => {
+                if let Some(client) = self.client_map.get_mut(&connection_id) {
                     if let Some(player) = client.player.as_mut() {
                         if player.radius < 20.0 {
                             return;

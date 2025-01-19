@@ -22,11 +22,11 @@ pub async fn handle_tcp_stream(
     let ws_stream = match tokio_tungstenite::accept_async(tcp_stream).await {
         Ok(ws_stream) => ws_stream,
         Err(e) => {
-            error!("tokio_tungstenite accept_async error {:?}", e);
+            error!("tokio_tungstenite accept_async error: {:?}", e);
             return;
         }
     };
-    info!("Accept WebSocket stream: {:?}", ws_stream);
+    info!("tokio_tungstenite accept_async: {:?}", ws_stream);
 
     let connection_id: Arc<str> = nanoid!().into();
 
@@ -43,8 +43,8 @@ pub async fn handle_tcp_stream(
             connection_id: connection_id.clone(),
             client_agent_command_sender: client_agent.client_agent_command_sender.clone(),
         });
-    if let Err(error) = client_agent_register_rsult {
-        error!("client_agent_register_rsult error: {:?}", error);
+    if let Err(e) = client_agent_register_rsult {
+        error!("client_agent_register_rsult error: {:?}", e);
         return;
     }
 

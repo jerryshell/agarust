@@ -55,7 +55,7 @@ pub enum Command {
         victim_connection_id: Arc<str>,
     },
     Rush {
-        connectin_id: Arc<str>,
+        connection_id: Arc<str>,
     },
     LeaderboardRequest,
     LeaderboardResponse {

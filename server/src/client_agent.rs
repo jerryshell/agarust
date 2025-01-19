@@ -92,8 +92,8 @@ impl ClientAgent {
                 Ok(packet) => {
                     self.handle_client_reader_packet(packet).await;
                 }
-                Err(error) => {
-                    warn!("proto decode error {:?}: {:?}", self, error);
+                Err(e) => {
+                    warn!("proto decode error {:?}: {:?}", self, e);
                 }
             }
         } else {
@@ -119,8 +119,8 @@ impl ClientAgent {
 
                     let auth = match query_result {
                         Ok(auth) => auth,
-                        Err(error) => {
-                            warn!("auth query error: {:?}", error);
+                        Err(e) => {
+                            warn!("auth query error: {:?}", e);
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".into(),
                             );
@@ -144,8 +144,8 @@ impl ClientAgent {
                                 return;
                             }
                         }
-                        Err(error) => {
-                            warn!("bcrypt verify error: {:?}", error);
+                        Err(e) => {
+                            warn!("bcrypt verify error: {:?}", e);
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".into(),
                             );
@@ -166,8 +166,8 @@ impl ClientAgent {
 
                     let player = match query_result {
                         Ok(player) => player,
-                        Err(error) => {
-                            warn!("player query error: {:?}", error);
+                        Err(e) => {
+                            warn!("player query error: {:?}", e);
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".into(),
                             );
@@ -195,8 +195,8 @@ impl ClientAgent {
 
                     let mut transaction = match self.db_pool.begin().await {
                         Ok(transaction) => transaction,
-                        Err(error) => {
-                            warn!("transaction begin error: {:?}", error);
+                        Err(e) => {
+                            warn!("transaction begin error: {:?}", e);
                             let packet =
                                 proto_util::register_err_packet("transaction begin error".into());
                             let _ = self
@@ -244,8 +244,8 @@ impl ClientAgent {
 
                     let password = match bcrypt::hash(password, bcrypt::DEFAULT_COST) {
                         Ok(password) => password,
-                        Err(error) => {
-                            warn!("password hash error: {:?}", error);
+                        Err(e) => {
+                            warn!("password hash error: {:?}", e);
                             let packet =
                                 proto_util::register_err_packet("password hash error".into());
                             let _ = self
@@ -266,8 +266,8 @@ impl ClientAgent {
 
                     let auth_id = match query_result {
                         Ok(query_result) => query_result.last_insert_rowid(),
-                        Err(error) => {
-                            warn!("auth insert error: {:?}", error);
+                        Err(e) => {
+                            warn!("auth insert error: {:?}", e);
                             let packet =
                                 proto_util::register_err_packet("auth insert error".into());
                             let _ = self
@@ -287,8 +287,8 @@ impl ClientAgent {
                     .execute(&mut *transaction)
                     .await;
 
-                    if let Err(error) = query_result {
-                        warn!("player insert error: {:?}", error);
+                    if let Err(e) = query_result {
+                        warn!("player insert error: {:?}", e);
                         let packet = proto_util::register_err_packet("player insert error".into());
                         let _ = self
                             .client_agent_command_sender
@@ -296,8 +296,8 @@ impl ClientAgent {
                         return;
                     }
 
-                    if let Err(error) = transaction.commit().await {
-                        warn!("transaction commit error: {:?}", error);
+                    if let Err(e) = transaction.commit().await {
+                        warn!("transaction commit error: {:?}", e);
                         let packet =
                             proto_util::register_err_packet("transaction commit error".into());
                         let _ = self
@@ -364,7 +364,7 @@ impl ClientAgent {
                 }
                 proto::packet::Data::Rush(_) => {
                     let _ = self.hub_command_sender.send(command::Command::Rush {
-                        connectin_id: self.connection_id.clone(),
+                        connection_id: self.connection_id.clone(),
                     });
                 }
                 proto::packet::Data::Disconnect(_) => {
@@ -391,8 +391,8 @@ impl ClientAgent {
                                 score: player.best_score as u64,
                             })
                             .collect::<Vec<_>>(),
-                        Err(error) => {
-                            error!("fetch leaderboard error: {:?}", error);
+                        Err(e) => {
+                            error!("fetch leaderboard error: {:?}", e);
                             return;
                         }
                     };
@@ -465,8 +465,8 @@ impl ClientAgent {
                 .execute(&self.db_pool)
                 .await;
 
-                if let Err(error) = query_result {
-                    warn!("UPDATE player SET best_score error: {:?}", error);
+                if let Err(e) = query_result {
+                    warn!("UPDATE player SET best_score error: {:?}", e);
                 }
             }
             command::Command::DisconnectClinet => {

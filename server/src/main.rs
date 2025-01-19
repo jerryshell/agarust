@@ -25,8 +25,8 @@ async fn main() {
 
     let tcp_listener = match tokio::net::TcpListener::bind(&bind_addr).await {
         Ok(tcp_listener) => tcp_listener,
-        Err(error) => {
-            tracing::error!("TcpListener bind error: {:?}", error);
+        Err(e) => {
+            tracing::error!("TcpListener bind error: {:?}", e);
             return;
         }
     };
@@ -39,8 +39,8 @@ async fn main() {
 
     let db_pool = match sqlx::sqlite::SqlitePool::connect(&database_url).await {
         Ok(pool) => pool,
-        Err(error) => {
-            tracing::error!("SqlitePool connect error: {:?}", error);
+        Err(e) => {
+            tracing::error!("SqlitePool connect error: {:?}", e);
             return;
         }
     };
