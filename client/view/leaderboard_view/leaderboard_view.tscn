@@ -37,7 +37,7 @@ text = "Back"
 
 [node name="Leaderboard" parent="Gui" instance=ExtResource("2_rkw7s")]
 unique_name_in_owner = true
-offset_left = 320.0
-offset_top = 16.0
-offset_right = -320.0
+offset_left = 448.0
+offset_top = 64.0
+offset_right = -448.0
 offset_bottom = -16.0

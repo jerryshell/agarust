@@ -105,27 +105,19 @@ offset_right = 256.0
 offset_bottom = -16.0
 grow_vertical = 0
 
-[node name="Ping" parent="Gui" instance=ExtResource("4_g2reg")]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -64.0
-offset_right = 96.0
-offset_bottom = -40.0
-grow_vertical = 0
-
 [node name="ConnectionIdLabel" type="Label" parent="Gui"]
 unique_name_in_owner = true
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = -40.0
-offset_right = 162.0
-offset_bottom = -17.0
-grow_vertical = 0
+offset_top = 16.0
+offset_right = 165.0
+offset_bottom = 39.0
 text = "Connection ID: ABC"
+
+[node name="Ping" parent="Gui" instance=ExtResource("4_g2reg")]
+offset_left = 16.0
+offset_top = 48.0
+offset_right = 96.0
+offset_bottom = 72.0
 
 [node name="MessagePanel" type="Panel" parent="Gui"]
 unique_name_in_owner = true
