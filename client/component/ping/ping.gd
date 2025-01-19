@@ -10,8 +10,8 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	if packet.has_ping():
 		var ping := packet.get_ping()
 		var client_timestamp := ping.get_client_timestamp()
-		var server_timestamp := ping.get_server_timestamp()
-		var diff := server_timestamp - client_timestamp
+		var now := Time.get_unix_time_from_system() * 1000
+		var diff := now - client_timestamp
 		text = "Ping: %s ms" % diff
 
 func _on_timer_timeout() -> void:

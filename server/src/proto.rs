@@ -59,8 +59,6 @@ pub mod packet {
 pub struct Ping {
     #[prost(int64, tag = "1")]
     pub client_timestamp: i64,
-    #[prost(int64, tag = "2")]
-    pub server_timestamp: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Hello {

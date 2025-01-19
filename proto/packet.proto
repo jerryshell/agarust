@@ -28,10 +28,7 @@ message Packet {
   }
 }
 
-message Ping {
-  int64 client_timestamp = 1;
-  int64 server_timestamp = 2;
-}
+message Ping { int64 client_timestamp = 1; }
 
 message Hello { string connection_id = 1; }
 

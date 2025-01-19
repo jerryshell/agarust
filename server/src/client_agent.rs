@@ -3,12 +3,7 @@ use crate::*;
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use prost::Message as _;
 use sqlx::query_as;
-use std::{
-    io::Cursor,
-    net::SocketAddr,
-    sync::Arc,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::{io::Cursor, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::TcpStream,
     sync::{
@@ -119,21 +114,13 @@ impl ClientAgent {
     async fn handle_client_reader_packet(&mut self, packet: proto::Packet) {
         if let Some(data) = packet.data {
             match data {
-                proto::packet::Data::Ping(mut ping) => {
-                    match SystemTime::now().duration_since(UNIX_EPOCH) {
-                        Ok(n) => {
-                            ping.server_timestamp = n.as_millis() as i64;
-                            let packet = proto::Packet {
-                                data: Some(proto::packet::Data::Ping(ping)),
-                            };
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
-                        }
-                        Err(_) => {
-                            error!("SystemTime before UNIX EPOCH!")
-                        }
+                proto::packet::Data::Ping(ping) => {
+                    let packet = proto::Packet {
+                        data: Some(proto::packet::Data::Ping(ping)),
                     };
+                    let _ = self
+                        .client_agent_command_sender
+                        .send(command::Command::SendPacket { packet });
                 }
                 proto::packet::Data::Login(login) => {
                     let username = login.username;

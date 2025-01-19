@@ -2002,11 +2002,6 @@ class Ping:
 		service.field = __client_timestamp
 		data[__client_timestamp.tag] = service
 
-		__server_timestamp = PBField.new("server_timestamp", PB_DATA_TYPE.INT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.INT64])
-		service = PBServiceField.new()
-		service.field = __server_timestamp
-		data[__server_timestamp.tag] = service
-
 	var data = {}
 
 	var __client_timestamp: PBField
@@ -2021,19 +2016,6 @@ class Ping:
 		__client_timestamp.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT64]
 	func set_client_timestamp(value: int) -> void:
 		__client_timestamp.value = value
-
-	var __server_timestamp: PBField
-	func has_server_timestamp() -> bool:
-		if __server_timestamp.value != null:
-			return true
-		return false
-	func get_server_timestamp() -> int:
-		return __server_timestamp.value
-	func clear_server_timestamp() -> void:
-		data[2].state = PB_SERVICE_STATE.UNFILLED
-		__server_timestamp.value = DEFAULT_VALUES_3[PB_DATA_TYPE.INT64]
-	func set_server_timestamp(value: int) -> void:
-		__server_timestamp.value = value
 
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
