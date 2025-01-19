@@ -47,17 +47,17 @@ async fn main() {
 
     let hub = agarust_server::hub::Hub::new(db_pool.clone());
     let hub_command_sender = hub.command_sender.clone();
-    let hub_task = hub.run();
-    tokio::spawn(hub_task);
+    let hub_run_future = hub.run();
+    tokio::spawn(hub_run_future);
 
     while let Ok((tcp_stream, socket_addr)) = tcp_listener.accept().await {
         tracing::info!("tcp_listener accept: {:?}", socket_addr);
-        let handle_client_task = agarust_server::handle_tcp_stream(
+        let tcp_stream_future = agarust_server::handle_tcp_stream(
             tcp_stream,
             socket_addr,
             db_pool.clone(),
             hub_command_sender.clone(),
         );
-        tokio::spawn(handle_client_task);
+        tokio::spawn(tcp_stream_future);
     }
 }
