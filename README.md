@@ -15,7 +15,7 @@ Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/aga
 ## Tech stack
 
 - Godot 4
-- Rust - Tokio asynchronous runtime
+- Rust
 - Protocol Buffers
 - WebScoket
 - SQLite
@@ -46,7 +46,7 @@ cargo run
 
 Import the `client` folder using [Godot 4](https://godotengine.org)
 
-### Change server url
+### Change server URL
 
 Change `debug_server_url` and `release_server_url` in [client/global/global.gd](client/global/global.gd)
 
