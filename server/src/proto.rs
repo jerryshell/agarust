@@ -3,7 +3,7 @@
 pub struct Packet {
     #[prost(
         oneof = "packet::Data",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21"
     )]
     pub data: ::core::option::Option<packet::Data>,
 }
@@ -12,46 +12,55 @@ pub mod packet {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Data {
         #[prost(message, tag = "1")]
-        Hello(super::Hello),
+        Ping(super::Ping),
         #[prost(message, tag = "2")]
-        Login(super::Login),
+        Hello(super::Hello),
         #[prost(message, tag = "3")]
-        LoginOk(super::LoginOk),
+        Login(super::Login),
         #[prost(message, tag = "4")]
-        LoginErr(super::LoginErr),
+        LoginOk(super::LoginOk),
         #[prost(message, tag = "5")]
-        Register(super::Register),
+        LoginErr(super::LoginErr),
         #[prost(message, tag = "6")]
-        RegisterOk(super::RegisterOk),
+        Register(super::Register),
         #[prost(message, tag = "7")]
-        RegisterErr(super::RegisterErr),
+        RegisterOk(super::RegisterOk),
         #[prost(message, tag = "8")]
-        Join(super::Join),
+        RegisterErr(super::RegisterErr),
         #[prost(message, tag = "9")]
-        Disconnect(super::Disconnect),
+        Join(super::Join),
         #[prost(message, tag = "10")]
-        Chat(super::Chat),
+        Disconnect(super::Disconnect),
         #[prost(message, tag = "11")]
-        UpdatePlayer(super::UpdatePlayer),
+        Chat(super::Chat),
         #[prost(message, tag = "12")]
-        UpdatePlayerBatch(super::UpdatePlayerBatch),
+        UpdatePlayer(super::UpdatePlayer),
         #[prost(message, tag = "13")]
-        UpdatePlayerDirectionAngle(super::UpdatePlayerDirectionAngle),
+        UpdatePlayerBatch(super::UpdatePlayerBatch),
         #[prost(message, tag = "14")]
-        UpdateSpore(super::UpdateSpore),
+        UpdatePlayerDirectionAngle(super::UpdatePlayerDirectionAngle),
         #[prost(message, tag = "15")]
-        UpdateSporeBatch(super::UpdateSporeBatch),
+        UpdateSpore(super::UpdateSpore),
         #[prost(message, tag = "16")]
-        ConsumeSpore(super::ConsumeSpore),
+        UpdateSporeBatch(super::UpdateSporeBatch),
         #[prost(message, tag = "17")]
-        ConsumePlayer(super::ConsumePlayer),
+        ConsumeSpore(super::ConsumeSpore),
         #[prost(message, tag = "18")]
-        Rush(super::Rush),
+        ConsumePlayer(super::ConsumePlayer),
         #[prost(message, tag = "19")]
-        LeaderboardRequest(super::LeaderboardRequest),
+        Rush(super::Rush),
         #[prost(message, tag = "20")]
+        LeaderboardRequest(super::LeaderboardRequest),
+        #[prost(message, tag = "21")]
         LeaderboardResponse(super::LeaderboardResponse),
     }
+}
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Ping {
+    #[prost(int64, tag = "1")]
+    pub client_timestamp: i64,
+    #[prost(int64, tag = "2")]
+    pub server_timestamp: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Hello {

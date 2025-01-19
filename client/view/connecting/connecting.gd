@@ -9,7 +9,6 @@ func _on_ws_connected() -> void:
 	print_debug("server connected")
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
-	print_debug(packet)
 	if packet.has_hello():
 		_handle_hello_msg(packet.get_hello())
 

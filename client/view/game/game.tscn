@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://b6eavbvcua5hk"]
+[gd_scene load_steps=6 format=3 uid="uid://b6eavbvcua5hk"]
 
 [ext_resource type="Script" path="res://view/game/game.gd" id="1_dhpwo"]
 [ext_resource type="PackedScene" uid="uid://dis1cx3bi13xh" path="res://component/leaderboard/leaderboard.tscn" id="3_vpl7a"]
 [ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="4_8v2iv"]
 [ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_nyaor"]
+[ext_resource type="PackedScene" uid="uid://cs885p6pg785h" path="res://component/ping/ping.tscn" id="5_fhova"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_dhpwo")
@@ -83,3 +84,9 @@ offset_top = 64.0
 offset_right = 226.0
 offset_bottom = 95.0
 text = "Show server position"
+
+[node name="Ping" parent="Gui" instance=ExtResource("5_fhova")]
+offset_left = 24.0
+offset_top = 96.0
+offset_right = 104.0
+offset_bottom = 120.0

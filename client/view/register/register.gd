@@ -21,15 +21,12 @@ func _ready() -> void:
 	connection_id_label.text = "Connection ID: %s" % [Global.connection_id]
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
-	print_debug(packet)
 	if packet.has_register_ok():
 		message_panel.hide()
 		logger.success("register success")
 	elif packet.has_register_err():
 		message_panel.hide()
 		logger.error(packet.get_register_err().get_reason())
-	else:
-		print_debug("unknown packet: ", packet)
 
 func _on_register_button_pressed() -> void:
 	var username := username_edit.text.strip_edges()

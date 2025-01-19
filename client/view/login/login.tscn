@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://brcr5qfnvbrao"]
+[gd_scene load_steps=9 format=3 uid="uid://brcr5qfnvbrao"]
 
 [ext_resource type="Script" path="res://view/login/login.gd" id="1_cvf3h"]
 [ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="3_m0dil"]
 [ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_47oqa"]
+[ext_resource type="PackedScene" uid="uid://cs885p6pg785h" path="res://component/ping/ping.tscn" id="4_g2reg"]
 [ext_resource type="Shader" path="res://assets/background_effect.gdshader" id="4_v3yw7"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vqait"]
@@ -102,6 +103,16 @@ offset_left = -256.0
 offset_top = -440.0
 offset_right = 256.0
 offset_bottom = -16.0
+grow_vertical = 0
+
+[node name="Ping" parent="Gui" instance=ExtResource("4_g2reg")]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -64.0
+offset_right = 96.0
+offset_bottom = -40.0
 grow_vertical = 0
 
 [node name="ConnectionIdLabel" type="Label" parent="Gui"]

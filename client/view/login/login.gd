@@ -18,15 +18,12 @@ func _ready() -> void:
 	connection_id_label.text = "Connection ID: %s" % [Global.connection_id]
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
-	print_debug(packet)
 	if packet.has_login_ok():
 		message_panel.hide()
 		get_tree().change_scene_to_file("res://view/game/game.tscn")
 	elif packet.has_login_err():
 		message_panel.hide()
 		logger.error(packet.get_login_err().get_reason())
-	else:
-		print_debug("unknown packet: ", packet)
 
 func _on_login_button_pressed() -> void:
 	var username := username_edit.text.strip_edges()

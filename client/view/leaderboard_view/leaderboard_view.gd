@@ -9,7 +9,6 @@ func _ready() -> void:
 	_fetch_leaderboard()
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
-	print_debug(packet)
 	if packet.has_leaderboard_response():
 		var leaderboard_response = packet.get_leaderboard_response()
 		for entry: Global.proto.LeaderboardEntry in leaderboard_response.get_leaderboard_entry_list():
@@ -17,8 +16,6 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 			var rank_and_name := "%d. %s" % [entry.get_rank(), player_nickname]
 			var score: int = entry.get_score()
 			leaderboard.set_score(rank_and_name, score)
-	else:
-		print_debug("unknown packet: ", packet)
 
 func _fetch_leaderboard() -> void:
 	var packet := Global.proto.Packet.new()

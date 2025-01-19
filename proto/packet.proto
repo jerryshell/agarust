@@ -4,27 +4,33 @@ package proto;
 
 message Packet {
   oneof data {
-    Hello hello = 1;
-    Login login = 2;
-    LoginOk login_ok = 3;
-    LoginErr login_err = 4;
-    Register register = 5;
-    RegisterOk register_ok = 6;
-    RegisterErr register_err = 7;
-    Join join = 8;
-    Disconnect disconnect = 9;
-    Chat chat = 10;
-    UpdatePlayer update_player = 11;
-    UpdatePlayerBatch update_player_batch = 12;
-    UpdatePlayerDirectionAngle update_player_direction_angle = 13;
-    UpdateSpore update_spore = 14;
-    UpdateSporeBatch update_spore_batch = 15;
-    ConsumeSpore consume_spore = 16;
-    ConsumePlayer consume_player = 17;
-    Rush rush = 18;
-    LeaderboardRequest leaderboard_request = 19;
-    LeaderboardResponse leaderboard_response = 20;
+    Ping ping = 1;
+    Hello hello = 2;
+    Login login = 3;
+    LoginOk login_ok = 4;
+    LoginErr login_err = 5;
+    Register register = 6;
+    RegisterOk register_ok = 7;
+    RegisterErr register_err = 8;
+    Join join = 9;
+    Disconnect disconnect = 10;
+    Chat chat = 11;
+    UpdatePlayer update_player = 12;
+    UpdatePlayerBatch update_player_batch = 13;
+    UpdatePlayerDirectionAngle update_player_direction_angle = 14;
+    UpdateSpore update_spore = 15;
+    UpdateSporeBatch update_spore_batch = 16;
+    ConsumeSpore consume_spore = 17;
+    ConsumePlayer consume_player = 18;
+    Rush rush = 19;
+    LeaderboardRequest leaderboard_request = 20;
+    LeaderboardResponse leaderboard_response = 21;
   }
+}
+
+message Ping {
+  int64 client_timestamp = 1;
+  int64 server_timestamp = 2;
 }
 
 message Hello { string connection_id = 1; }

@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://cs885p6pg785h"]
+
+[ext_resource type="Script" path="res://component/ping/ping.gd" id="1_fc5bw"]
+
+[node name="Ping" type="Label"]
+offset_right = 80.0
+offset_bottom = 24.0
+text = "Ping: 0 ms"
+vertical_alignment = 1
+script = ExtResource("1_fc5bw")
+
+[node name="Timer" type="Timer" parent="."]
+unique_name_in_owner = true
+autostart = true
