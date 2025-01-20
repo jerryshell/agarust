@@ -5,6 +5,7 @@ extends Label
 func _ready() -> void:
 	WsClient.packet_received.connect(_on_ws_packet_received)
 	timer.timeout.connect(_on_timer_timeout)
+	_send_ping()
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 	if packet.has_ping():
@@ -15,6 +16,9 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		text = "Ping: %s ms" % diff
 
 func _on_timer_timeout() -> void:
+	_send_ping()
+
+func _send_ping() -> void:
 	var packet := Global.proto.Packet.new()
 	var ping := packet.new_ping()
 	var now := int(Time.get_unix_time_from_system() * 1000)
