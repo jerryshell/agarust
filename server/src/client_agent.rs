@@ -17,6 +17,7 @@ use tracing::{error, warn};
 
 #[derive(Debug)]
 pub struct ClientAgent {
+    pub ws_stream: WebSocketStream<TcpStream>,
     pub socket_addr: SocketAddr,
     pub connection_id: Arc<str>,
     pub db: db::Db,
@@ -28,6 +29,7 @@ pub struct ClientAgent {
 
 impl ClientAgent {
     pub async fn new(
+        ws_stream: WebSocketStream<TcpStream>,
         socket_addr: SocketAddr,
         db: db::Db,
         hub_command_sender: UnboundedSender<command::Command>,
@@ -57,6 +59,7 @@ impl ClientAgent {
         };
 
         let client_agent = Self {
+            ws_stream,
             socket_addr,
             connection_id,
             db,
@@ -69,7 +72,7 @@ impl ClientAgent {
         Some(client_agent)
     }
 
-    pub async fn run(mut self, mut ws_stream: WebSocketStream<TcpStream>) {
+    pub async fn run(mut self) {
         let packet = proto_util::hello_packet(self.connection_id.clone());
         let _ = self
             .client_agent_command_sender
@@ -77,12 +80,12 @@ impl ClientAgent {
 
         loop {
             tokio::select! {
-                ws_stream_next = ws_stream.next() => {
+                ws_stream_next = self.ws_stream.next() => {
                     match ws_stream_next {
                         Some(ws_stream_next_result) => {
                             match ws_stream_next_result {
                                 Ok(ws_stream_message) => {
-                                    self.handle_ws_stream_message(ws_stream_message, &mut ws_stream).await;
+                                    self.handle_ws_stream_message(ws_stream_message).await;
                                 },
                                 Err(e) => {
                                     warn!("client_reader error, disconnect {:?}: {:?}", self.socket_addr, e);
@@ -99,7 +102,7 @@ impl ClientAgent {
                 command_recv = self.client_agent_command_receiver.recv() => {
                     match command_recv {
                         Some(command) => {
-                            self.handle_command(command, &mut ws_stream).await;
+                            self.handle_command(command).await;
                         },
                         None => {
                             warn!("client_agent_command_receiver recv None, disconnect {:?}", self.socket_addr);
@@ -109,13 +112,15 @@ impl ClientAgent {
                 },
             };
         }
+
+        let _ = self
+            .hub_command_sender
+            .send(command::Command::UnregisterClientAgent {
+                connection_id: self.connection_id,
+            });
     }
 
-    async fn handle_ws_stream_message(
-        &mut self,
-        client_reader_message: Message,
-        ws_stream: &mut WebSocketStream<TcpStream>,
-    ) {
+    async fn handle_ws_stream_message(&mut self, client_reader_message: Message) {
         match client_reader_message {
             Message::Binary(bytes) => match proto::Packet::decode(Cursor::new(bytes)) {
                 Ok(packet) => {
@@ -127,7 +132,7 @@ impl ClientAgent {
             },
             Message::Close(close_frame) => {
                 info!("client close_frame: {:?}", close_frame);
-                let _ = ws_stream.close(None).await;
+                let _ = self.ws_stream.close(None).await;
             }
             _ => {
                 warn!("unkonwn message: {:?}", client_reader_message);
@@ -421,18 +426,14 @@ impl ClientAgent {
         }
     }
 
-    async fn handle_command(
-        &mut self,
-        command: command::Command,
-        ws_stream: &mut WebSocketStream<TcpStream>,
-    ) {
+    async fn handle_command(&mut self, command: command::Command) {
         match command {
             command::Command::SendPacket { packet } => {
                 let raw_data = packet.encode_to_vec();
-                let _ = ws_stream.send(Message::binary(raw_data)).await;
+                let _ = self.ws_stream.send(Message::binary(raw_data)).await;
             }
             command::Command::SendRawData { raw_data } => {
-                let _ = ws_stream.send(Message::binary(raw_data)).await;
+                let _ = self.ws_stream.send(Message::binary(raw_data)).await;
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
                 let client_agent_command_sender = self.client_agent_command_sender.clone();
@@ -476,7 +477,7 @@ impl ClientAgent {
             }
             command::Command::DisconnectClinet => {
                 warn!("Command::DisconnectClinet");
-                let _ = ws_stream.close(None).await;
+                let _ = self.ws_stream.close(None).await;
             }
             _ => {
                 warn!("unknown command: {:?}", command);

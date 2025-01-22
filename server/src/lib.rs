@@ -28,18 +28,20 @@ pub async fn handle_tcp_stream(
     };
     info!("tokio_tungstenite accept_async: {:?}", ws_stream);
 
-    let client_agent =
-        match client_agent::ClientAgent::new(socket_addr, db, hub_command_sender.clone()).await {
-            Some(client_agent) => client_agent,
-            None => {
-                error!("ClientAgent::new() None, return");
-                return;
-            }
-        };
+    let client_agent = match client_agent::ClientAgent::new(
+        ws_stream,
+        socket_addr,
+        db,
+        hub_command_sender,
+    )
+    .await
+    {
+        Some(client_agent) => client_agent,
+        None => {
+            error!("ClientAgent::new() None, return");
+            return;
+        }
+    };
 
-    let connection_id = client_agent.connection_id.clone();
-
-    client_agent.run(ws_stream).await;
-
-    let _ = hub_command_sender.send(command::Command::UnregisterClientAgent { connection_id });
+    client_agent.run().await;
 }
