@@ -88,13 +88,13 @@ impl ClientAgent {
                                     self.handle_ws_stream_message(ws_stream_message).await;
                                 },
                                 Err(e) => {
-                                    warn!("client_reader error, disconnect {:?}: {:?}", self.socket_addr, e);
+                                    warn!("ws_stream_next_result error, disconnect {:?}: {:?}", self.socket_addr, e);
                                     break;
                                 },
                             }
                         },
                         None => {
-                            warn!("client_reader next None, disconnect {:?}", self.socket_addr);
+                            warn!("ws_stream_next next None, disconnect {:?}", self.socket_addr);
                             break;
                         },
                     }
@@ -120,11 +120,11 @@ impl ClientAgent {
             });
     }
 
-    async fn handle_ws_stream_message(&mut self, client_reader_message: Message) {
-        match client_reader_message {
+    async fn handle_ws_stream_message(&mut self, ws_stream_message: Message) {
+        match ws_stream_message {
             Message::Binary(bytes) => match proto::Packet::decode(Cursor::new(bytes)) {
                 Ok(packet) => {
-                    self.handle_client_reader_packet(packet).await;
+                    self.handle_packet(packet).await;
                 }
                 Err(e) => {
                     warn!("proto decode error {:?}: {:?}", self, e);
@@ -135,12 +135,12 @@ impl ClientAgent {
                 let _ = self.ws_stream.close(None).await;
             }
             _ => {
-                warn!("unkonwn message: {:?}", client_reader_message);
+                warn!("unkonwn message: {:?}", ws_stream_message);
             }
         }
     }
 
-    async fn handle_client_reader_packet(&mut self, packet: proto::Packet) {
+    async fn handle_packet(&mut self, packet: proto::Packet) {
         if let Some(data) = packet.data {
             match data {
                 proto::packet::Data::Ping(ping) => {
@@ -437,9 +437,9 @@ impl ClientAgent {
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
                 let client_agent_command_sender = self.client_agent_command_sender.clone();
-                let mut send_interval = interval(Duration::from_millis(50));
                 tokio::spawn(async move {
                     let client_agent_command_sender = client_agent_command_sender.clone();
+                    let mut send_interval = interval(Duration::from_millis(50));
                     for spore_window in spore_batch.windows(32) {
                         let packet = proto_util::update_spore_batch_packet(spore_window);
                         let raw_data = packet.encode_to_vec();
