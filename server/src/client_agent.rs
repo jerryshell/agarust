@@ -8,7 +8,7 @@ use tokio::{
     net::TcpStream,
     sync::{
         mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        oneshot, RwLock,
+        oneshot,
     },
     time::interval,
 };
@@ -23,7 +23,7 @@ pub struct ClientAgent {
     pub hub_command_sender: UnboundedSender<command::Command>,
     pub client_agent_command_sender: UnboundedSender<command::Command>,
     pub client_agent_command_receiver: UnboundedReceiver<command::Command>,
-    pub db_player: Arc<RwLock<Option<db::Player>>>,
+    pub db_player: Option<db::Player>,
 }
 
 impl ClientAgent {
@@ -63,7 +63,7 @@ impl ClientAgent {
             hub_command_sender,
             client_agent_command_sender,
             client_agent_command_receiver,
-            db_player: Arc::new(RwLock::new(None)),
+            db_player: None,
         };
 
         Some(client_agent)
@@ -202,10 +202,7 @@ impl ClientAgent {
                         }
                     };
 
-                    {
-                        let mut db_player = self.db_player.write().await;
-                        *db_player = Some(player);
-                    }
+                    self.db_player = Some(player);
 
                     let packet = proto_util::login_ok_packet();
                     let _ = self
@@ -336,8 +333,7 @@ impl ClientAgent {
                         .send(command::Command::SendPacket { packet });
                 }
                 proto::packet::Data::Join(_) => {
-                    let db_player = self.db_player.read().await;
-                    let db_player = match &*db_player {
+                    let db_player = match self.db_player.as_ref() {
                         Some(db_player) => db_player,
                         None => {
                             warn!("join without login");
@@ -426,7 +422,7 @@ impl ClientAgent {
     }
 
     async fn handle_command(
-        &self,
+        &mut self,
         command: command::Command,
         ws_stream: &mut WebSocketStream<TcpStream>,
     ) {
@@ -454,8 +450,7 @@ impl ClientAgent {
             }
             command::Command::SyncPlayerBestScore { current_score } => {
                 let db_player_id = {
-                    let mut db_player = self.db_player.write().await;
-                    let db_player = match &mut *db_player {
+                    let db_player = match self.db_player.as_mut() {
                         Some(db_player) => db_player,
                         None => {
                             warn!("sync player best score without login");
