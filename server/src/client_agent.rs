@@ -8,7 +8,7 @@ use tokio::{
     net::TcpStream,
     sync::{
         mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        Mutex, RwLock,
+        oneshot, Mutex, RwLock,
     },
 };
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
@@ -26,24 +26,46 @@ pub struct ClientAgent {
 }
 
 impl ClientAgent {
-    pub fn new(
+    pub async fn new(
         socket_addr: SocketAddr,
-        connection_id: Arc<str>,
         db_pool: sqlx::Pool<sqlx::Sqlite>,
         hub_command_sender: UnboundedSender<command::Command>,
-    ) -> Self {
+    ) -> Option<Self> {
         let (client_agent_command_sender, client_agent_command_receiver) =
             unbounded_channel::<command::Command>();
-        let db_player = Arc::new(RwLock::new(None));
-        Self {
+
+        let connection_id = {
+            let client_agent_command_sender = client_agent_command_sender.clone();
+            let (response_sender, response_reader) = oneshot::channel();
+            let send_result = hub_command_sender.send(command::Command::RegisterClientAgent {
+                socket_addr,
+                client_agent_command_sender,
+                response_sender,
+            });
+            if let Err(e) = send_result {
+                error!("send RegisterClientAgent error: {:?}", e);
+                return None;
+            }
+            match response_reader.await {
+                Ok(connection_id) => connection_id,
+                Err(e) => {
+                    error!("ClientAgent::new() error: {:?}", e);
+                    return None;
+                }
+            }
+        };
+
+        let client_agent = Self {
             socket_addr,
             connection_id,
             db_pool,
             hub_command_sender,
             client_agent_command_sender,
             client_agent_command_receiver,
-            db_player,
-        }
+            db_player: Arc::new(RwLock::new(None)),
+        };
+
+        Some(client_agent)
     }
 
     pub async fn run(mut self, ws_stream: WebSocketStream<TcpStream>) {

@@ -1,11 +1,13 @@
 use crate::*;
 
+use tokio::sync::oneshot;
+
 #[derive(Debug)]
 pub enum Command {
     RegisterClientAgent {
         socket_addr: SocketAddr,
-        connection_id: Arc<str>,
         client_agent_command_sender: UnboundedSender<command::Command>,
+        response_sender: oneshot::Sender<Arc<str>>,
     },
     UnregisterClientAgent {
         connection_id: Arc<str>,

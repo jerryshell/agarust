@@ -76,10 +76,12 @@ impl Hub {
         match command {
             command::Command::RegisterClientAgent {
                 socket_addr,
-                connection_id,
                 client_agent_command_sender,
+                response_sender,
             } => {
-                info!("RegisterClientAgent: {:?} {:?}", socket_addr, connection_id);
+                info!("RegisterClientAgent: {:?}", socket_addr);
+
+                let connection_id: Arc<str> = nanoid!().into();
 
                 let client = Client {
                     socket_addr,
@@ -88,6 +90,8 @@ impl Hub {
                     player: None,
                 };
                 self.client_map.insert(connection_id.clone(), client);
+
+                let _ = response_sender.send(connection_id.clone());
 
                 let packet = proto_util::hello_packet(connection_id);
                 let _ = client_agent_command_sender.send(command::Command::SendPacket { packet });

@@ -28,28 +28,23 @@ pub async fn handle_tcp_stream(
     };
     info!("tokio_tungstenite accept_async: {:?}", ws_stream);
 
-    let connection_id: Arc<str> = nanoid!().into();
-
-    let client_agent = client_agent::ClientAgent::new(
+    let client_agent = match client_agent::ClientAgent::new(
         socket_addr,
-        connection_id.clone(),
         db_pool,
         hub_command_sender.clone(),
-    );
+    )
+    .await
+    {
+        Some(client_agent) => client_agent,
+        None => {
+            error!("ClientAgent::new() None, return");
+            return;
+        }
+    };
 
-    let client_agent_register_rsult =
-        hub_command_sender.send(command::Command::RegisterClientAgent {
-            socket_addr,
-            connection_id: connection_id.clone(),
-            client_agent_command_sender: client_agent.client_agent_command_sender.clone(),
-        });
-    if let Err(e) = client_agent_register_rsult {
-        error!("client_agent_register_rsult error: {:?}", e);
-        return;
-    }
+    let connection_id = client_agent.connection_id.clone();
 
     client_agent.run(ws_stream).await;
 
-    let unregister_command = command::Command::UnregisterClientAgent { connection_id };
-    let _ = hub_command_sender.send(unregister_command);
+    let _ = hub_command_sender.send(command::Command::UnregisterClientAgent { connection_id });
 }
