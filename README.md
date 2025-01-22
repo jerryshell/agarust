@@ -53,3 +53,4 @@ Change `debug_server_url` and `release_server_url` in [client/global/global.gd](
 ## Credits
 
 - [Godot 4 + Golang MMO Tutorial Series by Tristan Batchler](https://www.tbat.me/projects/godot-golang-mmo-tutorial-series)
+- [Actors with Tokio by Alice Ryhl](https://draft.ryhl.io/blog/actors-with-tokio)
