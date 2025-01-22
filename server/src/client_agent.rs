@@ -92,7 +92,7 @@ impl ClientAgent {
                             }
                         },
                         None => {
-                            warn!("ws_stream_next next None, disconnect {:?}", self.socket_addr);
+                            warn!("ws_stream_next None, disconnect {:?}", self.socket_addr);
                             break;
                         },
                     }
@@ -103,7 +103,7 @@ impl ClientAgent {
                             self.handle_command(command).await;
                         },
                         None => {
-                            warn!("client_agent_command_receiver recv None, disconnect {:?}", self.socket_addr);
+                            warn!("command_recv None, disconnect {:?}", self.socket_addr);
                             break;
                         },
                     }
