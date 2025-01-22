@@ -201,10 +201,6 @@ impl ClientAgent {
                     self.send_packet(packet).await;
                 }
                 proto::packet::Data::Register(register) => {
-                    let username = register.username;
-                    let password = register.password;
-                    let color = register.color;
-
                     let mut transaction = match self.db.db_pool.begin().await {
                         Ok(transaction) => transaction,
                         Err(e) => {
@@ -216,6 +212,7 @@ impl ClientAgent {
                         }
                     };
 
+                    let username = register.username;
                     if username.is_empty() {
                         warn!("username is empty: {:?}", username);
                         let packet = proto_util::register_err_packet("username is empty".into());
@@ -246,6 +243,7 @@ impl ClientAgent {
                         return;
                     }
 
+                    let password = register.password;
                     let password = match bcrypt::hash(password, bcrypt::DEFAULT_COST) {
                         Ok(password) => password,
                         Err(e) => {
@@ -277,6 +275,7 @@ impl ClientAgent {
                         }
                     };
 
+                    let color = register.color;
                     let query_result = query_as!(
                         db::Player,
                         r#"INSERT INTO player ( auth_id, nickname, color ) VALUES ( ?, ?, ? )"#,
@@ -399,11 +398,12 @@ impl ClientAgent {
                 self.send_raw_data(raw_data).await;
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
+                const SEND_INTERNAL_DURATION: Duration = Duration::from_millis(50);
+                const SPORE_WINDOWS: usize = 20;
                 let client_agent_command_sender = self.client_agent_command_sender.clone();
                 tokio::spawn(async move {
-                    let client_agent_command_sender = client_agent_command_sender.clone();
-                    let mut send_interval = interval(Duration::from_millis(50));
-                    for spore_window in spore_batch.windows(32) {
+                    let mut send_interval = interval(SEND_INTERNAL_DURATION);
+                    for spore_window in spore_batch.windows(SPORE_WINDOWS) {
                         let packet = proto_util::update_spore_batch_packet(spore_window);
                         let raw_data = packet.encode_to_vec();
                         let _ = client_agent_command_sender
