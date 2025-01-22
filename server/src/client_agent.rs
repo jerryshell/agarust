@@ -8,8 +8,9 @@ use tokio::{
     net::TcpStream,
     sync::{
         mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        oneshot, Mutex, RwLock,
+        oneshot, RwLock,
     },
+    time::interval,
 };
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use tracing::{error, warn};
@@ -74,9 +75,7 @@ impl ClientAgent {
             .client_agent_command_sender
             .send(command::Command::SendPacket { packet });
 
-        let (client_writer, mut client_reader) = ws_stream.split();
-
-        let client_writer = Arc::new(Mutex::new(client_writer));
+        let (mut client_writer, mut client_reader) = ws_stream.split();
 
         loop {
             tokio::select! {
@@ -85,8 +84,7 @@ impl ClientAgent {
                         Some(read_message_result) => {
                             match read_message_result {
                                 Ok(client_reader_message) => {
-                                    let client_writer = client_writer.clone();
-                                    self.handle_client_reader_message(client_reader_message, client_writer).await;
+                                    self.handle_client_reader_message(client_reader_message, &mut client_writer).await;
                                 },
                                 Err(e) => {
                                     warn!("client_reader error, disconnect {:?}: {:?}", self.socket_addr, e);
@@ -103,8 +101,7 @@ impl ClientAgent {
                 command_recv = self.client_agent_command_receiver.recv() => {
                     match command_recv {
                         Some(command) => {
-                            let client_writer = client_writer.clone();
-                            self.handle_command(command, client_writer).await;
+                            self.handle_command(command, &mut client_writer).await;
                         },
                         None => {
                             warn!("client_agent_command_receiver recv None, disconnect {:?}", self.socket_addr);
@@ -119,7 +116,7 @@ impl ClientAgent {
     async fn handle_client_reader_message(
         &mut self,
         client_reader_message: Message,
-        client_writer: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
+        client_writer: &mut SplitSink<WebSocketStream<TcpStream>, Message>,
     ) {
         match client_reader_message {
             Message::Binary(bytes) => match proto::Packet::decode(Cursor::new(bytes)) {
@@ -132,7 +129,7 @@ impl ClientAgent {
             },
             Message::Close(close_frame) => {
                 info!("client close_frame: {:?}", close_frame);
-                let _ = client_writer.lock().await.close().await;
+                let _ = client_writer.close().await;
             }
             _ => {
                 warn!("unkonwn message: {:?}", client_reader_message);
@@ -433,28 +430,27 @@ impl ClientAgent {
     async fn handle_command(
         &self,
         command: command::Command,
-        client_writer: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
+        client_writer: &mut SplitSink<WebSocketStream<TcpStream>, Message>,
     ) {
         match command {
             command::Command::SendPacket { packet } => {
                 let raw_data = packet.encode_to_vec();
-                let mut client_writer = client_writer.lock().await;
                 let _ = client_writer.send(Message::binary(raw_data)).await;
             }
             command::Command::SendRawData { raw_data } => {
-                let mut client_writer = client_writer.lock().await;
                 let _ = client_writer.send(Message::binary(raw_data)).await;
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
+                let client_agent_command_sender = self.client_agent_command_sender.clone();
+                let mut send_interval = interval(Duration::from_millis(50));
                 tokio::spawn(async move {
+                    let client_agent_command_sender = client_agent_command_sender.clone();
                     for spore_window in spore_batch.windows(32) {
                         let packet = proto_util::update_spore_batch_packet(spore_window);
                         let raw_data = packet.encode_to_vec();
-                        {
-                            let mut client_writer = client_writer.lock().await;
-                            let _ = client_writer.send(Message::binary(raw_data)).await;
-                        }
-                        tokio::time::sleep(Duration::from_millis(50)).await;
+                        let _ = client_agent_command_sender
+                            .send(command::Command::SendRawData { raw_data });
+                        send_interval.tick().await;
                     }
                 });
             }
@@ -487,7 +483,6 @@ impl ClientAgent {
             }
             command::Command::DisconnectClinet => {
                 warn!("Command::DisconnectClinet");
-                let mut client_writer = client_writer.lock().await;
                 let _ = client_writer.close().await;
             }
             _ => {
