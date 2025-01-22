@@ -16,7 +16,7 @@ use tracing::{error, info};
 pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,
     socket_addr: SocketAddr,
-    db_pool: sqlx::Pool<sqlx::Sqlite>,
+    db: db::Db,
     hub_command_sender: UnboundedSender<command::Command>,
 ) {
     let ws_stream = match tokio_tungstenite::accept_async(tcp_stream).await {
@@ -28,19 +28,14 @@ pub async fn handle_tcp_stream(
     };
     info!("tokio_tungstenite accept_async: {:?}", ws_stream);
 
-    let client_agent = match client_agent::ClientAgent::new(
-        socket_addr,
-        db_pool,
-        hub_command_sender.clone(),
-    )
-    .await
-    {
-        Some(client_agent) => client_agent,
-        None => {
-            error!("ClientAgent::new() None, return");
-            return;
-        }
-    };
+    let client_agent =
+        match client_agent::ClientAgent::new(socket_addr, db, hub_command_sender.clone()).await {
+            Some(client_agent) => client_agent,
+            None => {
+                error!("ClientAgent::new() None, return");
+                return;
+            }
+        };
 
     let connection_id = client_agent.connection_id.clone();
 

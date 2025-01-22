@@ -17,6 +17,7 @@ hashbrown = "*"
 sqlx = { version = "*", features = ["runtime-tokio", "sqlite"] }
 dotenv = "*"
 bcrypt = "*"
+anyhow = "*"
 
 [build-dependencies]
 prost-build = "*"

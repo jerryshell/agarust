@@ -37,15 +37,15 @@ async fn main() {
     };
     tracing::info!("database_url: {:?}", database_url);
 
-    let db_pool = match sqlx::sqlite::SqlitePool::connect(&database_url).await {
-        Ok(pool) => pool,
+    let db = match agarust_server::db::Db::new(&database_url).await {
+        Ok(db) => db,
         Err(e) => {
-            tracing::error!("SqlitePool connect error: {:?}", e);
+            tracing::error!("Db::new() error: {:?}", e);
             return;
         }
     };
 
-    let hub = agarust_server::hub::Hub::new(db_pool.clone());
+    let hub = agarust_server::hub::Hub::new(db.clone());
     let hub_command_sender = hub.command_sender.clone();
     let hub_run_future = hub.run();
     tokio::spawn(hub_run_future);
@@ -55,7 +55,7 @@ async fn main() {
         let tcp_stream_future = agarust_server::handle_tcp_stream(
             tcp_stream,
             socket_addr,
-            db_pool.clone(),
+            db.clone(),
             hub_command_sender.clone(),
         );
         tokio::spawn(tcp_stream_future);

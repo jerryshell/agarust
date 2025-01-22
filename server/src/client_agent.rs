@@ -18,7 +18,7 @@ use tracing::{error, warn};
 pub struct ClientAgent {
     pub socket_addr: SocketAddr,
     pub connection_id: Arc<str>,
-    pub db_pool: sqlx::Pool<sqlx::Sqlite>,
+    pub db: db::Db,
     pub hub_command_sender: UnboundedSender<command::Command>,
     pub client_agent_command_sender: UnboundedSender<command::Command>,
     pub client_agent_command_receiver: UnboundedReceiver<command::Command>,
@@ -28,7 +28,7 @@ pub struct ClientAgent {
 impl ClientAgent {
     pub async fn new(
         socket_addr: SocketAddr,
-        db_pool: sqlx::Pool<sqlx::Sqlite>,
+        db: db::Db,
         hub_command_sender: UnboundedSender<command::Command>,
     ) -> Option<Self> {
         let (client_agent_command_sender, client_agent_command_receiver) =
@@ -58,7 +58,7 @@ impl ClientAgent {
         let client_agent = Self {
             socket_addr,
             connection_id,
-            db_pool,
+            db,
             hub_command_sender,
             client_agent_command_sender,
             client_agent_command_receiver,
@@ -153,17 +153,7 @@ impl ClientAgent {
                 }
                 proto::packet::Data::Login(login) => {
                     let username = login.username;
-                    let password = login.password;
-
-                    let query_result = query_as!(
-                        db::Auth,
-                        r#"SELECT * FROM auth WHERE username = ? LIMIT 1"#,
-                        username
-                    )
-                    .fetch_one(&self.db_pool)
-                    .await;
-
-                    let auth = match query_result {
+                    let auth = match self.db.auth_get_one_by_username(&username).await {
                         Ok(auth) => auth,
                         Err(e) => {
                             warn!("auth query error: {:?}", e);
@@ -177,6 +167,7 @@ impl ClientAgent {
                         }
                     };
 
+                    let password = login.password;
                     match bcrypt::verify(password, &auth.password) {
                         Ok(valid) => {
                             if !valid {
@@ -202,15 +193,7 @@ impl ClientAgent {
                         }
                     }
 
-                    let query_result = query_as!(
-                        db::Player,
-                        r#"SELECT * FROM player WHERE auth_id = ? LIMIT 1"#,
-                        auth.id
-                    )
-                    .fetch_one(&self.db_pool)
-                    .await;
-
-                    let player = match query_result {
+                    let player = match self.db.player_get_one_by_auth_id(auth.id).await {
                         Ok(player) => player,
                         Err(e) => {
                             warn!("player query error: {:?}", e);
@@ -239,7 +222,7 @@ impl ClientAgent {
                     let password = register.password;
                     let color = register.color;
 
-                    let mut transaction = match self.db_pool.begin().await {
+                    let mut transaction = match self.db.db_pool.begin().await {
                         Ok(transaction) => transaction,
                         Err(e) => {
                             warn!("transaction begin error: {:?}", e);
@@ -419,15 +402,7 @@ impl ClientAgent {
                         .send(command::Command::DisconnectClinet);
                 }
                 proto::packet::Data::LeaderboardRequest(_) => {
-                    let query_result = query_as!(
-                        db::Player,
-                        r#"SELECT * FROM player ORDER BY best_score DESC LIMIT ?"#,
-                        100,
-                    )
-                    .fetch_all(&self.db_pool)
-                    .await;
-
-                    let leaderboard_entry_list = match query_result {
+                    let leaderboard_entry_list = match self.db.player_get_list(100).await {
                         Ok(player_list) => player_list
                             .iter()
                             .enumerate()
@@ -502,17 +477,12 @@ impl ClientAgent {
                     db_player.id
                 };
 
-                let query_result = query_as!(
-                    db::Player,
-                    r#"UPDATE player SET best_score = ? WHERE id = ?"#,
-                    current_score,
-                    db_player_id,
-                )
-                .execute(&self.db_pool)
-                .await;
-
-                if let Err(e) = query_result {
-                    warn!("UPDATE player SET best_score error: {:?}", e);
+                if let Err(e) = self
+                    .db
+                    .player_update_best_score_by_id(current_score, db_player_id)
+                    .await
+                {
+                    error!("UPDATE player SET best_score error: {:?}", e);
                 }
             }
             command::Command::DisconnectClinet => {
