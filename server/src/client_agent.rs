@@ -39,7 +39,7 @@ impl ClientAgent {
 
         let connection_id = {
             let client_agent_command_sender = client_agent_command_sender.clone();
-            let (response_sender, response_reader) = oneshot::channel();
+            let (response_sender, response_receiver) = oneshot::channel();
             let send_result = hub_command_sender.send(command::Command::RegisterClientAgent {
                 socket_addr,
                 client_agent_command_sender,
@@ -49,7 +49,7 @@ impl ClientAgent {
                 error!("send RegisterClientAgent error: {:?}", e);
                 return None;
             }
-            match response_reader.await {
+            match response_receiver.await {
                 Ok(connection_id) => connection_id,
                 Err(e) => {
                     error!("ClientAgent::new() error: {:?}", e);
