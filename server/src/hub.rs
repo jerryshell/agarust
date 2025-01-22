@@ -82,6 +82,7 @@ impl Hub {
                 info!("RegisterClientAgent: {:?}", socket_addr);
 
                 let connection_id: Arc<str> = nanoid!().into();
+                info!("connection_id: {:?}", connection_id);
 
                 let client = Client {
                     socket_addr,
@@ -92,9 +93,6 @@ impl Hub {
                 self.client_map.insert(connection_id.clone(), client);
 
                 let _ = response_sender.send(connection_id.clone());
-
-                let packet = proto_util::hello_packet(connection_id);
-                let _ = client_agent_command_sender.send(command::Command::SendPacket { packet });
             }
             command::Command::UnregisterClientAgent { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);

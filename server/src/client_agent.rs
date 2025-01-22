@@ -69,8 +69,15 @@ impl ClientAgent {
     }
 
     pub async fn run(mut self, ws_stream: WebSocketStream<TcpStream>) {
+        let packet = proto_util::hello_packet(self.connection_id.clone());
+        let _ = self
+            .client_agent_command_sender
+            .send(command::Command::SendPacket { packet });
+
         let (client_writer, mut client_reader) = ws_stream.split();
+
         let client_writer = Arc::new(Mutex::new(client_writer));
+
         loop {
             tokio::select! {
                 client_reader_next = client_reader.next() => {
