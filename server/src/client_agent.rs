@@ -73,10 +73,8 @@ impl ClientAgent {
     }
 
     pub async fn run(mut self) {
-        let packet = proto_util::hello_packet(self.connection_id.clone());
-        let _ = self
-            .client_agent_command_sender
-            .send(command::Command::SendPacket { packet });
+        let hello_packet = proto_util::hello_packet(self.connection_id.clone());
+        self.send_packet(hello_packet).await;
 
         loop {
             tokio::select! {
@@ -147,9 +145,7 @@ impl ClientAgent {
                     let packet = proto::Packet {
                         data: Some(proto::packet::Data::Ping(ping)),
                     };
-                    let _ = self
-                        .client_agent_command_sender
-                        .send(command::Command::SendPacket { packet });
+                    self.send_packet(packet).await;
                 }
                 proto::packet::Data::Login(login) => {
                     let username = login.username;
@@ -160,9 +156,7 @@ impl ClientAgent {
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".into(),
                             );
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     };
@@ -175,9 +169,7 @@ impl ClientAgent {
                                 let packet = proto_util::login_err_packet(
                                     "incorrect username or password".into(),
                                 );
-                                let _ = self
-                                    .client_agent_command_sender
-                                    .send(command::Command::SendPacket { packet });
+                                self.send_packet(packet).await;
                                 return;
                             }
                         }
@@ -186,9 +178,7 @@ impl ClientAgent {
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".into(),
                             );
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     }
@@ -200,9 +190,7 @@ impl ClientAgent {
                             let packet = proto_util::login_err_packet(
                                 "incorrect username or password".into(),
                             );
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     };
@@ -210,9 +198,7 @@ impl ClientAgent {
                     self.db_player = Some(player);
 
                     let packet = proto_util::login_ok_packet();
-                    let _ = self
-                        .client_agent_command_sender
-                        .send(command::Command::SendPacket { packet });
+                    self.send_packet(packet).await;
                 }
                 proto::packet::Data::Register(register) => {
                     let username = register.username;
@@ -225,9 +211,7 @@ impl ClientAgent {
                             warn!("transaction begin error: {:?}", e);
                             let packet =
                                 proto_util::register_err_packet("transaction begin error".into());
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     };
@@ -235,18 +219,14 @@ impl ClientAgent {
                     if username.is_empty() {
                         warn!("username is empty: {:?}", username);
                         let packet = proto_util::register_err_packet("username is empty".into());
-                        let _ = self
-                            .client_agent_command_sender
-                            .send(command::Command::SendPacket { packet });
+                        self.send_packet(packet).await;
                         return;
                     }
 
                     if username.len() > 16 {
                         warn!("username too long: {:?}", username);
                         let packet = proto_util::register_err_packet("username too long".into());
-                        let _ = self
-                            .client_agent_command_sender
-                            .send(command::Command::SendPacket { packet });
+                        self.send_packet(packet).await;
                         return;
                     }
 
@@ -262,9 +242,7 @@ impl ClientAgent {
                         warn!("auth already exists: {:?}", username);
                         let packet =
                             proto_util::register_err_packet("username already exists".into());
-                        let _ = self
-                            .client_agent_command_sender
-                            .send(command::Command::SendPacket { packet });
+                        self.send_packet(packet).await;
                         return;
                     }
 
@@ -274,9 +252,7 @@ impl ClientAgent {
                             warn!("password hash error: {:?}", e);
                             let packet =
                                 proto_util::register_err_packet("password hash error".into());
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     };
@@ -296,9 +272,7 @@ impl ClientAgent {
                             warn!("auth insert error: {:?}", e);
                             let packet =
                                 proto_util::register_err_packet("auth insert error".into());
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     };
@@ -316,9 +290,7 @@ impl ClientAgent {
                     if let Err(e) = query_result {
                         warn!("player insert error: {:?}", e);
                         let packet = proto_util::register_err_packet("player insert error".into());
-                        let _ = self
-                            .client_agent_command_sender
-                            .send(command::Command::SendPacket { packet });
+                        self.send_packet(packet).await;
                         return;
                     }
 
@@ -326,16 +298,12 @@ impl ClientAgent {
                         warn!("transaction commit error: {:?}", e);
                         let packet =
                             proto_util::register_err_packet("transaction commit error".into());
-                        let _ = self
-                            .client_agent_command_sender
-                            .send(command::Command::SendPacket { packet });
+                        self.send_packet(packet).await;
                         return;
                     }
 
                     let packet = proto_util::register_ok_packet();
-                    let _ = self
-                        .client_agent_command_sender
-                        .send(command::Command::SendPacket { packet });
+                    self.send_packet(packet).await;
                 }
                 proto::packet::Data::Join(_) => {
                     let db_player = match self.db_player.as_ref() {
@@ -344,9 +312,7 @@ impl ClientAgent {
                             warn!("join without login");
                             let packet =
                                 proto_util::register_err_packet("transaction commit error".into());
-                            let _ = self
-                                .client_agent_command_sender
-                                .send(command::Command::SendPacket { packet });
+                            self.send_packet(packet).await;
                             return;
                         }
                     };
@@ -415,9 +381,7 @@ impl ClientAgent {
                     };
 
                     let packet = proto_util::leaderboard_response(&leaderboard_entry_list);
-                    let _ = self
-                        .client_agent_command_sender
-                        .send(command::Command::SendPacket { packet });
+                    self.send_packet(packet).await;
                 }
                 _ => {
                     warn!("unknown packet data: {:?}", data);
@@ -429,11 +393,10 @@ impl ClientAgent {
     async fn handle_command(&mut self, command: command::Command) {
         match command {
             command::Command::SendPacket { packet } => {
-                let raw_data = packet.encode_to_vec();
-                let _ = self.ws_stream.send(Message::binary(raw_data)).await;
+                self.send_packet(packet).await;
             }
             command::Command::SendRawData { raw_data } => {
-                let _ = self.ws_stream.send(Message::binary(raw_data)).await;
+                self.send_raw_data(raw_data).await;
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
                 let client_agent_command_sender = self.client_agent_command_sender.clone();
@@ -483,5 +446,14 @@ impl ClientAgent {
                 warn!("unknown command: {:?}", command);
             }
         }
+    }
+
+    async fn send_packet(&mut self, packet: proto::Packet) {
+        let raw_data = packet.encode_to_vec();
+        self.send_raw_data(raw_data).await;
+    }
+
+    async fn send_raw_data(&mut self, raw_data: Vec<u8>) {
+        let _ = self.ws_stream.send(Message::binary(raw_data)).await;
     }
 }
