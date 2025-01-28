@@ -41,11 +41,11 @@ async fn main() -> anyhow::Result<()> {
 
 fn init_tracing() -> tracing_appender::non_blocking::WorkerGuard {
     let log_directory = std::env::var("LOG_DIRECTORY").unwrap_or(DEFAULT_LOG_DIRECTORY.to_string());
-    tracing::info!("log_directory: {:?}", log_directory);
+    println!("log_directory: {:?}", log_directory);
 
     let log_file_name_prefix =
         std::env::var("LOG_FILE_NAME_PREFIX").unwrap_or(DEFAULT_LOG_FILE_NAME_PREFIX.to_string());
-    tracing::info!("log_file_name_prefix: {:?}", log_file_name_prefix);
+    println!("log_file_name_prefix: {:?}", log_file_name_prefix);
 
     let file_appender = tracing_appender::rolling::hourly(log_directory, log_file_name_prefix);
     let (non_blocking_writer, worker_guard) = tracing_appender::non_blocking(file_appender);
