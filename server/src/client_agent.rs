@@ -266,7 +266,8 @@ impl ClientAgent {
                         }
                     };
 
-                    let color = register.color;
+                    // force alpha 0xFFFF
+                    let color = register.color | 0xFFFF;
                     let query_result = query_as!(
                         db::Player,
                         r#"INSERT INTO player ( auth_id, nickname, color ) VALUES ( ?, ?, ? )"#,
