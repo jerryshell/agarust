@@ -1,5 +1,6 @@
 use crate::*;
 
+use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
 use prost::Message as _;
 use sqlx::query_as;
@@ -33,29 +34,19 @@ impl ClientAgent {
         socket_addr: SocketAddr,
         db: db::Db,
         hub_command_sender: UnboundedSender<command::Command>,
-    ) -> Option<Self> {
+    ) -> Result<Self> {
         let (client_agent_command_sender, client_agent_command_receiver) =
             unbounded_channel::<command::Command>();
 
         let connection_id = {
             let client_agent_command_sender = client_agent_command_sender.clone();
             let (response_sender, response_receiver) = oneshot::channel();
-            let send_result = hub_command_sender.send(command::Command::RegisterClientAgent {
+            hub_command_sender.send(command::Command::RegisterClientAgent {
                 socket_addr,
                 client_agent_command_sender,
                 response_sender,
-            });
-            if let Err(e) = send_result {
-                error!("send RegisterClientAgent error: {:?}", e);
-                return None;
-            }
-            match response_receiver.await {
-                Ok(connection_id) => connection_id,
-                Err(e) => {
-                    error!("ClientAgent::new() error: {:?}", e);
-                    return None;
-                }
-            }
+            })?;
+            response_receiver.await?
         };
 
         let client_agent = Self {
@@ -69,7 +60,7 @@ impl ClientAgent {
             db_player: None,
         };
 
-        Some(client_agent)
+        Ok(client_agent)
     }
 
     pub async fn run(mut self) {

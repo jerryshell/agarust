@@ -8,40 +8,24 @@ pub mod proto_util;
 pub mod spore;
 pub mod util;
 
+use anyhow::Result;
 use nanoid::nanoid;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::mpsc::UnboundedSender};
-use tracing::{error, info};
+use tracing::info;
 
 pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,
     socket_addr: SocketAddr,
     db: db::Db,
     hub_command_sender: UnboundedSender<command::Command>,
-) {
-    let ws_stream = match tokio_tungstenite::accept_async(tcp_stream).await {
-        Ok(ws_stream) => ws_stream,
-        Err(e) => {
-            error!("tokio_tungstenite accept_async error: {:?}", e);
-            return;
-        }
-    };
-    info!("tokio_tungstenite accept_async: {:?}", ws_stream);
+) -> Result<()> {
+    let ws_stream = tokio_tungstenite::accept_async(tcp_stream).await?;
 
-    let client_agent = match client_agent::ClientAgent::new(
-        ws_stream,
-        socket_addr,
-        db,
-        hub_command_sender,
-    )
-    .await
-    {
-        Some(client_agent) => client_agent,
-        None => {
-            error!("ClientAgent::new() None, return");
-            return;
-        }
-    };
+    let client_agent =
+        client_agent::ClientAgent::new(ws_stream, socket_addr, db, hub_command_sender).await?;
 
     client_agent.run().await;
+
+    Ok(())
 }

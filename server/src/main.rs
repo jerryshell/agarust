@@ -33,7 +33,14 @@ async fn main() -> anyhow::Result<()> {
             db.clone(),
             hub_command_sender.clone(),
         );
-        tokio::spawn(tcp_stream_future);
+        tokio::spawn(async move {
+            let tcp_stream_result = tcp_stream_future.await;
+            tracing::info!(
+                "{:?} tcp_stream_result: {:?}",
+                socket_addr,
+                tcp_stream_result
+            )
+        });
     }
 
     Ok(())
