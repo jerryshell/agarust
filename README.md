@@ -28,6 +28,8 @@ cd server
 
 ### Init database
 
+**Note**: You **MUST** initialise the database before you can compile the source code, for more details see: [sqlx - Compile-time verification](https://github.com/launchbadge/sqlx?tab=readme-ov-file#compile-time-verification)
+
 ```bash
 cargo install sqlx-cli
 ```
