@@ -309,9 +309,6 @@ impl ClientAgent {
                         Some(db_player) => db_player,
                         None => {
                             warn!("join without login");
-                            let packet =
-                                proto_util::register_err_packet("transaction commit error".into());
-                            self.send_packet(packet).await;
                             return;
                         }
                     };
