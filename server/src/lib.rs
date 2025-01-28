@@ -9,10 +9,8 @@ pub mod spore;
 pub mod util;
 
 use anyhow::Result;
-use nanoid::nanoid;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::mpsc::UnboundedSender};
-use tracing::info;
 
 pub async fn handle_tcp_stream(
     tcp_stream: TcpStream,

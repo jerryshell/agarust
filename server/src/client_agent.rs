@@ -14,7 +14,7 @@ use tokio::{
     time::interval,
 };
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 #[derive(Debug)]
 pub struct ClientAgent {
