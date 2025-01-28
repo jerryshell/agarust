@@ -1,6 +1,6 @@
 # Agarust
 
-_Agarust_ is a multiplayer online game powered by Godot 4 and Rust 🤖🦀 inspired by agar.io
+_Agarust_ is a server-authoritative real-time multiplayer online game powered by Godot 4 and Rust 🤖🦀 inspired by agar.io
 
 Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/agarust)
 
