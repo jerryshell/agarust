@@ -1,52 +1,27 @@
+const DEFAULT_LOG_DIRECTORY: &str = "./";
+const DEFAULT_LOG_FILE_NAME_PREFIX: &str = "agarust_server.log";
 const DEFAULT_BIND_ADDR: &str = "127.0.0.1:8080";
 const DEFAULT_DATABASE_URL: &str = "sqlite:agarust_db.sqlite";
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
-    let file_appender = tracing_appender::rolling::hourly("./", "agarust_server.log");
-    let (non_blocking_writer, _guard) = tracing_appender::non_blocking(file_appender);
-    tracing_subscriber::fmt()
-        .compact()
-        .with_file(true)
-        .with_line_number(true)
-        .with_thread_ids(true)
-        .with_target(false)
-        .with_writer(non_blocking_writer)
-        .with_ansi(false)
-        .init();
+    let _tracing_guard = init_tracing();
 
-    let bind_addr = match std::env::var("BIND_ADDR") {
-        Ok(bind_addr) => bind_addr,
-        Err(_) => DEFAULT_BIND_ADDR.to_string(),
-    };
+    let bind_addr = std::env::var("BIND_ADDR").unwrap_or(DEFAULT_BIND_ADDR.to_string());
     tracing::info!("bind_addr: {:?}", bind_addr);
 
-    let tcp_listener = match tokio::net::TcpListener::bind(&bind_addr).await {
-        Ok(tcp_listener) => tcp_listener,
-        Err(e) => {
-            tracing::error!("TcpListener bind error: {:?}", e);
-            return;
-        }
-    };
+    let tcp_listener = tokio::net::TcpListener::bind(&bind_addr).await?;
 
-    let database_url = match std::env::var("DATABASE_URL") {
-        Ok(database_url) => database_url,
-        Err(_) => DEFAULT_DATABASE_URL.to_string(),
-    };
+    let database_url = std::env::var("DATABASE_URL").unwrap_or(DEFAULT_DATABASE_URL.to_string());
     tracing::info!("database_url: {:?}", database_url);
 
-    let db = match agarust_server::db::Db::new(&database_url).await {
-        Ok(db) => db,
-        Err(e) => {
-            tracing::error!("Db::new() error: {:?}", e);
-            return;
-        }
-    };
+    let db = agarust_server::db::Db::new(&database_url).await?;
 
     let hub = agarust_server::hub::Hub::new(db.clone());
     let hub_command_sender = hub.command_sender.clone();
+
     let hub_run_future = hub.run();
     tokio::spawn(hub_run_future);
 
@@ -60,4 +35,29 @@ async fn main() {
         );
         tokio::spawn(tcp_stream_future);
     }
+
+    Ok(())
+}
+
+fn init_tracing() -> tracing_appender::non_blocking::WorkerGuard {
+    let log_directory = std::env::var("LOG_DIRECTORY").unwrap_or(DEFAULT_LOG_DIRECTORY.to_string());
+    tracing::info!("log_directory: {:?}", log_directory);
+
+    let log_file_name_prefix =
+        std::env::var("LOG_FILE_NAME_PREFIX").unwrap_or(DEFAULT_LOG_FILE_NAME_PREFIX.to_string());
+    tracing::info!("log_file_name_prefix: {:?}", log_file_name_prefix);
+
+    let file_appender = tracing_appender::rolling::hourly(log_directory, log_file_name_prefix);
+    let (non_blocking_writer, worker_guard) = tracing_appender::non_blocking(file_appender);
+    tracing_subscriber::fmt()
+        .compact()
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_target(false)
+        .with_writer(non_blocking_writer)
+        .with_ansi(false)
+        .init();
+
+    worker_guard
 }
