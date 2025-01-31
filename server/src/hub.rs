@@ -195,14 +195,17 @@ impl Hub {
 
                         self.spore_map.remove(&spore_id);
 
-                        let packet =
-                            proto_util::consume_spore_packet(connection_id.clone(), spore_id);
-
                         let current_score = util::radius_to_mass(player.radius) as i64;
-                        let client_sender = client.client_agent_command_sender.clone();
 
-                        self.broadcast_packet(packet);
-                        let _ = client_sender
+                        let client_agent_command_sender =
+                            client.client_agent_command_sender.clone();
+
+                        self.broadcast_packet(proto_util::consume_spore_packet(
+                            connection_id,
+                            spore_id,
+                        ));
+
+                        let _ = client_agent_command_sender
                             .send(command::Command::SyncPlayerBestScore { current_score });
                     }
                 }
