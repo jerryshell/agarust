@@ -93,7 +93,7 @@ impl Hub {
                 };
                 self.client_map.insert(connection_id.clone(), client);
 
-                let _ = response_sender.send(connection_id.clone());
+                let _ = response_sender.send(connection_id);
             }
             command::Command::UnregisterClientAgent { connection_id } => {
                 info!("UnregisterClient: {:?}", connection_id);
