@@ -40,6 +40,7 @@ func _get_packet() -> Global.proto.Packet:
 	var result := packet.from_bytes(data)
 	if result != OK:
 		printerr("Error build packet from data: %s" % data)
+		return null
 
 	return packet
 

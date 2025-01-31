@@ -42,8 +42,6 @@ func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
 		_handle_consume_spore_msg(packet.get_consume_spore())
 	elif packet.has_disconnect():
 		_handle_disconnect_msg(packet.get_disconnect())
-	else:
-		print_debug("unknown packet: ", packet)
 
 func _on_logout_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://view/connecting/connecting.tscn")
