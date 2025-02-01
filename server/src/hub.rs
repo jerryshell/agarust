@@ -101,7 +101,7 @@ impl Hub {
                 self.client_map.remove(&connection_id);
 
                 let packet = proto_util::disconnect_packet(connection_id, "unregister".into());
-                self.broadcast_packet(packet);
+                self.broadcast_packet(&packet);
             }
             command::Command::Join {
                 connection_id,
@@ -155,7 +155,7 @@ impl Hub {
             }
             command::Command::Chat { connection_id, msg } => {
                 let packet = proto_util::chat_packet(connection_id, msg);
-                self.broadcast_packet(packet);
+                self.broadcast_packet(&packet);
             }
             command::Command::UpdatePlayerDirectionAngle {
                 connection_id,
@@ -200,7 +200,7 @@ impl Hub {
                         let client_agent_command_sender =
                             client.client_agent_command_sender.clone();
 
-                        self.broadcast_packet(proto_util::consume_spore_packet(
+                        self.broadcast_packet(&proto_util::consume_spore_packet(
                             connection_id,
                             spore_id,
                         ));
@@ -265,7 +265,7 @@ impl Hub {
 
                             self.spore_map.insert(spore.id.clone(), spore);
 
-                            self.broadcast_packet(packet);
+                            self.broadcast_packet(&packet);
                         }
                     }
                 }
@@ -276,7 +276,7 @@ impl Hub {
         }
     }
 
-    fn broadcast_packet(&self, packet: proto::Packet) {
+    fn broadcast_packet(&self, packet: &proto::Packet) {
         let raw_data = packet.encode_to_vec();
         self.broadcast_raw_data(raw_data);
     }
@@ -300,7 +300,7 @@ impl Hub {
 
         self.spore_map.insert(spore.id.clone(), spore);
 
-        self.broadcast_packet(packet);
+        self.broadcast_packet(&packet);
     }
 
     fn tick_player(&mut self, delta: Duration) {
@@ -334,7 +334,7 @@ impl Hub {
         self.sync_player();
 
         for spore_packet in spore_packet_list {
-            self.broadcast_packet(spore_packet);
+            self.broadcast_packet(&spore_packet);
         }
     }
 
@@ -346,6 +346,6 @@ impl Hub {
             .collect::<Vec<_>>();
 
         let packet = proto_util::update_player_batch_packet(&player_list);
-        self.broadcast_packet(packet);
+        self.broadcast_packet(&packet);
     }
 }
