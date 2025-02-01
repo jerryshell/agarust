@@ -1,13 +1,11 @@
 use crate::*;
 
-use tokio::sync::oneshot;
-
 #[derive(Debug)]
 pub enum Command {
     RegisterClientAgent {
         socket_addr: SocketAddr,
         client_agent_command_sender: UnboundedSender<command::Command>,
-        response_sender: oneshot::Sender<Arc<str>>,
+        response_sender: tokio::sync::oneshot::Sender<Arc<str>>,
     },
     UnregisterClientAgent {
         connection_id: Arc<str>,
@@ -31,8 +29,8 @@ pub enum Command {
     SendPacket {
         packet: proto::Packet,
     },
-    SendRawData {
-        raw_data: Vec<u8>,
+    SendBytes {
+        bytes: bytes::Bytes,
     },
     SyncPlayerBestScore {
         current_score: i64,

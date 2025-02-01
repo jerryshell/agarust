@@ -23,6 +23,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcrypt",
+ "bytes",
  "dotenv",
  "futures-util",
  "hashbrown",

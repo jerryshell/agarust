@@ -1,5 +1,6 @@
 use crate::*;
 
+use bytes::Bytes;
 use hashbrown::HashMap;
 use nanoid::nanoid;
 use prost::Message;
@@ -277,19 +278,19 @@ impl Hub {
     }
 
     fn broadcast_packet(&self, packet: &proto::Packet) {
-        let raw_data = packet.encode_to_vec();
-        self.broadcast_raw_data(raw_data);
+        let bytes = packet.encode_to_vec().into();
+        self.broadcast_bytes(bytes);
     }
 
-    fn broadcast_raw_data(&self, raw_data: Vec<u8>) {
+    fn broadcast_bytes(&self, bytes: Bytes) {
         self.client_map
             .values()
             .filter(|client| client.player.is_some())
             .for_each(|client| {
-                let raw_data = raw_data.clone();
+                let bytes = bytes.clone();
                 let _ = client
                     .client_agent_command_sender
-                    .send(command::Command::SendRawData { raw_data });
+                    .send(command::Command::SendBytes { bytes });
             });
     }
 

@@ -18,6 +18,7 @@ sqlx = { version = "*", features = ["runtime-tokio", "sqlite"] }
 dotenv = "*"
 bcrypt = "*"
 anyhow = "*"
+bytes = "*"
 
 [build-dependencies]
 prost-build = "*"

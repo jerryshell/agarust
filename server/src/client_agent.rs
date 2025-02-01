@@ -1,6 +1,7 @@
 use crate::*;
 
 use anyhow::Result;
+use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use prost::Message as _;
 use sqlx::query_as;
@@ -369,8 +370,8 @@ impl ClientAgent {
             command::Command::SendPacket { packet } => {
                 self.send_packet(&packet).await;
             }
-            command::Command::SendRawData { raw_data } => {
-                self.send_raw_data(raw_data).await;
+            command::Command::SendBytes { bytes } => {
+                self.send_bytes(bytes).await;
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
                 const SEND_INTERNAL_DURATION: Duration = Duration::from_millis(50);
@@ -380,9 +381,9 @@ impl ClientAgent {
                     let mut send_interval = interval(SEND_INTERNAL_DURATION);
                     for spore_window in spore_batch.windows(SPORE_WINDOWS) {
                         let packet = proto_util::update_spore_batch_packet(spore_window);
-                        let raw_data = packet.encode_to_vec();
-                        let _ = client_agent_command_sender
-                            .send(command::Command::SendRawData { raw_data });
+                        let bytes = packet.encode_to_vec().into();
+                        let _ =
+                            client_agent_command_sender.send(command::Command::SendBytes { bytes });
                         send_interval.tick().await;
                     }
                 });
@@ -424,11 +425,11 @@ impl ClientAgent {
     }
 
     async fn send_packet(&mut self, packet: &proto::Packet) {
-        let raw_data = packet.encode_to_vec();
-        self.send_raw_data(raw_data).await;
+        let bytes = packet.encode_to_vec().into();
+        self.send_bytes(bytes).await;
     }
 
-    async fn send_raw_data(&mut self, raw_data: Vec<u8>) {
-        let _ = self.ws_stream.send(Message::binary(raw_data)).await;
+    async fn send_bytes(&mut self, bytes: Bytes) {
+        let _ = self.ws_stream.send(Message::binary(bytes)).await;
     }
 }
