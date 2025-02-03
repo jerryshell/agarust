@@ -374,13 +374,13 @@ impl ClientAgent {
                 self.send_bytes(bytes).await;
             }
             command::Command::UpdateSporeBatch { spore_batch } => {
-                const SEND_INTERNAL_DURATION: Duration = Duration::from_millis(50);
-                const SPORE_WINDOWS: usize = 20;
+                const SEND_INTERNAL_DURATION: Duration = Duration::from_millis(20);
+                const SPORE_CHUNKS: usize = 20;
                 let client_agent_command_sender = self.client_agent_command_sender.clone();
                 tokio::spawn(async move {
                     let mut send_interval = interval(SEND_INTERNAL_DURATION);
-                    for spore_window in spore_batch.windows(SPORE_WINDOWS) {
-                        let packet = proto_util::update_spore_batch_packet(spore_window);
+                    for spore_chunk in spore_batch.chunks(SPORE_CHUNKS) {
+                        let packet = proto_util::update_spore_batch_packet(spore_chunk);
                         let bytes = packet.encode_to_vec().into();
                         let _ =
                             client_agent_command_sender.send(command::Command::SendBytes { bytes });
