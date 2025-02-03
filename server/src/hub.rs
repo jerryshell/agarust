@@ -219,6 +219,14 @@ impl Hub {
                     if let (Some(player), Some(victim)) =
                         (&mut player_client.player, &mut victim_client.player)
                     {
+                        let player_mass = util::radius_to_mass(player.radius);
+                        let victim_mass = util::radius_to_mass(victim.radius);
+
+                        if player_mass < victim_mass * 1.2 {
+                            warn!("consume player error, too small");
+                            return;
+                        }
+
                         let is_close = util::check_distance_is_close(
                             player.x,
                             player.y,
@@ -233,7 +241,6 @@ impl Hub {
                             return;
                         }
 
-                        let victim_mass = util::radius_to_mass(victim.radius);
                         player.increase_mass(victim_mass);
 
                         victim.respawn();

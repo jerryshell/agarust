@@ -176,7 +176,7 @@ func _collide_actor(actor: Actor) -> void:
 	var player_mass := _radius_to_mass(player.radius)
 	var actor_mass := _radius_to_mass(actor.radius)
 
-	if player_mass > actor_mass * 1.5:
+	if player_mass >= actor_mass * 1.2:
 		_consume_actor(actor)
 
 func _consume_actor(actor: Actor) -> void:

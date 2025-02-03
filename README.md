@@ -8,7 +8,7 @@ Play now on itch.io: [jerryshell.itch.io/agarust](https://jerryshell.itch.io/aga
 - Press the left mouse button to sprint
   - Sprinting drops 20% of your mass
   - Players with too little mass can't sprint
-- You can only eat another player if the difference in mass is greater than 1.5 times
+- You can only eat another player if the difference in mass is greater than 1.2 times
 - The player's mass will slowly drop over time, the higher the mass, the higher the chance of dropping
 - The formula for converting mass to radius: `Mass = PI * Radius * Radius`
 
