@@ -89,7 +89,7 @@ impl Hub {
                 let client = Client {
                     socket_addr,
                     connection_id: connection_id.clone(),
-                    client_agent_command_sender: client_agent_command_sender.clone(),
+                    client_agent_command_sender,
                     player: None,
                 };
                 self.client_map.insert(connection_id.clone(), client);
@@ -115,20 +115,17 @@ impl Hub {
                     connection_id, player_db_id, nickname, color
                 );
 
-                self.client_map
-                    .values()
-                    .flat_map(|client| client.player.as_ref())
-                    .for_each(|online_player| {
-                        if online_player.db_id == player_db_id {
-                            if let Some(online_client) =
-                                self.client_map.get(&online_player.connection_id)
-                            {
-                                let _ = online_client
-                                    .client_agent_command_sender
-                                    .send(command::Command::DisconnectClinet);
-                            }
-                        }
-                    });
+                self.client_map.values().for_each(|client| {
+                    let player = match &client.player {
+                        Some(player) => player,
+                        None => return,
+                    };
+                    if player.db_id == player_db_id {
+                        let _ = client
+                            .client_agent_command_sender
+                            .send(command::Command::DisconnectClinet);
+                    }
+                });
 
                 let client = match self.client_map.get_mut(&connection_id) {
                     Some(client) => client,
