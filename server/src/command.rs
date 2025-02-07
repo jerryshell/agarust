@@ -10,15 +10,6 @@ pub enum Command {
     UnregisterClientAgent {
         connection_id: Arc<str>,
     },
-    Login {
-        username: Arc<str>,
-        password: Arc<str>,
-    },
-    Register {
-        username: Arc<str>,
-        password: Arc<str>,
-        color: i64,
-    },
     Join {
         connection_id: Arc<str>,
         player_db_id: i64,
