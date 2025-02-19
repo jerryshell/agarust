@@ -68,18 +68,6 @@ func _ready():
 	nameplate.text = actor_nickname
 	camera.enabled = is_player
 
-func _process(_delta: float) -> void:
-	# TODO: Particle system does not work in Godot 4.3 web export, temporarily disabled
-	#rush_particles.emitting = is_rushing
-	if not is_equal_approx(camera.zoom.x, target_zoom):
-		camera.zoom = lerp(camera.zoom, Vector2(1, 1) * target_zoom, 0.05)
-	if not is_equal_approx(radius, server_radius):
-		radius = lerp(radius, server_radius, 0.05)
-	if is_player and Input.is_action_pressed("rush") and not is_rushing:
-		var mouse_screen_position = get_viewport().get_mouse_position()
-		if mouse_screen_position.y > 128:
-			_rush()
-
 func _physics_process(delta) -> void:
 	position += direction * speed * delta
 	server_position += direction * speed * delta
@@ -93,6 +81,17 @@ func _physics_process(delta) -> void:
 	var distance_squared_to_mouse := position.distance_squared_to(mouse_position)
 	if distance_squared_to_mouse < pow(radius, 2):
 		return
+
+	# TODO: Particle system does not work in Godot 4.3 web export, temporarily disabled
+	#rush_particles.emitting = is_rushing
+	if not is_equal_approx(camera.zoom.x, target_zoom):
+		camera.zoom = lerp(camera.zoom, Vector2.ONE * target_zoom, 0.05)
+	if not is_equal_approx(radius, server_radius):
+		radius = lerp(radius, server_radius, 0.05)
+	if is_player and Input.is_action_pressed("rush") and not is_rushing:
+		var mouse_screen_position = get_viewport().get_mouse_position()
+		if mouse_screen_position.y > 128:
+			_rush()
 
 	var direction_to_mouse := position.direction_to(mouse_position).normalized()
 
