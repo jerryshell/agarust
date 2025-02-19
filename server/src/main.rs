@@ -54,7 +54,7 @@ fn init_tracing() -> tracing_appender::non_blocking::WorkerGuard {
         std::env::var("LOG_FILE_NAME_PREFIX").unwrap_or(DEFAULT_LOG_FILE_NAME_PREFIX.to_string());
     println!("log_file_name_prefix: {:?}", log_file_name_prefix);
 
-    let file_appender = tracing_appender::rolling::hourly(log_directory, log_file_name_prefix);
+    let file_appender = tracing_appender::rolling::daily(log_directory, log_file_name_prefix);
     let (non_blocking_writer, worker_guard) = tracing_appender::non_blocking(file_appender);
     tracing_subscriber::fmt()
         .compact()
