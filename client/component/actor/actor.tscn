@@ -1,50 +1,11 @@
-[gd_scene load_steps=13 format=3 uid="uid://b7p42ft05kib6"]
+[gd_scene load_steps=6 format=3 uid="uid://b7p42ft05kib6"]
 
 [ext_resource type="Shader" uid="uid://3yy1k1mdmahd" path="res://assets/rainbow.gdshader" id="1_j04ga"]
 [ext_resource type="Script" uid="uid://c3yg0cl3t7bht" path="res://component/actor/actor.gd" id="1_wnuxu"]
-[ext_resource type="Texture2D" uid="uid://drda0yvn27i6h" path="res://assets/blob.png" id="2_43lcj"]
+[ext_resource type="PackedScene" uid="uid://bmqxeihcu3h80" path="res://component/rush_particles/rush_particles.tscn" id="3_1tdkq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mxwvi"]
 resource_local_to_scene = true
-
-[sub_resource type="Curve" id="Curve_nu47k"]
-_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.25, 1), 0.0, 0.0, 0, 0]
-point_count = 2
-
-[sub_resource type="CurveTexture" id="CurveTexture_bdijl"]
-curve = SubResource("Curve_nu47k")
-
-[sub_resource type="Curve" id="Curve_r0eof"]
-_limits = [-200.0, 200.0, 0.0, 1.0]
-_data = [Vector2(0, -100), 0.0, 0.0, 0, 0, Vector2(1, 100), 0.0, 0.0, 0, 0]
-point_count = 2
-
-[sub_resource type="CurveTexture" id="CurveTexture_arkch"]
-curve = SubResource("Curve_r0eof")
-
-[sub_resource type="Curve" id="Curve_36utw"]
-_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.25, 1), 0.0, 0.0, 0, 0, Vector2(0.5, 0.2), 0.0, 0.0, 0, 0, Vector2(0.75, 0.5), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
-point_count = 5
-
-[sub_resource type="CurveTexture" id="CurveTexture_jrmyl"]
-curve = SubResource("Curve_36utw")
-
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_dbtlh"]
-particle_flag_disable_z = true
-emission_shape = 6
-emission_ring_axis = Vector3(0, 0, 1)
-emission_ring_height = 0.0
-emission_ring_radius = 100.0
-emission_ring_inner_radius = 100.0
-emission_ring_cone_angle = 90.0
-gravity = Vector3(0, 0, 0)
-radial_accel_min = 10.0
-radial_accel_max = 10.0
-radial_accel_curve = SubResource("CurveTexture_arkch")
-scale_min = 0.2
-scale_curve = SubResource("CurveTexture_jrmyl")
-alpha_curve = SubResource("CurveTexture_bdijl")
-turbulence_enabled = true
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_fakvn"]
 resource_local_to_scene = true
@@ -54,14 +15,8 @@ material = SubResource("ShaderMaterial_mxwvi")
 script = ExtResource("1_wnuxu")
 rush_shader = ExtResource("1_j04ga")
 
-[node name="RushParticles" type="GPUParticles2D" parent="."]
+[node name="RushParticles" parent="." instance=ExtResource("3_1tdkq")]
 unique_name_in_owner = true
-z_index = -1
-emitting = false
-amount = 128
-texture = ExtResource("2_43lcj")
-randomness = 0.2
-process_material = SubResource("ParticleProcessMaterial_dbtlh")
 
 [node name="CollisionShape" type="CollisionShape2D" parent="."]
 unique_name_in_owner = true
