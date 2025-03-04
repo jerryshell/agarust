@@ -16,7 +16,6 @@ func _ready() -> void:
     register_button.pressed.connect(_on_register_button_pressed)
     leaderboard_button.pressed.connect(_on_leaderboard_button_pressed)
     connection_id_label.text = "Connection ID: %s" % [Global.connection_id]
-    get_tree().create_timer(1).timeout.connect(func() -> void: %MessagePanel.hide())
 
 func _on_ws_packet_received(packet: Global.proto.Packet) -> void:
     if packet.has_login_ok():

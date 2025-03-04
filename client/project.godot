@@ -21,6 +21,7 @@ config/icon="res://assets/icon.png"
 
 Global="*res://global/global.gd"
 WsClient="*res://global/ws_client.gd"
+VfxPreCompile="*res://global/vfx_pre_compile.tscn"
 
 [display]
 

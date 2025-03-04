@@ -1,11 +1,10 @@
-[gd_scene load_steps=10 format=3 uid="uid://brcr5qfnvbrao"]
+[gd_scene load_steps=9 format=3 uid="uid://brcr5qfnvbrao"]
 
 [ext_resource type="Script" uid="uid://bti66t0cs6p0s" path="res://view/login/login.gd" id="1_cvf3h"]
 [ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="3_m0dil"]
 [ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_47oqa"]
 [ext_resource type="PackedScene" uid="uid://cs885p6pg785h" path="res://component/ping/ping.tscn" id="4_g2reg"]
 [ext_resource type="Shader" uid="uid://cuybon2vubibm" path="res://assets/background_effect.gdshader" id="4_v3yw7"]
-[ext_resource type="PackedScene" uid="uid://4wvs4kpky4st" path="res://component/vfx_pre_compile/vfx_pre_compile.tscn" id="6_28o63"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vqait"]
 shader = ExtResource("4_v3yw7")
@@ -32,8 +31,6 @@ texture = ExtResource("4_47oqa")
 centered = false
 region_enabled = true
 region_rect = Rect2(0, 0, 12000, 12000)
-
-[node name="VfxPreCompile" parent="." instance=ExtResource("6_28o63")]
 
 [node name="Gui" type="CanvasLayer" parent="."]
 
@@ -124,6 +121,7 @@ offset_bottom = 72.0
 
 [node name="MessagePanel" type="Panel" parent="Gui"]
 unique_name_in_owner = true
+visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
