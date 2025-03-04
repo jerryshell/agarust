@@ -57,7 +57,6 @@ filters = PackedStringArray("*.proto; Google Protobuf File")
 
 [node name="OutputFileDialog" type="FileDialog" parent="."]
 size = Vector2i(600, 600)
-ok_button_text = "Save"
 access = 2
 filters = PackedStringArray("*.gd; GDScript")
 
