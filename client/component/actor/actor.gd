@@ -82,8 +82,7 @@ func _physics_process(delta) -> void:
     if distance_squared_to_mouse < pow(radius, 2):
         return
 
-    # TODO: Particle system does not work in Godot 4.3 web export, temporarily disabled
-    #rush_particles.emitting = is_rushing
+    rush_particles.emitting = is_rushing
     if not is_equal_approx(camera.zoom.x, target_zoom):
         camera.zoom = lerp(camera.zoom, Vector2.ONE * target_zoom, 0.05)
     if not is_equal_approx(radius, server_radius):

@@ -59,9 +59,9 @@ unique_name_in_owner = true
 z_index = -1
 emitting = false
 amount = 128
-process_material = SubResource("ParticleProcessMaterial_dbtlh")
 texture = ExtResource("2_43lcj")
 randomness = 0.2
+process_material = SubResource("ParticleProcessMaterial_dbtlh")
 
 [node name="CollisionShape" type="CollisionShape2D" parent="."]
 unique_name_in_owner = true
