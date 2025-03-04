@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://i8esfsijgi4"]
 
-[ext_resource type="Script" path="res://view/connecting/connecting.gd" id="1_36lmk"]
-[ext_resource type="Shader" path="res://assets/background_effect.gdshader" id="3_08j1f"]
+[ext_resource type="Script" uid="uid://ceh4nrkrkjpin" path="res://view/connecting/connecting.gd" id="1_36lmk"]
+[ext_resource type="Shader" uid="uid://cuybon2vubibm" path="res://assets/background_effect.gdshader" id="3_08j1f"]
 [ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_5br80"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_4xac1"]

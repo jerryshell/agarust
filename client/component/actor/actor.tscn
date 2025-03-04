@@ -1,7 +1,7 @@
 [gd_scene load_steps=13 format=3 uid="uid://b7p42ft05kib6"]
 
-[ext_resource type="Shader" path="res://assets/rainbow.gdshader" id="1_j04ga"]
-[ext_resource type="Script" path="res://component/actor/actor.gd" id="1_wnuxu"]
+[ext_resource type="Shader" uid="uid://3yy1k1mdmahd" path="res://assets/rainbow.gdshader" id="1_j04ga"]
+[ext_resource type="Script" uid="uid://c3yg0cl3t7bht" path="res://component/actor/actor.gd" id="1_wnuxu"]
 [ext_resource type="Texture2D" uid="uid://drda0yvn27i6h" path="res://assets/blob.png" id="2_43lcj"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mxwvi"]
@@ -15,8 +15,7 @@ point_count = 2
 curve = SubResource("Curve_nu47k")
 
 [sub_resource type="Curve" id="Curve_r0eof"]
-min_value = -200.0
-max_value = 200.0
+_limits = [-200.0, 200.0, 0.0, 1.0]
 _data = [Vector2(0, -100), 0.0, 0.0, 0, 0, Vector2(1, 100), 0.0, 0.0, 0, 0]
 point_count = 2
 
@@ -37,6 +36,7 @@ emission_ring_axis = Vector3(0, 0, 1)
 emission_ring_height = 0.0
 emission_ring_radius = 100.0
 emission_ring_inner_radius = 100.0
+emission_ring_cone_angle = 90.0
 gravity = Vector3(0, 0, 0)
 radial_accel_min = 10.0
 radial_accel_max = 10.0

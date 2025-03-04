@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cinebpo0mb8ri"]
 
-[ext_resource type="Script" path="res://addons/protobuf/protobuf_ui_dock.gd" id="1"]
+[ext_resource type="Script" uid="uid://jcjaykakp8pa" path="res://addons/protobuf/protobuf_ui_dock.gd" id="1"]
 
 [node name="Godobuf" type="VBoxContainer"]
 offset_right = 176.0

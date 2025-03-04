@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://dcmx5j0nynrpq"]
 
-[ext_resource type="Script" path="res://view/register/register.gd" id="1_kfcug"]
-[ext_resource type="Shader" path="res://assets/background_effect.gdshader" id="3_64uqn"]
+[ext_resource type="Script" uid="uid://1ms5shec5bs4" path="res://view/register/register.gd" id="1_kfcug"]
+[ext_resource type="Shader" uid="uid://cuybon2vubibm" path="res://assets/background_effect.gdshader" id="3_64uqn"]
 [ext_resource type="Texture2D" uid="uid://dyo2iothubrem" path="res://assets/background.svg" id="4_nt46l"]
 [ext_resource type="PackedScene" uid="uid://cpmsnc8fuugqe" path="res://component/logger/logger.tscn" id="5_o2ql1"]
 

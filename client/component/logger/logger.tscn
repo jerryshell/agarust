@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cpmsnc8fuugqe"]
 
-[ext_resource type="Script" path="res://component/logger/logger.gd" id="1_bql4o"]
+[ext_resource type="Script" uid="uid://cvpl8fum0bwrg" path="res://component/logger/logger.gd" id="1_bql4o"]
 
 [node name="Logger" type="RichTextLabel"]
 anchors_preset = 15
