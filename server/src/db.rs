@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sqlx::{query_as, sqlite::SqliteQueryResult, Pool, Sqlite};
+use sqlx::{Pool, Sqlite, query_as, sqlite::SqliteQueryResult};
 use std::sync::Arc;
 
 #[derive(Debug)]

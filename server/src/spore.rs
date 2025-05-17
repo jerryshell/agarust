@@ -1,5 +1,4 @@
 use crate::*;
-
 use nanoid::nanoid;
 
 const SPORE_BOUND: f64 = 3000.0;
