@@ -55,31 +55,31 @@ pub mod packet {
         LeaderboardResponse(super::LeaderboardResponse),
     }
 }
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Ping {
     #[prost(int64, tag = "1")]
     pub client_timestamp: i64,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Hello {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Login {
     #[prost(string, tag = "1")]
     pub username: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub password: ::prost::alloc::string::String,
 }
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LoginOk {}
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LoginErr {
     #[prost(string, tag = "1")]
     pub reason: ::prost::alloc::string::String,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Register {
     #[prost(string, tag = "1")]
     pub username: ::prost::alloc::string::String,
@@ -88,23 +88,23 @@ pub struct Register {
     #[prost(int64, tag = "3")]
     pub color: i64,
 }
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RegisterOk {}
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RegisterErr {
     #[prost(string, tag = "1")]
     pub reason: ::prost::alloc::string::String,
 }
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Join {}
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Disconnect {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub reason: ::prost::alloc::string::String,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Chat {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
@@ -158,25 +158,25 @@ pub struct UpdateSporeBatch {
     #[prost(message, repeated, tag = "1")]
     pub update_spore_batch: ::prost::alloc::vec::Vec<UpdateSpore>,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ConsumeSpore {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub spore_id: ::prost::alloc::string::String,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ConsumePlayer {
     #[prost(string, tag = "1")]
     pub connection_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub victim_connection_id: ::prost::alloc::string::String,
 }
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Rush {}
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LeaderboardRequest {}
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LeaderboardEntry {
     #[prost(uint64, tag = "1")]
     pub rank: u64,
