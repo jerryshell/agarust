@@ -5,7 +5,7 @@ extends Node2D
 @onready var chat_edit: LineEdit = %ChatEdit
 @onready var send_chat_button: Button = %SendChatButton
 @onready var leaderboard: Leaderboard = %Leaderboard
-@onready var logger: Logger = %Logger
+@onready var logger: GameLogger = %Logger
 @onready var show_server_position_check: CheckButton = %ShowServerPositionCheck
 
 var player_map: Dictionary = {}
