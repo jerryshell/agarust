@@ -159,9 +159,10 @@ impl Hub {
                 direction_angle,
             } => {
                 if let Some(client) = self.client_map.get_mut(&connection_id)
-                    && let Some(player) = client.player.as_mut() {
-                        player.direction_angle = direction_angle;
-                    }
+                    && let Some(player) = client.player.as_mut()
+                {
+                    player.direction_angle = direction_angle;
+                }
             }
             command::Command::ConsumeSpore {
                 connection_id,
@@ -170,40 +171,39 @@ impl Hub {
                 if let (Some(client), Some(spore)) = (
                     self.client_map.get_mut(&connection_id),
                     self.spore_map.get_mut(&spore_id),
-                )
-                    && let Some(player) = client.player.as_mut() {
-                        let is_close = util::check_distance_is_close(
-                            player.x,
-                            player.y,
-                            player.radius,
-                            spore.x,
-                            spore.y,
-                            spore.radius,
-                        );
+                ) && let Some(player) = client.player.as_mut()
+                {
+                    let is_close = util::check_distance_is_close(
+                        player.x,
+                        player.y,
+                        player.radius,
+                        spore.x,
+                        spore.y,
+                        spore.radius,
+                    );
 
-                        if !is_close {
-                            warn!("consume spore error, distance too far");
-                            return;
-                        }
-
-                        let spore_mass = util::radius_to_mass(spore.radius);
-                        player.increase_mass(spore_mass);
-
-                        self.spore_map.remove(&spore_id);
-
-                        let current_score = util::radius_to_mass(player.radius) as i64;
-
-                        let client_agent_command_sender =
-                            client.client_agent_command_sender.clone();
-
-                        self.broadcast_packet(&proto_util::consume_spore_packet(
-                            connection_id,
-                            spore_id,
-                        ));
-
-                        let _ = client_agent_command_sender
-                            .send(command::Command::SyncPlayerBestScore { current_score });
+                    if !is_close {
+                        warn!("consume spore error, distance too far");
+                        return;
                     }
+
+                    let spore_mass = util::radius_to_mass(spore.radius);
+                    player.increase_mass(spore_mass);
+
+                    self.spore_map.remove(&spore_id);
+
+                    let current_score = util::radius_to_mass(player.radius) as i64;
+
+                    let client_agent_command_sender = client.client_agent_command_sender.clone();
+
+                    self.broadcast_packet(&proto_util::consume_spore_packet(
+                        connection_id,
+                        spore_id,
+                    ));
+
+                    let _ = client_agent_command_sender
+                        .send(command::Command::SyncPlayerBestScore { current_score });
+                }
             }
             command::Command::ConsumePlayer {
                 connection_id,
@@ -214,60 +214,61 @@ impl Hub {
                     .get_many_mut([&connection_id, &victim_connection_id])
                     && let (Some(player), Some(victim)) =
                         (&mut player_client.player, &mut victim_client.player)
-                    {
-                        let player_mass = util::radius_to_mass(player.radius);
-                        let victim_mass = util::radius_to_mass(victim.radius);
+                {
+                    let player_mass = util::radius_to_mass(player.radius);
+                    let victim_mass = util::radius_to_mass(victim.radius);
 
-                        if player_mass < victim_mass * 1.2 {
-                            warn!("consume player error, too small");
-                            return;
-                        }
-
-                        let is_close = util::check_distance_is_close(
-                            player.x,
-                            player.y,
-                            player.radius,
-                            victim.x,
-                            victim.y,
-                            victim.radius,
-                        );
-
-                        if !is_close {
-                            warn!("consume player error, distance too far");
-                            return;
-                        }
-
-                        player.increase_mass(victim_mass);
-
-                        victim.respawn();
+                    if player_mass < victim_mass * 1.2 {
+                        warn!("consume player error, too small");
+                        return;
                     }
+
+                    let is_close = util::check_distance_is_close(
+                        player.x,
+                        player.y,
+                        player.radius,
+                        victim.x,
+                        victim.y,
+                        victim.radius,
+                    );
+
+                    if !is_close {
+                        warn!("consume player error, distance too far");
+                        return;
+                    }
+
+                    player.increase_mass(victim_mass);
+
+                    victim.respawn();
+                }
             }
             command::Command::Rush { connection_id } => {
                 if let Some(client) = self.client_map.get_mut(&connection_id)
-                    && let Some(player) = client.player.as_mut() {
-                        if player.radius < 20.0 {
-                            return;
-                        }
-                        if player.rush_instant.is_some() {
-                            return;
-                        }
-                        let player_mass = util::radius_to_mass(player.radius);
-                        let drop_mass = player_mass * 0.2;
-                        if let Some(mass) = player.try_drop_mass(drop_mass) {
-                            player.rush();
-
-                            let mut spore = spore::Spore::random();
-                            spore.x = player.x;
-                            spore.y = player.y;
-                            spore.radius = util::mass_to_radius(mass);
-
-                            let packet = proto_util::update_spore_pack(&spore);
-
-                            self.spore_map.insert(spore.id.clone(), spore);
-
-                            self.broadcast_packet(&packet);
-                        }
+                    && let Some(player) = client.player.as_mut()
+                {
+                    if player.radius < 20.0 {
+                        return;
                     }
+                    if player.rush_instant.is_some() {
+                        return;
+                    }
+                    let player_mass = util::radius_to_mass(player.radius);
+                    let drop_mass = player_mass * 0.2;
+                    if let Some(mass) = player.try_drop_mass(drop_mass) {
+                        player.rush();
+
+                        let mut spore = spore::Spore::random();
+                        spore.x = player.x;
+                        spore.y = player.y;
+                        spore.radius = util::mass_to_radius(mass);
+
+                        let packet = proto_util::update_spore_pack(&spore);
+
+                        self.spore_map.insert(spore.id.clone(), spore);
+
+                        self.broadcast_packet(&packet);
+                    }
+                }
             }
             _ => {
                 warn!("unknown command: {:?}", command);

@@ -53,10 +53,11 @@ impl Player {
         self.y = new_y;
 
         if let Some(rush_instant) = self.rush_instant
-            && rush_instant.elapsed() > RUSH_DURATION {
-                self.speed = INIT_SPEED;
-                self.rush_instant = None;
-            }
+            && rush_instant.elapsed() > RUSH_DURATION
+        {
+            self.speed = INIT_SPEED;
+            self.rush_instant = None;
+        }
     }
 
     pub fn rush(&mut self) {
