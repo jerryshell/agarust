@@ -158,11 +158,10 @@ impl Hub {
                 connection_id,
                 direction_angle,
             } => {
-                if let Some(client) = self.client_map.get_mut(&connection_id) {
-                    if let Some(player) = client.player.as_mut() {
+                if let Some(client) = self.client_map.get_mut(&connection_id)
+                    && let Some(player) = client.player.as_mut() {
                         player.direction_angle = direction_angle;
                     }
-                }
             }
             command::Command::ConsumeSpore {
                 connection_id,
@@ -171,8 +170,8 @@ impl Hub {
                 if let (Some(client), Some(spore)) = (
                     self.client_map.get_mut(&connection_id),
                     self.spore_map.get_mut(&spore_id),
-                ) {
-                    if let Some(player) = client.player.as_mut() {
+                )
+                    && let Some(player) = client.player.as_mut() {
                         let is_close = util::check_distance_is_close(
                             player.x,
                             player.y,
@@ -205,7 +204,6 @@ impl Hub {
                         let _ = client_agent_command_sender
                             .send(command::Command::SyncPlayerBestScore { current_score });
                     }
-                }
             }
             command::Command::ConsumePlayer {
                 connection_id,
@@ -214,8 +212,7 @@ impl Hub {
                 if let [Some(player_client), Some(victim_client)] = self
                     .client_map
                     .get_many_mut([&connection_id, &victim_connection_id])
-                {
-                    if let (Some(player), Some(victim)) =
+                    && let (Some(player), Some(victim)) =
                         (&mut player_client.player, &mut victim_client.player)
                     {
                         let player_mass = util::radius_to_mass(player.radius);
@@ -244,11 +241,10 @@ impl Hub {
 
                         victim.respawn();
                     }
-                }
             }
             command::Command::Rush { connection_id } => {
-                if let Some(client) = self.client_map.get_mut(&connection_id) {
-                    if let Some(player) = client.player.as_mut() {
+                if let Some(client) = self.client_map.get_mut(&connection_id)
+                    && let Some(player) = client.player.as_mut() {
                         if player.radius < 20.0 {
                             return;
                         }
@@ -272,7 +268,6 @@ impl Hub {
                             self.broadcast_packet(&packet);
                         }
                     }
-                }
             }
             _ => {
                 warn!("unknown command: {:?}", command);

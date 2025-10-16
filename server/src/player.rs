@@ -52,12 +52,11 @@ impl Player {
         self.x = new_x;
         self.y = new_y;
 
-        if let Some(rush_instant) = self.rush_instant {
-            if rush_instant.elapsed() > RUSH_DURATION {
+        if let Some(rush_instant) = self.rush_instant
+            && rush_instant.elapsed() > RUSH_DURATION {
                 self.speed = INIT_SPEED;
                 self.rush_instant = None;
             }
-        }
     }
 
     pub fn rush(&mut self) {
